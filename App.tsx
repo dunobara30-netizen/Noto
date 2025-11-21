@@ -4,7 +4,7 @@ import ResultsDashboard from './components/ResultsDashboard';
 import ChatWidget from './components/ChatWidget';
 import { Course, GradeLevel, AnalysisResult } from './types';
 import { analyzeAcademicProfile } from './services/geminiService';
-import { GraduationCap, Sparkles, MessageCircle, QrCode, X } from 'lucide-react';
+import { GraduationCap, Sparkles, MessageCircle, QrCode, X, Smartphone } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -51,7 +51,8 @@ const App: React.FC = () => {
   };
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(currentUrl)}&color=5b21b6`;
+  // Use Google Charts API for reliable QR code generation
+  const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=350x350&chl=${encodeURIComponent(currentUrl)}&choe=UTF-8`;
   const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
 
   return (
@@ -68,10 +69,11 @@ const App: React.FC = () => {
             {/* QR Code Button */}
             <button 
               onClick={() => setShowQr(true)}
-              className="p-2.5 rounded-xl bg-white border border-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white hover:shadow-lg hover:shadow-violet-300/50 transition-all duration-300 group/qr"
-              title="Seite teilen"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-violet-50 border border-violet-100 text-violet-600 hover:bg-violet-600 hover:text-white hover:shadow-lg hover:shadow-violet-300/50 transition-all duration-300 group/qr"
+              title="Scan for Mobile"
             >
               <QrCode className="w-5 h-5" />
+              <span className="hidden sm:block font-bold text-sm">Mobile Access</span>
             </button>
 
             <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
@@ -149,27 +151,31 @@ const App: React.FC = () => {
             <div className="text-center space-y-6">
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 mb-2">Teile deinen Weg</h3>
-                <p className="text-slate-500 text-sm">Scanne den Code, um die App auf deinem Handy zu öffnen.</p>
+                <p className="text-slate-500 text-sm">Scanne den Code mit deinem Handy, um die App dort zu öffnen.</p>
               </div>
               
-              <div className="bg-slate-50 p-6 rounded-2xl border-2 border-dashed border-violet-200 mx-auto inline-block">
+              <div className="bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-inner mx-auto inline-block group relative">
+                 <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/20 to-fuchsia-500/20 rounded-xl blur-xl group-hover:blur-2xl transition-all opacity-50"></div>
                 <img 
                   src={qrUrl} 
-                  alt="QR Code" 
-                  className="w-48 h-48 mix-blend-multiply"
+                  alt="QR Code via Google Charts" 
+                  className="w-48 h-48 object-contain relative z-10"
                   loading="lazy"
                 />
+                <div className="absolute bottom-2 right-2 bg-white p-1 rounded-full shadow-sm z-20">
+                    <Smartphone className="w-4 h-4 text-violet-600" />
+                </div>
               </div>
 
               {isLocalhost && (
                 <div className="bg-amber-50 text-amber-700 text-[11px] font-medium p-3 rounded-xl text-left border border-amber-100">
-                  <strong>Hinweis:</strong> Du bist auf Localhost. Damit der Scan funktioniert, müssen beide Geräte im selben WLAN sein oder die Seite muss veröffentlicht sein.
+                  <strong>Hinweis:</strong> Du bist im lokalen Modus (localhost). Damit der Scan funktioniert, müssen beide Geräte im selben WLAN sein oder die Seite muss veröffentlicht sein.
                 </div>
               )}
 
-              <div className="flex items-center justify-center gap-2 text-xs font-bold text-violet-600 bg-violet-50 py-2 px-4 rounded-full mx-auto w-fit">
+              <div className="flex items-center justify-center gap-2 text-xs font-bold text-slate-400 py-2">
                 <Sparkles className="w-3 h-3" />
-                GradePath AI
+                Powered by Google Charts
               </div>
             </div>
           </div>
