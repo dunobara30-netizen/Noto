@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageCircle, X, Send, Loader2, Minimize2 } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { MessageCircle, X, Send, Loader2, Minimize2, Globe, ExternalLink } from 'lucide-react';
+import { ChatMessage, Source } from '../types';
 import { createChatSession } from '../services/geminiService';
-import { Chat } from '@google/genai';
+import { Chat, GenerateContentResponse } from '@google/genai';
 
 interface ChatWidgetProps {
   contextSummary: string;
@@ -11,18 +11,29 @@ interface ChatWidgetProps {
 }
 
 const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOpen }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: '1', role: 'model', text: "Hallo! Ich bin dein AI Coach. Lass uns über deine Noten sprechen. Was möchtest du verbessern?", timestamp: new Date() }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const initializedRef = useRef(false);
 
-  // Initialize chat session when context changes or component mounts
+  // Initialize chat session
   useEffect(() => {
     if (isOpen && !chatSessionRef.current) {
-      chatSessionRef.current = createChatSession(contextSummary || "Der Student hat noch keine Noten eingegeben.");
+        setMessages([
+            { 
+                id: '1', 
+                role: 'model', 
+                text: "Hallo! Ich bin Gem. Ich kann live im Internet nach Unis und NC-Werten für dich suchen. Was möchtest du wissen?", 
+                timestamp: new Date() 
+            }
+        ]);
+
+        chatSessionRef.current = createChatSession(
+            contextSummary || "Der Student hat noch keine Noten eingegeben."
+        );
+        initializedRef.current = true;
     }
   }, [isOpen, contextSummary]);
 
@@ -52,6 +63,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
       const resultStream = await chatSessionRef.current.sendMessageStream({ message: userMsg.text });
       
       let fullResponse = "";
+      let foundSources: Source[] = [];
       const modelMsgId = (Date.now() + 1).toString();
       
       // Add placeholder message
@@ -63,11 +75,28 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
       }]);
 
       for await (const chunk of resultStream) {
-        const text = chunk.text || "";
+        const responseChunk = chunk as GenerateContentResponse;
+        const text = responseChunk.text || "";
         fullResponse += text;
         
+        // Extract grounding chunks (sources) if available
+        const groundingChunks = responseChunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
+        if (groundingChunks) {
+            groundingChunks.forEach((gc: any) => {
+                if (gc.web?.uri && gc.web?.title) {
+                    // Avoid duplicates
+                    if (!foundSources.some(s => s.url === gc.web.uri)) {
+                        foundSources.push({
+                            title: gc.web.title,
+                            url: gc.web.uri
+                        });
+                    }
+                }
+            });
+        }
+        
         setMessages(prev => prev.map(msg => 
-          msg.id === modelMsgId ? { ...msg, text: fullResponse } : msg
+          msg.id === modelMsgId ? { ...msg, text: fullResponse, sources: foundSources } : msg
         ));
       }
     } catch (error) {
@@ -97,30 +126,55 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
           {/* Header */}
           <div className="bg-violet-600 p-4 flex justify-between items-center text-white">
             <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span className="font-bold">Dein Noten-Coach</span>
+              <div className="w-2 h-2 rounded-full animate-pulse bg-green-400"></div>
+              <div className="flex flex-col">
+                 <span className="font-bold leading-tight">Gemini Coach</span>
+                 <span className="text-[10px] flex items-center gap-1 text-violet-200">
+                    <Globe className="w-3 h-3" />
+                    Online Suche aktiv
+                 </span>
+              </div>
             </div>
-            <button onClick={() => setIsOpen(false)} className="hover:bg-violet-700 p-1 rounded-lg transition-colors">
+            <button onClick={() => setIsOpen(false)} className="hover:bg-white/10 p-1 rounded-lg transition-colors">
               <Minimize2 className="w-5 h-5" />
             </button>
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50 custom-scrollbar">
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
                   className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed ${
                     msg.role === 'user'
-                      ? 'bg-violet-600 text-white rounded-br-none shadow-md shadow-violet-200'
+                      ? 'bg-violet-600 shadow-violet-200 text-white rounded-br-none shadow-md'
                       : 'bg-white text-slate-700 border border-slate-100 rounded-bl-none shadow-sm'
                   }`}
                 >
                   {msg.text}
                 </div>
+                
+                {/* Source Chips */}
+                {msg.sources && msg.sources.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2 max-w-[90%]">
+                        {msg.sources.map((source, idx) => (
+                            <a 
+                                key={idx}
+                                href={source.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1 bg-white border border-slate-200 rounded-full px-2 py-1 text-[10px] font-medium text-slate-500 hover:text-violet-600 hover:border-violet-300 transition-colors shadow-sm"
+                            >
+                                <Globe className="w-3 h-3" />
+                                <span className="truncate max-w-[100px]">{source.title}</span>
+                                <ExternalLink className="w-2.5 h-2.5 ml-0.5 opacity-50" />
+                            </a>
+                        ))}
+                    </div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -134,14 +188,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="Frag nach Tipps..."
+                placeholder="Frag nach Unis, NC-Werten..."
                 disabled={isLoading}
                 className="w-full pl-4 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-violet-500 focus:bg-white transition-all text-sm"
               />
               <button
                 onClick={handleSend}
                 disabled={isLoading || !input.trim()}
-                className="absolute right-2 p-2 text-violet-600 hover:bg-violet-50 rounded-lg disabled:opacity-50 transition-colors"
+                className="absolute right-2 p-2 rounded-lg disabled:opacity-50 transition-colors text-violet-600 hover:bg-violet-50"
               >
                 {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>

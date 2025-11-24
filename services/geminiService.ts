@@ -81,22 +81,24 @@ export const analyzeAcademicProfile = async (
 };
 
 export const createChatSession = (initialContext: string) => {
-  return ai.chats.create({
-    model: "gemini-2.5-flash",
-    config: {
-      // Detailed system instruction to prevent markdown formatting issues and ensure brevity
-      systemInstruction: `Du bist 'Gem', ein effizienter Studienberater.
+  const defaultInstruction = `Du bist 'Gem', ein effizienter Studienberater.
       Kontext des Schülers: ${initialContext}.
       
-      STRENGE REGELN:
-      1. Fasse dich EXTREM kurz. Maximal 2-3 Sätze pro Antwort.
-      2. Komm sofort auf den Punkt. Kein Smalltalk, kein "Gern geschehen".
-      3. Antworte IMMER nur in reinem Text (Plain Text).
-      4. KEINE Markdown-Formatierungen (#, *, **).
+      REGELN:
+      1. Fasse dich kurz.
+      2. Wenn du nach Fakten (NC-Werten, Unis, Fristen) gefragt wirst, nutze die Google Suche.
+      3. Antworte hilfreich und direkt.
       
       INHALT:
       - Nenne direkt passende Studiengänge/Unis.
-      - Gib kurze, knackige Tipps.`,
+      - Gib kurze, knackige Tipps.`;
+
+  return ai.chats.create({
+    model: "gemini-2.5-flash",
+    config: {
+      // Use Google Search to ground answers in reality
+      tools: [{ googleSearch: {} }],
+      systemInstruction: defaultInstruction,
     }
   });
 };

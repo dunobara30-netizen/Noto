@@ -32,11 +32,17 @@ export interface AnalysisResult {
   advice: AcademicAdvice;
 }
 
+export interface Source {
+  title: string;
+  url: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   text: string;
   timestamp: Date;
+  sources?: Source[];
 }
 
 // German Grading Scale (Numeric values for calculation)
