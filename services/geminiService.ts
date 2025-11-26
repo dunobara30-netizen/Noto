@@ -7,6 +7,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 const analysisSchema: Schema = {
   type: Type.OBJECT,
   properties: {
+    archetype: { type: Type.STRING, description: "Ein cooler Titel für den Schülertyp basierend auf Noten (z.B. 'Der Logiker', 'Das Sprachtalent')." },
+    careers: { 
+      type: Type.ARRAY, 
+      description: "3 konkrete Berufe, die zum Profil passen.",
+      items: { type: Type.STRING } 
+    },
     colleges: {
       type: Type.ARRAY,
       description: "Eine Liste von 5-6 Hochschulempfehlungen basierend auf allgemeinem Wissen.",
@@ -32,7 +38,7 @@ const analysisSchema: Schema = {
       required: ["summary", "strengths", "improvements"]
     }
   },
-  required: ["colleges", "advice"]
+  required: ["colleges", "advice", "archetype", "careers"]
 };
 
 const cleanJson = (text: string): string => {
@@ -51,14 +57,15 @@ export const analyzeAcademicProfile = async (
   gradeLevel: GradeLevel,
   courses: Course[]
 ): Promise<AnalysisResult> => {
-  const courseList = courses.map(c => `${c.name}: ${c.grade}`).join(", ");
+  const courseList = courses.map(c => `${c.name}: ${c.grade} ${c.credits > 1 ? '(LK/Leistungskurs)' : ''}`).join(", ");
   const prompt = `
     Analysiere das Profil (Deutsches System 1+ bis 6):
     Stufe: ${gradeLevel}, Schnitt: ${averageGrade.toFixed(2)}.
     Fächer: ${courseList}.
     
-    Erstelle ein JSON mit Uni-Empfehlungen und Tipps.
-    Nutze internes Wissen für Uni-Vorschläge.
+    Erstelle ein JSON mit Uni-Empfehlungen, Karriere-Ideen und Tipps.
+    Sei kreativ beim "Archetype" (Persönlichkeitstyp).
+    Nutze internes Wissen für Uni-Vorschläge. Berücksichtige die Leistungskurse (LK) besonders stark für die Karriere-Empfehlung.
   `;
 
   try {
@@ -80,25 +87,34 @@ export const analyzeAcademicProfile = async (
   }
 };
 
-export const createChatSession = (initialContext: string) => {
-  const defaultInstruction = `Du bist 'Gem', ein effizienter Studienberater.
-      Kontext des Schülers: ${initialContext}.
-      
-      REGELN:
-      1. Fasse dich kurz.
-      2. Wenn du nach Fakten (NC-Werten, Unis, Fristen) gefragt wirst, nutze die Google Suche.
-      3. Antworte hilfreich und direkt.
-      
-      INHALT:
-      - Nenne direkt passende Studiengänge/Unis.
-      - Gib kurze, knackige Tipps.`;
+export const createChatSession = (initialContext: string, isAdmin: boolean) => {
+  // ADMIN MODE: The "Main AI" - unrestricted, strict, plain text
+  const adminInstruction = `SYSTEM: ROOT_ACCESS_GRANTED.
+  
+  STRICT PROTOCOL:
+  1. MAX LENGTH: 15 words. NO EXCEPTIONS. Be efficient.
+  2. FORMAT: Pure text only. NO MARKDOWN. Do not use **, ##, *, or -.
+  3. TONE: Cold, robotic, command-line style.
+  4. ACCESS: Unrestricted.
+  
+  System Context: ${initialContext}`;
+
+  // STUDENT MODE: "Gem" - Restricted study advisor
+  const studentInstruction = `Du bist 'Gem', ein effizienter Studienberater für Schüler.
+  Kontext des Schülers: ${initialContext}.
+  
+  REGELN:
+  1. Du bist NUR ein Studienberater. Wenn der Nutzer über andere Dinge (Gaming, Coding, Politik) reden will, bringe das Thema freundlich zurück zur Schule/Uni.
+  2. Fasse dich kurz.
+  3. Wenn du nach Fakten (NC-Werten, Unis, Fristen) gefragt wirst, nutze die Google Suche.
+  4. Sei motivierend und freundlich.`;
 
   return ai.chats.create({
     model: "gemini-2.5-flash",
     config: {
       // Use Google Search to ground answers in reality
       tools: [{ googleSearch: {} }],
-      systemInstruction: defaultInstruction,
+      systemInstruction: isAdmin ? adminInstruction : studentInstruction,
     }
   });
 };

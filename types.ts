@@ -6,11 +6,18 @@ export interface Course {
 }
 
 export enum GradeLevel {
-  CLASS_9 = '9. Klasse',
-  CLASS_10 = '10. Klasse (Einführungsphase)',
-  CLASS_11 = '11. Klasse (Qualifikationsphase 1)',
-  CLASS_12 = '12. Klasse (Qualifikationsphase 2 / Abitur)',
-  UNI = 'Universität / Hochschule',
+  Five = 'Klasse 5',
+  Six = 'Klasse 6',
+  Seven = 'Klasse 7',
+  Eight = 'Klasse 8',
+  Nine = 'Klasse 9',
+  Ten = 'Klasse 10 (Mittlere Reife)',
+  EF = 'Einführungsphase (EF/11)',
+  Q1 = 'Qualifikationsphase 1 (Q1/12.1)',
+  Q2 = 'Qualifikationsphase 2 (Q2/12.2)',
+  Q3 = 'Qualifikationsphase 3 (Q3/13.1)',
+  Q4 = 'Qualifikationsphase 4 (Q4/13.2)',
+  ABITUR = 'Abitur (Gesamt)',
 }
 
 export interface CollegeRecommendation {
@@ -30,6 +37,8 @@ export interface AcademicAdvice {
 export interface AnalysisResult {
   colleges: CollegeRecommendation[];
   advice: AcademicAdvice;
+  archetype: string; // e.g. "Der Analytiker"
+  careers: string[]; // e.g. ["Ingenieur", "Data Scientist"]
 }
 
 export interface Source {

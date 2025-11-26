@@ -4,7 +4,7 @@ import ResultsDashboard from './components/ResultsDashboard';
 import ChatWidget from './components/ChatWidget';
 import { Course, GradeLevel, AnalysisResult } from './types';
 import { analyzeAcademicProfile } from './services/geminiService';
-import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Trash2, Eye, EyeOff } from 'lucide-react';
+import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Eye, EyeOff, Lock, Unlock, Edit2 } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -13,21 +13,32 @@ const App: React.FC = () => {
   const [currentCourses, setCurrentCourses] = useState<Course[]>([]);
   const [contextSummary, setContextSummary] = useState<string>('');
   
-  // Lifted state for ChatWidget
+  // Chat & Admin State
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [pinInput, setPinInput] = useState('');
+  const [loginError, setLoginError] = useState(false);
+
+  // App Utilities
   const [showQr, setShowQr] = useState(false);
+  const [qrSource, setQrSource] = useState('');
   const [showInstallModal, setShowInstallModal] = useState(false);
   const [installTab, setInstallTab] = useState<'android' | 'ios'>('android');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [copySuccess, setCopySuccess] = useState(false);
 
   // Security & Privacy State
-  const [sessionKey, setSessionKey] = useState(0); // Used to completely reset child components
+  const [sessionKey, setSessionKey] = useState(0); 
   const [isBlurred, setIsBlurred] = useState(false);
   const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
 
-  // Handle PWA Install Prompt
+  // Handle PWA Install Prompt & QR Init
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setQrSource(window.location.href);
+    }
+
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -73,85 +84,101 @@ const App: React.FC = () => {
   };
 
   const handleCopyUrl = () => {
-    navigator.clipboard.writeText(window.location.href);
+    navigator.clipboard.writeText(qrSource);
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
   };
 
-  const handleClearSession = () => {
-    if (window.confirm("Sicher? Alle Daten werden sofort unwiderruflich gelöscht.")) {
-      setAnalysisResult(null);
-      setCurrentAverage(0);
-      setCurrentCourses([]);
-      setContextSummary('');
-      setIsChatOpen(false);
-      setIsBlurred(false);
-      setSessionKey(prev => prev + 1); // Re-mounts children to reset their internal state
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (pinInput === '6767') {
+      setIsAdmin(true);
+      setShowLogin(false);
+      setPinInput('');
+      setLoginError(false);
+      setIsChatOpen(true); // Auto open chat on login
+    } else {
+      setLoginError(true);
+      setPinInput('');
+      setTimeout(() => setLoginError(false), 2000);
     }
   };
 
+  const handleLogout = () => {
+    setIsAdmin(false);
+    setIsChatOpen(false);
+  };
+
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
-  const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=350x350&chl=${encodeURIComponent(currentUrl)}&choe=UTF-8`;
+  const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrSource)}`;
   const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
 
   return (
-    <div className="min-h-screen bg-[#f0f4f8] text-slate-800 flex flex-col overflow-x-hidden relative font-['Inter']">
+    <div className={`min-h-screen bg-[#f0f4f8] text-slate-800 flex flex-col overflow-x-hidden relative font-['Inter'] transition-colors duration-500 ${isAdmin ? 'bg-slate-900' : ''}`}>
       
       {/* Background Ambient Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-violet-300/30 rounded-full blur-[100px] animate-pulse duration-3000 pointer-events-none"></div>
-      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-fuchsia-300/30 rounded-full blur-[100px] animate-pulse duration-5000 delay-1000 pointer-events-none"></div>
+      <div className={`absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[100px] animate-pulse duration-3000 pointer-events-none ${isAdmin ? 'bg-emerald-900/20' : 'bg-violet-300/30'}`}></div>
+      <div className={`absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full blur-[100px] animate-pulse duration-5000 delay-1000 pointer-events-none ${isAdmin ? 'bg-slate-800/40' : 'bg-fuchsia-300/30'}`}></div>
       
       {/* Navbar */}
-      <header className="bg-white/70 backdrop-blur-md border-b border-white/50 sticky top-0 z-40 shadow-sm">
+      <header className={`backdrop-blur-md border-b sticky top-0 z-40 shadow-sm transition-colors ${isAdmin ? 'bg-slate-900/80 border-slate-700' : 'bg-white/70 border-white/50'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           
           {/* Logo Section */}
-          <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
-            <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 p-2.5 rounded-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform duration-300">
-              <GraduationCap className="w-6 h-6 text-white" />
+          <div className="flex items-center gap-3 select-none">
+            <div className={`p-2.5 rounded-xl shadow-lg transition-transform duration-300 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 border border-emerald-500/30' : 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-violet-500/20'}`}>
+              <GraduationCap className={`w-6 h-6 ${isAdmin ? 'text-emerald-500' : 'text-white'}`} />
             </div>
-            <h1 className="text-xl sm:text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600 tracking-tight hidden sm:block">
-              GradePath
+            <h1 className={`text-xl sm:text-2xl font-black tracking-tight hidden sm:block ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600'}`}>
+              {isAdmin ? 'SYSTEM_OVERRIDE' : 'GradePath'}
             </h1>
           </div>
 
           {/* Actions Section */}
           <div className="flex items-center gap-2">
             
+            {/* Admin Lock */}
+            <button 
+                onClick={isAdmin ? handleLogout : () => setShowLogin(true)}
+                className={`p-2 rounded-xl transition-all border ${
+                    isAdmin 
+                    ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50 hover:bg-emerald-500/20' 
+                    : 'bg-white text-slate-400 border-slate-200 hover:text-violet-600 hover:border-violet-200'
+                }`}
+            >
+                {isAdmin ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
+            </button>
+
             {/* Security Tools Group */}
-            <div className="flex items-center bg-slate-100/50 rounded-xl p-1 mr-2 border border-white/50">
+            <div className={`flex items-center rounded-xl p-1 mr-2 border ${isAdmin ? 'bg-slate-800 border-slate-700' : 'bg-slate-100/50 border-white/50'}`}>
                <button 
                  onClick={() => setShowPrivacyInfo(true)}
-                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-all"
+                 className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all ${isAdmin ? 'text-slate-400 hover:text-white' : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'}`}
                  title="Datenschutz Status: Sicher"
                >
                  <ShieldCheck className="w-4 h-4" />
                  <span className="text-xs font-bold hidden md:inline">Anonym</span>
                </button>
 
-               <div className="w-px h-4 bg-slate-300 mx-1"></div>
+               <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
 
                <button 
                  onClick={() => setIsBlurred(!isBlurred)}
-                 className={`p-1.5 rounded-lg transition-all ${isBlurred ? 'bg-violet-100 text-violet-600' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200'}`}
+                 className={`p-1.5 rounded-lg transition-all ${
+                     isBlurred 
+                        ? (isAdmin ? 'bg-emerald-900/30 text-emerald-400' : 'bg-violet-100 text-violet-600') 
+                        : (isAdmin ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200')
+                 }`}
                  title={isBlurred ? "Inhalt anzeigen" : "Inhalt verbergen (Stealth Mode)"}
                >
                  {isBlurred ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-               </button>
-
-               <button 
-                 onClick={handleClearSession}
-                 className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all"
-                 title="Alles löschen (Panic Button)"
-               >
-                 <Trash2 className="w-4 h-4" />
                </button>
             </div>
 
             {/* Install Button */}
             <button 
               onClick={handleInstallClick}
-              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-violet-600 transition-all"
+              className={`hidden md:flex items-center gap-2 px-3 py-2 rounded-xl transition-all ${isAdmin ? 'text-slate-500 hover:text-emerald-400' : 'text-slate-500 hover:bg-slate-100 hover:text-violet-600'}`}
               title="App installieren"
             >
               <Download className="w-5 h-5" />
@@ -160,10 +187,10 @@ const App: React.FC = () => {
             {/* QR Code */}
             <button 
               onClick={() => setShowQr(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg shadow-violet-200 hover:shadow-violet-300 hover:scale-105 transition-all duration-300 border border-white/20"
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-white shadow-lg transition-all duration-300 border border-white/20 hover:scale-105 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 hover:bg-slate-700 text-emerald-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 hover:shadow-violet-300'}`}
             >
               <QrCode className="w-5 h-5" />
-              <span className="font-bold text-sm hidden sm:inline">Auf's Handy</span>
+              <span className="font-bold text-sm hidden sm:inline">App</span>
             </button>
           </div>
         </div>
@@ -176,23 +203,25 @@ const App: React.FC = () => {
           
           {/* Left Column: Grade Input */}
           <div className="lg:col-span-5 flex flex-col">
-            <GradeCalculator 
-              key={`calc-${sessionKey}`} // Changing key forces re-render (reset)
-              onCalculate={handleCalculateAndAnalyze} 
-              isAnalyzing={isAnalyzing}
-            />
+            <div className={isAdmin ? 'opacity-80 grayscale hover:grayscale-0 transition-all' : ''}>
+                <GradeCalculator 
+                key={`calc-${sessionKey}`} // Changing key forces re-render (reset)
+                onCalculate={handleCalculateAndAnalyze} 
+                isAnalyzing={isAnalyzing}
+                />
+            </div>
           </div>
 
           {/* Right Column: Results */}
           <div id="results-container" className="lg:col-span-7 flex flex-col">
             <div className="flex items-center gap-2 mb-6 pl-2 mt-8 lg:mt-0">
-              <div className="p-1.5 bg-white rounded-lg shadow-sm">
-                 <Sparkles className="w-5 h-5 text-amber-500" />
+              <div className={`p-1.5 rounded-lg shadow-sm ${isAdmin ? 'bg-slate-800' : 'bg-white'}`}>
+                 <Sparkles className={`w-5 h-5 ${isAdmin ? 'text-emerald-500' : 'text-amber-500'}`} />
               </div>
-              <h2 className="text-xl font-bold text-slate-700">Deine Zukunftsanalyse</h2>
+              <h2 className={`text-xl font-bold ${isAdmin ? 'text-slate-200' : 'text-slate-700'}`}>Deine Zukunftsanalyse</h2>
             </div>
-            <div className="flex-1 bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-xl shadow-slate-200/50 overflow-hidden relative min-h-[300px]">
-               <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent pointer-events-none"></div>
+            <div className={`flex-1 backdrop-blur-md rounded-3xl border shadow-xl overflow-hidden relative min-h-[300px] ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/40 border-white/60 shadow-slate-200/50'}`}>
+               <div className={`absolute inset-0 bg-gradient-to-b pointer-events-none ${isAdmin ? 'from-slate-800/40 to-transparent' : 'from-white/40 to-transparent'}`}></div>
               <ResultsDashboard 
                 key={`results-${sessionKey}`}
                 results={analysisResult} 
@@ -223,14 +252,54 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Chat Widget - Always available if not blurred */}
+      {/* Chat Widget */}
       {!isBlurred && (
-        <ChatWidget 
-          key={`chat-${sessionKey}`}
-          contextSummary={contextSummary} 
-          isOpen={isChatOpen} 
-          setIsOpen={setIsChatOpen} 
-        />
+        <div>
+            <ChatWidget 
+            key={`chat-${sessionKey}-${isAdmin}`}
+            contextSummary={contextSummary} 
+            isOpen={isChatOpen} 
+            setIsOpen={setIsChatOpen} 
+            isAdmin={isAdmin}
+            />
+        </div>
+      )}
+
+      {/* Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full relative animate-in zoom-in-95 duration-300 border border-white/50">
+             <button 
+               onClick={() => { setShowLogin(false); setPinInput(''); }}
+               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+             >
+               <X className="w-6 h-6" />
+             </button>
+             <div className="text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
+                    <Lock className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-800 mb-2">Admin Access</h3>
+                <p className="text-slate-500 text-sm mb-6">Enter code to unlock Main AI.</p>
+                <form onSubmit={handleLogin} className="relative">
+                    <input 
+                        type="password" 
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={pinInput}
+                        onChange={(e) => setPinInput(e.target.value)}
+                        className={`w-full bg-slate-50 border-2 rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-widest focus:outline-none transition-all ${loginError ? 'border-red-500 text-red-500 bg-red-50' : 'border-slate-200 focus:border-violet-500 text-slate-800'}`}
+                        placeholder="••••"
+                        autoFocus
+                    />
+                    {loginError && <p className="text-red-500 text-xs font-bold mt-2 animate-pulse">Zugriff verweigert</p>}
+                    <button type="submit" className="w-full mt-4 bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors">
+                        Unlock
+                    </button>
+                </form>
+             </div>
+           </div>
+        </div>
       )}
 
       {/* Privacy Info Modal */}
@@ -374,20 +443,21 @@ const App: React.FC = () => {
               <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-inner mx-auto inline-block relative group">
                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/20 to-fuchsia-500/20 rounded-xl blur-xl opacity-50"></div>
                 <img 
-                  src={qrUrl} 
+                  src={qrApiUrl} 
                   alt="QR Code" 
                   className="w-48 h-48 object-contain relative z-10"
                 />
               </div>
 
-              {/* Manual URL Copy Section */}
+              {/* Editable URL Section */}
               <div className="space-y-2 pt-2">
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Oder Link kopieren</p>
-                <div className="flex items-center gap-2 bg-slate-50 p-2 pl-3 rounded-xl border border-slate-200">
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Verlinkte Adresse (Editierbar)</p>
+                <div className="flex items-center gap-2 bg-slate-50 p-2 pl-3 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-violet-200 focus-within:border-violet-400 transition-all">
+                  <div className="shrink-0 text-slate-400"><Edit2 className="w-3 h-3" /></div>
                   <input 
                     type="text" 
-                    readOnly 
-                    value={currentUrl} 
+                    value={qrSource} 
+                    onChange={(e) => setQrSource(e.target.value)}
                     className="bg-transparent w-full text-xs text-slate-600 font-mono outline-none truncate"
                   />
                   <button 
@@ -401,7 +471,7 @@ const App: React.FC = () => {
 
               {isLocalhost && (
                 <div className="bg-amber-50 text-amber-700 text-[11px] font-medium p-3 rounded-xl text-left border border-amber-100 leading-tight">
-                  ⚠️ Du bist auf "localhost". Dein Handy muss im selben WLAN sein. Nutze deine lokale IP-Adresse statt "localhost".
+                  ⚠️ <strong>Localhost erkannt:</strong> Das Scannen funktioniert evtl. nicht, da dein Handy "localhost" nicht finden kann. Ersetze oben im Feld "localhost" durch die lokale IP deines PCs (z.B. 192.168.x.x).
                 </div>
               )}
             </div>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Course, GradeLevel, GERMAN_GRADES, getClosestGradeLabel } from '../types';
-import { Plus, Trash2, Sparkles, GraduationCap } from 'lucide-react';
+import { Plus, Trash2, Sparkles, GraduationCap, Star } from 'lucide-react';
 
 interface GradeCalculatorProps {
   onCalculate: (average: number, courses: Course[], level: GradeLevel) => void;
@@ -13,8 +13,30 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
     { id: '2', name: 'Deutsch', grade: '1-', credits: 1 },
     { id: '3', name: 'Englisch', grade: '2-', credits: 1 },
   ]);
-  const [gradeLevel, setGradeLevel] = useState<GradeLevel>(GradeLevel.CLASS_11);
+  const [gradeLevel, setGradeLevel] = useState<GradeLevel>(GradeLevel.Ten);
   const [average, setAverage] = useState<number>(0);
+
+  // Check if current level supports Advanced Courses (LK) - Q-Phase & Abitur only
+  const isAdvancedLevel = [
+    GradeLevel.Q1,
+    GradeLevel.Q2,
+    GradeLevel.Q3,
+    GradeLevel.Q4,
+    GradeLevel.ABITUR
+  ].includes(gradeLevel);
+
+  // Auto-reset LK weights if switching to lower grades (5-11/EF)
+  useEffect(() => {
+    if (!isAdvancedLevel) {
+      setCourses(prev => {
+        const hasWeightedCourses = prev.some(c => c.credits > 1);
+        if (hasWeightedCourses) {
+          return prev.map(c => ({ ...c, credits: 1 }));
+        }
+        return prev;
+      });
+    }
+  }, [gradeLevel, isAdvancedLevel]);
 
   const calculateAverage = React.useCallback(() => {
     let totalScore = 0;
@@ -49,6 +71,10 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
     setCourses(courses.map(c => c.id === id ? { ...c, [field]: value } : c));
   };
 
+  const toggleLK = (id: string) => {
+    setCourses(courses.map(c => c.id === id ? { ...c, credits: c.credits === 1 ? 2 : 1 } : c));
+  };
+
   const handleAnalyze = () => {
     const currentAvg = calculateAverage();
     onCalculate(currentAvg, courses, gradeLevel);
@@ -64,7 +90,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
             Deine Noten
           </h2>
           <p className="text-slate-500 text-sm font-medium mt-1">
-            Trage deine Fächer ein
+            Trage deine Fächer ein {isAdvancedLevel ? '(LK = ★)' : ''}
           </p>
         </div>
         
@@ -84,7 +110,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
       </div>
 
       <div className="mb-8">
-        <label className="block text-sm font-bold text-slate-600 mb-3 uppercase tracking-wide">Klassenstufe</label>
+        <label className="block text-sm font-bold text-slate-600 mb-3 uppercase tracking-wide">Klassenstufe / Phase</label>
         <div className="relative">
           <select
             value={gradeLevel}
@@ -105,12 +131,13 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
         {courses.map((course, idx) => (
           <div 
             key={course.id} 
-            className="flex items-center gap-3 p-3 bg-white rounded-2xl border shadow-sm transition-all duration-300 group animate-in slide-in-from-bottom-2 border-slate-100 hover:shadow-md hover:border-violet-200"
+            className={`flex items-center gap-3 p-3 rounded-2xl border shadow-sm transition-all duration-300 group animate-in slide-in-from-bottom-2 ${course.credits > 1 ? 'bg-violet-50/50 border-violet-200' : 'bg-white border-slate-100 hover:shadow-md hover:border-violet-200'}`}
             style={{ animationDelay: `${idx * 50}ms` }}
           >
-            <div className="h-10 w-10 rounded-full bg-violet-50 flex items-center justify-center text-violet-600 font-bold text-sm shrink-0">
+            <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 transition-colors ${course.credits > 1 ? 'bg-violet-600 text-white' : 'bg-violet-50 text-violet-600'}`}>
               {idx + 1}
             </div>
+            
             <input
               type="text"
               placeholder="Fach (z.B. Bio)"
@@ -118,6 +145,18 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
               onChange={(e) => updateCourse(course.id, 'name', e.target.value)}
               className="flex-1 bg-transparent border-none focus:ring-0 font-bold placeholder-slate-300 text-lg text-slate-700"
             />
+            
+            {/* LK Toggle - Only visible for Q-Phase/Abitur */}
+            {isAdvancedLevel && (
+              <button
+                  onClick={() => toggleLK(course.id)}
+                  className={`p-2 rounded-xl transition-all ${course.credits > 1 ? 'text-amber-400 hover:bg-amber-100' : 'text-slate-200 hover:text-amber-400 hover:bg-slate-50'}`}
+                  title={course.credits > 1 ? "Leistungskurs (zählt doppelt)" : "Als LK markieren"}
+              >
+                  <Star className={`w-5 h-5 ${course.credits > 1 ? 'fill-amber-400' : ''}`} />
+              </button>
+            )}
+
             <div className="relative">
                 <select
                   value={course.grade}
@@ -132,12 +171,13 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({ onCalculate, isAnalyz
                       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
                   </div>
             </div>
-              <button
-                onClick={() => removeCourse(course.id)}
-                className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
-              >
-                <Trash2 className="w-5 h-5" />
-              </button>
+            
+            <button
+            onClick={() => removeCourse(course.id)}
+            className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all opacity-0 group-hover:opacity-100"
+            >
+            <Trash2 className="w-5 h-5" />
+            </button>
           </div>
         ))}
       </div>

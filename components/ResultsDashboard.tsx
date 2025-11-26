@@ -1,6 +1,6 @@
 import React from 'react';
 import { AnalysisResult, getClosestGradeLabel, Course } from '../types';
-import { MapPin, CheckCircle, Target, ArrowUpRight } from 'lucide-react';
+import { MapPin, CheckCircle, Target, ArrowUpRight, Briefcase, Award, Star, User } from 'lucide-react';
 import { BarChart, Bar, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface ResultsDashboardProps {
@@ -29,8 +29,46 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
   ];
 
   return (
-    <div className="space-y-8 h-auto lg:h-full lg:overflow-y-auto pr-3 custom-scrollbar pb-24 animate-in slide-in-from-right-4 duration-500">
+    <div className="space-y-6 h-auto lg:h-full lg:overflow-y-auto pr-3 custom-scrollbar pb-24 animate-in slide-in-from-right-4 duration-500">
       
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-slate-700 flex items-center gap-2">
+            <Award className="w-5 h-5 text-violet-500" />
+            Dein Ergebnis
+        </h2>
+      </div>
+
+      {/* Personality Archetype Hero Card */}
+      {results.archetype && (
+        <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-3xl p-6 text-white shadow-xl shadow-violet-200 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <Star className="w-32 h-32 text-white fill-white" />
+            </div>
+            <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-2 opacity-80">
+                    <User className="w-4 h-4" />
+                    <span className="text-xs font-bold uppercase tracking-widest">Dein Profil-Typ</span>
+                </div>
+                <h1 className="text-3xl sm:text-4xl font-black mb-4 tracking-tight">
+                    {results.archetype}
+                </h1>
+                
+                {/* Embedded Career Chips */}
+                {results.careers && results.careers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                        {results.careers.map((career, idx) => (
+                            <div key={idx} className="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-2">
+                                <Briefcase className="w-3 h-3" />
+                                {career}
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+      )}
+
       {/* Visual Grade Summary */}
       <div className="bg-white rounded-3xl shadow-lg border border-slate-100 p-6 flex flex-col md:flex-row gap-6 items-center">
          <div className="flex-1 w-full h-48 relative">
@@ -73,7 +111,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
       {/* Standard Recommendations */}
       <div className="space-y-4 pt-4 border-t border-slate-200/60">
         <div className="flex items-center justify-between px-2">
-             <h3 className="text-lg font-bold text-slate-700">Passende Hochschulen</h3>
+             <h3 className="text-lg font-bold text-slate-700">Passende Hochschulen & Wege</h3>
         </div>
         <div className="grid grid-cols-1 gap-4">
           {results.colleges.map((college, index) => (
