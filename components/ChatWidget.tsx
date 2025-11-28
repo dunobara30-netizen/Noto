@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Globe, ExternalLink, ShieldCheck, Lock } from 'lucide-react';
-import { ChatMessage, Source } from '../types';
+import { ChatMessage, Source, Language, TRANSLATIONS } from '../types';
 import { createChatSession } from '../services/geminiService';
 import { Chat, GenerateContentResponse } from '@google/genai';
 
@@ -9,21 +10,23 @@ interface ChatWidgetProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   isAdmin: boolean;
+  language: Language;
 }
 
-const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOpen, isAdmin }) => {
+const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOpen, isAdmin, language }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const t = TRANSLATIONS[language];
 
   // Initialize chat session whenever open state or admin status changes
   useEffect(() => {
     if (isOpen) {
         const initialGreeting = isAdmin 
-            ? "Ready."
-            : "Hallo! Ich bin Gem. Ich kann live im Internet nach Unis und NC-Werten für dich suchen. Was möchtest du wissen?";
+            ? t.chatGreetingAdmin
+            : t.chatGreeting;
 
         setMessages([
             { 
@@ -35,11 +38,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
         ]);
 
         chatSessionRef.current = createChatSession(
-            contextSummary || "Der Student hat noch keine Noten eingegeben.",
-            isAdmin
+            contextSummary || "User has not entered grades yet.",
+            isAdmin,
+            language
         );
     }
-  }, [isOpen, isAdmin, contextSummary]);
+  }, [isOpen, isAdmin, contextSummary, language]); // Added language dep
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -108,7 +112,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
       setMessages(prev => [...prev, {
         id: Date.now().toString(),
         role: 'model',
-        text: "Verbindungsproblem. Bitte versuche es erneut.",
+        text: "Connection error. Please try again.",
         timestamp: new Date()
       }]);
     } finally {
@@ -123,26 +127,30 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
     }
   };
 
-  // Helper to strip weird tags if admin
+  // Helper to strip weird tags if NOT admin. 
+  // If Admin, we allow text to pass through but clean up bolding artifacts if they appear to keep it clean.
   const formatText = (text: string) => {
-    if (!isAdmin) return text;
-    // Aggressively strip markdown syntax components
-    return text
-      .replace(/(\*\*|__)(.*?)\1/g, '$2') // Remove bold
-      .replace(/(\*|_)(.*?)\1/g, '$2')    // Remove italic
-      .replace(/`([^`]+)`/g, '$1')        // Remove code blocks
-      .replace(/[#*`]/g, '')              // Remove loose chars
-      .trim();
+    if (!isAdmin) {
+        return text
+        .replace(/(\*\*|__)(.*?)\1/g, '$2') // Remove bold
+        .replace(/(\*|_)(.*?)\1/g, '$2')    // Remove italic
+        .replace(/`([^`]+)`/g, '$1')        // Remove code blocks
+        .replace(/[#*`]/g, '')              // Remove loose chars
+        .trim();
+    }
+    
+    // For Admin: We keep the text raw but clean common markdown artifacts for better readability in the mono font
+    return text.replace(/\*\*/g, '').replace(/__/g, '');
   };
 
   // Theme configuration based on Admin status
   const theme = isAdmin ? {
-    header: 'bg-slate-900',
-    headerText: 'text-emerald-400',
-    userBubble: 'bg-slate-800 text-emerald-400 border border-emerald-900',
-    modelBubble: 'bg-black text-emerald-500 border border-slate-800 font-mono text-xs',
-    bg: 'bg-slate-950',
-    input: 'bg-slate-900 text-emerald-400 border-slate-800 placeholder-slate-600',
+    header: 'bg-slate-950',
+    headerText: 'text-emerald-500 font-mono tracking-widest',
+    userBubble: 'bg-slate-900 text-emerald-400 border border-emerald-900/50 font-mono',
+    modelBubble: 'bg-black text-emerald-500 border border-slate-800 font-mono text-sm whitespace-pre-wrap',
+    bg: 'bg-slate-900',
+    input: 'bg-slate-950 text-emerald-400 border-slate-800 placeholder-slate-700 font-mono',
     button: 'text-emerald-500 hover:bg-slate-800',
     fab: 'bg-slate-900 text-emerald-400 shadow-emerald-900/20'
   } : {
@@ -159,18 +167,18 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-['Inter']">
       {isOpen && (
-        <div className={`w-80 sm:w-96 h-[500px] rounded-2xl shadow-2xl border flex flex-col overflow-hidden mb-4 transition-all animate-in slide-in-from-bottom-10 duration-200 ${isAdmin ? 'border-slate-700' : 'border-slate-200'}`}>
+        <div className={`w-[calc(100vw-2rem)] sm:w-96 h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden mb-4 transition-all animate-in slide-in-from-bottom-10 duration-200 ${isAdmin ? 'border-slate-800' : 'border-slate-200'}`}>
           {/* Header */}
           <div className={`${theme.header} p-4 flex justify-between items-center transition-colors`}>
             <div className={`flex items-center gap-2 ${theme.headerText}`}>
-              <div className={`w-2 h-2 rounded-full animate-pulse ${isAdmin ? 'bg-emerald-500' : 'bg-green-400'}`}></div>
+              <div className={`w-2 h-2 rounded-full animate-pulse ${isAdmin ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-green-400'}`}></div>
               <div className="flex flex-col">
                  <span className="font-bold leading-tight flex items-center gap-2">
-                    {isAdmin ? <><ShieldCheck className="w-4 h-4" /> MAIN AI</> : 'Gemini Coach'}
+                    {isAdmin ? <><ShieldCheck className="w-4 h-4" /> ROOT_SHELL</> : 'Gemini Coach'}
                  </span>
-                 <span className={`text-[10px] flex items-center gap-1 ${isAdmin ? 'text-emerald-600/70' : 'text-violet-200'}`}>
+                 <span className={`text-[10px] flex items-center gap-1 ${isAdmin ? 'text-emerald-600/70 font-mono' : 'text-violet-200'}`}>
                     <Globe className="w-3 h-3" />
-                    Online Suche aktiv
+                    Online
                  </span>
               </div>
             </div>
@@ -187,7 +195,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
                 className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
               >
                 <div
-                  className={`max-w-[85%] p-3 rounded-2xl leading-relaxed ${
+                  className={`max-w-[90%] p-3 rounded-2xl leading-relaxed ${
                     msg.role === 'user' ? theme.userBubble : theme.modelBubble
                   }`}
                 >
@@ -218,14 +226,14 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
           </div>
 
           {/* Input */}
-          <div className={`p-3 border-t ${isAdmin ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
+          <div className={`p-3 border-t ${isAdmin ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100'}`}>
             <div className="relative flex items-center">
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={isAdmin ? "CMD..." : "Frag nach Unis, NC-Werten..."}
+                placeholder={isAdmin ? t.chatPlaceholderAdmin : t.chatPlaceholder}
                 disabled={isLoading}
                 className={`w-full pl-4 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-sm ${theme.input} ${isAdmin ? 'focus:ring-emerald-500' : 'focus:ring-violet-500'}`}
               />
