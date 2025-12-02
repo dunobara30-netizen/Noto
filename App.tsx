@@ -48,36 +48,6 @@ const App: React.FC = () => {
 
   const t = TRANSLATIONS[language];
 
-  // Auto-translate common subjects when language changes
-  useEffect(() => {
-    const translateMapDeToEn: Record<string, string> = {
-        'Mathematik': 'Math',
-        'Deutsch': 'German',
-        'Englisch': 'English',
-        'Biologie': 'Biology',
-        'Geschichte': 'History'
-    };
-    const translateMapEnToDe: Record<string, string> = {
-        'Math': 'Mathematik',
-        'German': 'Deutsch',
-        'English': 'Englisch',
-        'Biology': 'Biologie',
-        'History': 'Geschichte'
-    };
-
-    if (language === 'en') {
-        setCurrentCourses(prev => prev.map(c => ({
-            ...c,
-            name: translateMapDeToEn[c.name] || c.name
-        })));
-    } else {
-        setCurrentCourses(prev => prev.map(c => ({
-            ...c,
-            name: translateMapEnToDe[c.name] || c.name
-        })));
-    }
-  }, [language]);
-
   // Handle PWA Install Prompt & QR Init
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -161,7 +131,75 @@ const App: React.FC = () => {
   };
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'de' ? 'en' : 'de');
+    const newLang = language === 'de' ? 'en' : 'de';
+    setLanguage(newLang);
+
+    // INTELLIGENT MAPPING: Subjects, Grades, and Level
+    
+    // 1. Map Subject Names
+    const translateMapDeToEn: Record<string, string> = {
+        'Mathematik': 'Math',
+        'Deutsch': 'German',
+        'Englisch': 'English',
+        'Biologie': 'Biology',
+        'Geschichte': 'History'
+    };
+    const translateMapEnToDe: Record<string, string> = {
+        'Math': 'Mathematik',
+        'German': 'Deutsch',
+        'English': 'Englisch',
+        'Biology': 'Biologie',
+        'History': 'Geschichte'
+    };
+
+    // 2. Map Grades (Heuristic)
+    const mapGrade = (grade: string, toEn: boolean): string => {
+        if (toEn) {
+            // DE -> UK
+            if (['1+', '1', '1-'].includes(grade)) return '9';
+            if (['2+', '2', '2-'].includes(grade)) return '7';
+            if (['3+', '3', '3-'].includes(grade)) return '5';
+            if (['4+', '4', '4-'].includes(grade)) return '4';
+            if (['5+', '5', '5-'].includes(grade)) return '2';
+            if (grade === '6') return 'U';
+            return '5'; // default
+        } else {
+            // UK -> DE
+            if (['9', '9+', '9-'].includes(grade)) return '1';
+            if (['8', '8+', '8'].includes(grade)) return '1-';
+            if (['7', '7+', '7'].includes(grade)) return '2';
+            if (['6', '6+', '6'].includes(grade)) return '2-';
+            if (['5', '5+', '5'].includes(grade)) return '3';
+            if (['4', '4+', '4'].includes(grade)) return '4';
+            if (['3', '2', '1'].includes(grade)) return '5';
+            if (grade === 'U') return '6';
+            return '3'; // default
+        }
+    };
+
+    setCurrentCourses(prev => prev.map(c => ({
+        ...c,
+        name: newLang === 'en' 
+            ? (translateMapDeToEn[c.name] || c.name) 
+            : (translateMapEnToDe[c.name] || c.name),
+        grade: mapGrade(c.grade, newLang === 'en')
+    })));
+
+    // 3. Map Grade Level (Rough Approximation)
+    // If switching systems, try to keep the "age" equivalent
+    if (newLang === 'en') {
+        // DE -> UK
+        if (currentGradeLevel.includes('10')) setCurrentGradeLevel(GradeLevel.Y11);
+        else if (currentGradeLevel.includes('Q')) setCurrentGradeLevel(GradeLevel.Y13);
+        else if (currentGradeLevel.includes('5')) setCurrentGradeLevel(GradeLevel.Y7);
+        else setCurrentGradeLevel(GradeLevel.Y10);
+    } else {
+        // UK -> DE
+        if (currentGradeLevel.includes('11')) setCurrentGradeLevel(GradeLevel.Ten);
+        else if (currentGradeLevel.includes('13') || currentGradeLevel.includes('12')) setCurrentGradeLevel(GradeLevel.Q1);
+        else if (currentGradeLevel.includes('7')) setCurrentGradeLevel(GradeLevel.Five);
+        else setCurrentGradeLevel(GradeLevel.Ten);
+    }
   };
 
   const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -184,9 +222,12 @@ const App: React.FC = () => {
             <div className={`p-2 sm:p-2.5 rounded-xl shadow-lg transition-transform duration-300 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 border border-emerald-500/30' : 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-violet-500/20'}`}>
               <GraduationCap className={`w-5 h-5 sm:w-6 sm:h-6 ${isAdmin ? 'text-emerald-500' : 'text-white'}`} />
             </div>
-            <h1 className={`text-lg sm:text-2xl font-black tracking-tight hidden sm:block ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600'}`}>
-              {isAdmin ? 'SYSTEM_OVERRIDE' : 'GradePath'}
-            </h1>
+            <div className="hidden sm:flex flex-col justify-center">
+              <h1 className={`text-lg sm:text-2xl font-black tracking-tight ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600'}`}>
+                {isAdmin ? 'SYSTEM_OVERRIDE' : 'GradePath'}
+              </h1>
+              {!isAdmin && <span className="text-[10px] font-bold text-slate-400 tracking-wider leading-none">by Azez</span>}
+            </div>
           </div>
 
           {/* Navigation Tabs */}

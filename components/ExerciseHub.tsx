@@ -1,8 +1,9 @@
 
+
 import React, { useState } from 'react';
 import { generatePracticeQuestion } from '../services/geminiService';
-import { GradeLevel, Exercise, Language, TRANSLATIONS } from '../types';
-import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon } from 'lucide-react';
+import { GradeLevel, Exercise, Language, TRANSLATIONS, Difficulty } from '../types';
+import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon, Gauge } from 'lucide-react';
 
 interface ExerciseHubProps {
   gradeLevel: GradeLevel;
@@ -22,6 +23,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   const [viewState, setViewState] = useState<'selection' | 'config' | 'exercise'>('selection');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
   const [customTopic, setCustomTopic] = useState('');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(false);
@@ -36,6 +38,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
     setSelectedSubject(subjectId);
     setViewState('config');
     setCustomTopic(''); // Reset topic
+    setDifficulty('medium'); // Reset difficulty
   };
 
   const startExercise = async () => {
@@ -63,7 +66,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
         : selectedSubject;
 
       const data = await Promise.race([
-          generatePracticeQuestion(apiSubject, gradeLevel, customTopic, language),
+          generatePracticeQuestion(apiSubject, gradeLevel, customTopic, language, difficulty),
           timeoutPromise
       ]) as Exercise;
 
@@ -107,7 +110,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   // VIEW: SELECTION
   if (viewState === 'selection') {
     return (
-      <div className="animate-in slide-in-from-bottom-4 duration-500 h-full flex flex-col p-4 sm:p-6">
+      <div className="animate-in slide-in-from-bottom-4 duration-500 h-full flex flex-col p-4 sm:p-6 transition-all">
         <div className="mb-6 text-center space-y-2 mt-2 sm:mt-6">
             <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 flex items-center justify-center gap-2">
                 <BrainCircuit className="w-7 h-7 sm:w-8 sm:h-8 text-violet-500" />
@@ -156,7 +159,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
       const subjectName = (t as any)[subStyle?.translationKey || ''] || selectedSubject;
       
       return (
-        <div className="h-full flex flex-col animate-in zoom-in-95 duration-300 relative p-4 sm:p-6 items-center justify-center text-center">
+        <div className="h-full flex flex-col animate-in zoom-in-95 duration-300 relative p-4 sm:p-6 items-center justify-center text-center transition-all">
             <button 
                 onClick={goBack}
                 className="absolute top-4 left-4 text-slate-400 hover:text-slate-600 font-bold text-xs flex items-center gap-1 p-2 rounded-xl hover:bg-slate-100 transition-colors z-10"
@@ -171,11 +174,13 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             <h2 className="text-2xl sm:text-3xl font-black text-slate-800 mb-2">
                 {subjectName} {t.trainingFor}
             </h2>
-            <p className="text-slate-500 mb-8 max-w-xs text-sm sm:text-base">
+            <p className="text-slate-500 mb-6 max-w-xs text-sm sm:text-base">
                 {t.whatTopic}
             </p>
 
             <div className="w-full max-w-sm space-y-4">
+                
+                {/* Topic Input */}
                 <div className="relative group">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Pencil className="h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
@@ -190,9 +195,32 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                     />
                 </div>
                 
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                    {customTopic ? t.specificTopic : t.randomTopic}
-                </p>
+                {/* Difficulty Selector */}
+                <div className="bg-slate-50 p-1.5 rounded-2xl flex items-center justify-between gap-1 border border-slate-100">
+                    {(['easy', 'medium', 'hard'] as Difficulty[]).map((level) => (
+                        <button
+                            key={level}
+                            onClick={() => setDifficulty(level)}
+                            className={`flex-1 py-2 px-3 rounded-xl text-sm font-bold transition-all duration-300 ${
+                                difficulty === level 
+                                    ? (level === 'easy' ? 'bg-green-100 text-green-700 shadow-sm' : level === 'medium' ? 'bg-amber-100 text-amber-700 shadow-sm' : 'bg-rose-100 text-rose-700 shadow-sm')
+                                    : 'text-slate-400 hover:text-slate-600 hover:bg-white/50'
+                            }`}
+                        >
+                            {(t as any)[level]}
+                        </button>
+                    ))}
+                </div>
+
+                <div className="flex items-center justify-center gap-2 mb-2">
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                         {t.difficulty}: <span className={`${difficulty === 'easy' ? 'text-green-500' : difficulty === 'medium' ? 'text-amber-500' : 'text-rose-500'}`}>{(t as any)[difficulty]}</span>
+                    </span>
+                    <span className="text-slate-300 text-[10px]">•</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                        {customTopic ? t.specificTopic : t.randomTopic}
+                    </span>
+                </div>
 
                 <button
                     onClick={startExercise}
@@ -208,7 +236,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
 
   // VIEW: EXERCISE (Loading & Question)
   return (
-    <div className="h-full flex flex-col animate-in fade-in duration-300 relative">
+    <div className="h-full flex flex-col animate-in fade-in duration-300 relative transition-all">
       <button 
         onClick={goBack}
         className="absolute top-2 sm:top-4 left-2 sm:left-4 text-slate-400 hover:text-slate-600 font-bold text-xs flex items-center gap-1 p-2 rounded-lg hover:bg-slate-100 transition-colors z-20"
@@ -225,8 +253,9 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             <h3 className="text-xl sm:text-2xl font-black text-slate-700 animate-pulse mb-2">
                 {t.creatingQuiz}
             </h3>
-            <div className="bg-white/50 px-4 py-2 rounded-xl border border-white/50 text-slate-500 font-medium text-sm">
-                {t.topic}: {customTopic || "Random"}
+            <div className="bg-white/50 px-4 py-2 rounded-xl border border-white/50 text-slate-500 font-medium text-sm flex items-center gap-2">
+                <Gauge className="w-4 h-4" />
+                <span>{(t as any)[difficulty]}</span>
             </div>
         </div>
       ) : exercise ? (
@@ -239,7 +268,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                     <span className="bg-gradient-to-r from-violet-100 to-fuchsia-100 text-violet-700 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white">
                         {exercise.topic}
                     </span>
-                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${exercise.difficulty === 'Leicht' ? 'text-green-600 bg-green-50 border-green-100' : exercise.difficulty === 'Mittel' ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-red-600 bg-red-50 border-red-100'}`}>
+                    <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${exercise.difficulty === 'Leicht' || exercise.difficulty === 'Easy' ? 'text-green-600 bg-green-50 border-green-100' : (exercise.difficulty === 'Mittel' || exercise.difficulty === 'Medium') ? 'text-amber-600 bg-amber-50 border-amber-100' : 'text-red-600 bg-red-50 border-red-100'}`}>
                         {exercise.difficulty}
                     </span>
                 </div>

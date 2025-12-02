@@ -70,7 +70,7 @@ export interface Exercise {
   options: string[];
   correctAnswer: string;
   explanation: string;
-  difficulty: 'Leicht' | 'Mittel' | 'Schwer';
+  difficulty: 'Leicht' | 'Mittel' | 'Schwer' | 'Easy' | 'Medium' | 'Hard';
 }
 
 export interface Source {
@@ -108,6 +108,7 @@ export const UK_GRADES: Record<string, number> = {
 };
 
 export type Language = 'de' | 'en';
+export type Difficulty = 'easy' | 'medium' | 'hard';
 
 // Helper to find the closest grade label
 export const getClosestGradeLabel = (average: number, language: Language): string => {
@@ -188,6 +189,11 @@ export const TRANSLATIONS = {
     back: "Zurück",
     quit: "Beenden",
     noImage: "Kein Bild verfügbar",
+    // Difficulty
+    difficulty: "Schwierigkeit",
+    easy: "Leicht",
+    medium: "Mittel",
+    hard: "Schwer",
     // Uni Lookup
     uniLookupHeader: "Wunsch-Uni Check",
     uniLookupPlaceholder: "Welche Uni/Schule interessiert dich?",
@@ -252,6 +258,11 @@ export const TRANSLATIONS = {
     back: "Back",
     quit: "Quit",
     noImage: "No image available",
+    // Difficulty
+    difficulty: "Difficulty",
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
     // Uni Lookup
     uniLookupHeader: "Specific Uni Check",
     uniLookupPlaceholder: "Which Uni/School are you interested in?",

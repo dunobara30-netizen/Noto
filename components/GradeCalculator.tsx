@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Course, GradeLevel, GERMAN_GRADES, UK_GRADES, GERMAN_LEVELS, UK_LEVELS, getClosestGradeLabel, Language, TRANSLATIONS } from '../types';
 import { Plus, Trash2, Sparkles, GraduationCap, Star } from 'lucide-react';
@@ -47,26 +46,6 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
     }
   }, [gradeLevel, isAdvancedLevel, courses, setCourses]);
 
-  // Handle System Switch (UK <-> German)
-  useEffect(() => {
-    const validGrades = Object.keys(gradeSystem);
-    
-    // Only reset grade level if the CURRENT one is invalid for the new system
-    // This prevents resetting if we are just rendering the first time or if already valid
-    if (!gradeLevels.includes(gradeLevel)) {
-        setGradeLevel(gradeLevels[0]);
-    }
-
-    // Only reset courses if they have invalid grades for the current system
-    const defaultGrade = isUK ? '5' : '3';
-    const needsReset = courses.some(c => !validGrades.includes(c.grade));
-    
-    if (needsReset) {
-       setCourses(courses.map(c => ({ ...c, grade: defaultGrade })));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [language, isUK, gradeLevels]); // Removed dependencies that trigger loops
-
 
   const calculateAverage = React.useCallback(() => {
     let totalScore = 0;
@@ -112,7 +91,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-violet-200/50 p-5 sm:p-8 border border-white/50 h-full flex flex-col transition-all duration-500 animate-in slide-in-from-left-4 hover:shadow-violet-300/50 relative overflow-hidden">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-violet-200/50 p-5 sm:p-8 border border-white/50 flex flex-col transition-all duration-500 animate-in slide-in-from-left-4 hover:shadow-violet-300/50 relative overflow-hidden h-full">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 shrink-0">
         <div>

@@ -35,14 +35,84 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
     }
   };
 
+  // Reusable Uni Lookup Component
+  const UniLookupSection = () => (
+      <div className="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-3xl border border-violet-100 p-5 sm:p-6 shadow-sm mb-6">
+        <div className="flex items-center gap-2 mb-4 text-violet-700">
+            <Building2 className="w-5 h-5" />
+            <h3 className="font-bold text-base sm:text-lg">{t.uniLookupHeader}</h3>
+        </div>
+        
+        <div className="flex gap-2 mb-4">
+            <div className="relative flex-1">
+                <input 
+                    type="text" 
+                    value={uniQuery}
+                    onChange={(e) => setUniQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleUniCheck()}
+                    placeholder={t.uniLookupPlaceholder}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-violet-400 bg-white text-slate-700"
+                />
+                <Search className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
+            </div>
+            <button 
+                onClick={handleUniCheck}
+                disabled={checkingUni || !uniQuery}
+                className="bg-violet-600 text-white px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-violet-200 hover:bg-violet-700 disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2"
+            >
+                {checkingUni ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpRight className="w-4 h-4" />}
+                <span className="hidden sm:inline">{t.checkAdmission}</span>
+            </button>
+        </div>
+
+        {/* Lookup Result */}
+        {uniResult && (
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-md animate-in slide-in-from-bottom-2">
+                <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-slate-800">{uniResult.uniName}</h4>
+                    <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
+                        uniResult.likelihood === 'High' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                        uniResult.likelihood === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                        'bg-rose-50 text-rose-600 border-rose-100'
+                    }`}>
+                        {uniResult.likelihood === 'High' ? (isUK ? 'Likely' : 'Gut möglich') : uniResult.likelihood === 'Medium' ? 'Competitive' : (isUK ? 'Unlikely' : 'Unwahrscheinlich')}
+                    </span>
+                </div>
+                
+                <div className="space-y-3 text-sm">
+                    <div className="flex gap-3">
+                        <div className="shrink-0 mt-0.5"><Target className="w-4 h-4 text-slate-400" /></div>
+                        <div>
+                            <span className="block font-bold text-slate-600 text-xs uppercase mb-1">{t.requirements}</span>
+                            <p className="text-slate-600 leading-relaxed">{uniResult.requirements}</p>
+                        </div>
+                    </div>
+                    <div className="flex gap-3">
+                        <div className="shrink-0 mt-0.5"><AlertCircle className="w-4 h-4 text-violet-400" /></div>
+                        <div>
+                            <span className="block font-bold text-slate-600 text-xs uppercase mb-1">{t.gapAnalysis}</span>
+                            <p className="text-slate-600 leading-relaxed">{uniResult.gapAnalysis}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+      </div>
+  );
+
   if (!results) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-slate-400 p-8 sm:p-12 text-center animate-in fade-in duration-700 min-h-[300px]">
-        <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 p-6 sm:p-8 rounded-full shadow-inner mb-6 animate-pulse">
-          <Target className="w-12 h-12 sm:w-16 sm:h-16 text-violet-400" />
+      <div className="h-full flex flex-col p-4 sm:p-6 pb-24 lg:pb-24 overflow-y-auto custom-scrollbar">
+        {/* Render Uni Lookup even in empty state */}
+        <UniLookupSection />
+        
+        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-center animate-in fade-in duration-700">
+            <div className="bg-gradient-to-br from-violet-100 to-fuchsia-100 p-6 sm:p-8 rounded-full shadow-inner mb-6 animate-pulse">
+                <Target className="w-12 h-12 sm:w-16 sm:h-16 text-violet-400" />
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-slate-700 mb-3">{t.readyToCheck}</h3>
+            <p className="max-w-sm text-slate-500 leading-relaxed text-sm sm:text-base">{t.readyDesc}</p>
         </div>
-        <h3 className="text-xl sm:text-2xl font-bold text-slate-700 mb-3">{t.readyToCheck}</h3>
-        <p className="max-w-sm text-slate-500 leading-relaxed text-sm sm:text-base">{t.readyDesc}</p>
       </div>
     );
   }
@@ -143,68 +213,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
          </div>
       </div>
       
-      {/* UNI LOOKUP TOOL - NEW */}
-      <div className="bg-gradient-to-r from-violet-50 to-indigo-50 rounded-3xl border border-violet-100 p-5 sm:p-6 shadow-sm">
-        <div className="flex items-center gap-2 mb-4 text-violet-700">
-            <Building2 className="w-5 h-5" />
-            <h3 className="font-bold text-base sm:text-lg">{t.uniLookupHeader}</h3>
-        </div>
-        
-        <div className="flex gap-2 mb-4">
-            <div className="relative flex-1">
-                <input 
-                    type="text" 
-                    value={uniQuery}
-                    onChange={(e) => setUniQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleUniCheck()}
-                    placeholder={t.uniLookupPlaceholder}
-                    className="w-full pl-10 pr-4 py-3 rounded-xl border-none shadow-sm focus:ring-2 focus:ring-violet-400 bg-white text-slate-700"
-                />
-                <Search className="absolute left-3 top-3.5 w-4 h-4 text-slate-400" />
-            </div>
-            <button 
-                onClick={handleUniCheck}
-                disabled={checkingUni || !uniQuery}
-                className="bg-violet-600 text-white px-4 sm:px-6 rounded-xl font-bold shadow-lg shadow-violet-200 hover:bg-violet-700 disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2"
-            >
-                {checkingUni ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUpRight className="w-4 h-4" />}
-                <span className="hidden sm:inline">{t.checkAdmission}</span>
-            </button>
-        </div>
-
-        {/* Lookup Result */}
-        {uniResult && (
-            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-100 shadow-md animate-in slide-in-from-bottom-2">
-                <div className="flex items-center justify-between mb-3">
-                    <h4 className="font-bold text-slate-800">{uniResult.uniName}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold border ${
-                        uniResult.likelihood === 'High' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                        uniResult.likelihood === 'Medium' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                        'bg-rose-50 text-rose-600 border-rose-100'
-                    }`}>
-                        {uniResult.likelihood === 'High' ? 'Gut möglich' : uniResult.likelihood === 'Medium' ? 'Knapp / Competitive' : 'Unwahrscheinlich'}
-                    </span>
-                </div>
-                
-                <div className="space-y-3 text-sm">
-                    <div className="flex gap-3">
-                        <div className="shrink-0 mt-0.5"><Target className="w-4 h-4 text-slate-400" /></div>
-                        <div>
-                            <span className="block font-bold text-slate-600 text-xs uppercase mb-1">{t.requirements}</span>
-                            <p className="text-slate-600 leading-relaxed">{uniResult.requirements}</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-3">
-                        <div className="shrink-0 mt-0.5"><AlertCircle className="w-4 h-4 text-violet-400" /></div>
-                        <div>
-                            <span className="block font-bold text-slate-600 text-xs uppercase mb-1">{t.gapAnalysis}</span>
-                            <p className="text-slate-600 leading-relaxed">{uniResult.gapAnalysis}</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        )}
-      </div>
+      {/* UNI LOOKUP TOOL */}
+      <UniLookupSection />
 
       {/* Standard Recommendations */}
       <div className="space-y-4 pt-2 sm:pt-4 border-t border-slate-200/60">

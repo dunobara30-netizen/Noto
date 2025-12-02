@@ -1,7 +1,5 @@
-
-
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Course, GradeLevel, AnalysisResult, Exercise, Language, UniversityCheckResult } from "../types";
+import { Course, GradeLevel, AnalysisResult, Exercise, Language, UniversityCheckResult, Difficulty } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -127,8 +125,8 @@ export const checkUniversityAdmission = async (
     const courseSummary = courses.map(c => `${c.name} (${c.grade})`).join(", ");
     
     const contextInstruction = isUK
-      ? "Context: UK University Admissions (UCAS, A-Levels/GCSEs). Grades 9-1."
-      : "Context: Deutsche Hochschulzulassung (NC, Abitur, Wartesemester). Grades 1-6.";
+      ? "Context: UK University Admissions (UCAS, A-Levels/GCSEs). Grades 9-1 (9 is best, 4 is pass)."
+      : "Context: Deutsche Hochschulzulassung (NC, Abitur, Wartesemester). Grades 1-6 (1 is best).";
   
     const prompt = `
       Task: Check admission chances for "${uniQuery}".
@@ -137,16 +135,16 @@ export const checkUniversityAdmission = async (
       
       Instructions:
       1. Use 'googleSearch' to find current entry requirements for "${uniQuery}".
-      2. Compare requirements with User Profile.
-      3. Provide a strict analysis.
+      2. Compare requirements with User Profile grades.
+      3. CRITICAL: Identify exactly what grades need to improve. If they have a 5 (UK) in Math but need a 7, say "You have 5, need 7".
       
       Output JSON strictly (no markdown):
       {
         "uniName": "Full Name of Uni/School",
         "likelihood": "High" | "Medium" | "Low",
-        "requirements": "Short summary of official requirements found online.",
-        "gapAnalysis": "Specific comparison. E.g. 'You have Math 3, they require 1.'",
-        "verdictText": "One sentence advice."
+        "requirements": "Short summary of requirements found (e.g. 'AAA at A-Level including Math').",
+        "gapAnalysis": "Specific list of what grades to enter/improve. E.g. 'Your Math grade (5) is too low for this course, aim for 7.'",
+        "verdictText": "One sentence actionable advice."
       }
     `;
   
@@ -169,49 +167,75 @@ export const checkUniversityAdmission = async (
     }
   };
 
+// Random sub-concepts to force variety
+const getRandomConcept = (subject: string): string => {
+  const concepts: Record<string, string[]> = {
+    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics'],
+    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra'],
+    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices'],
+    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel'],
+    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms'],
+    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen'],
+    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis'],
+    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese'],
+    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages'],
+    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter']
+  };
+
+  // Find key that matches loosely
+  const key = Object.keys(concepts).find(k => k.toLowerCase() === subject.toLowerCase()) || 'Math';
+  const list = concepts[key] || concepts['Math'];
+  return list[Math.floor(Math.random() * list.length)];
+};
+
 export const generatePracticeQuestion = async (
     subject: string, 
     gradeLevel: string,
     specificTopic: string | undefined,
-    language: Language
+    language: Language,
+    difficulty: Difficulty
   ): Promise<Exercise> => {
-    // Inject randomness to prevent caching and repetition
-    const randomSeed = Math.floor(Math.random() * 1000000);
     
+    // 1. Force a random sub-concept if no specific topic is provided to prevent repetition
+    const randomSubConcept = !specificTopic ? getRandomConcept(subject) : '';
+    const randomSeed = Math.floor(Math.random() * 1000000); // Technical seed
+    
+    // 2. Build the Topic Prompt
     const topicPrompt = specificTopic 
       ? `Focus SPECIFICALLY on the topic: "${specificTopic}".` 
-      : `Choose a RANDOM, DISTINCT topic from the curriculum. Do NOT use the same topic as usual (e.g. if Math, don't just do Algebra, try Geometry or Stochastics).`;
+      : `Focus on the specific sub-topic: "${randomSubConcept}". Do NOT create a generic question.`;
 
     const isUK = language === 'en';
     const contextInstruction = isUK
       ? "Context: UK National Curriculum. Language: English."
       : "Context: Deutscher Lehrplan. Language: German.";
 
-    // NOTE: When using googleSearch, we CANNOT use responseSchema/responseMimeType.
-    // We must prompt for JSON text manually.
+    // 3. Prompt Engineering for Clarity and Variety
     const prompt = `
-      Task: Create a UNIQUE practice question for ${subject} at level ${gradeLevel}.
+      Task: Create a UNIQUE, HIGH-QUALITY practice question for ${subject} at level ${gradeLevel}.
+      Difficulty Level: ${difficulty.toUpperCase()} (Adjust complexity relative to grade level).
       Target Language: ${isUK ? 'English' : 'German'} (Ensure content and response are in this language).
       ${contextInstruction}
       ${topicPrompt}
       
       Instructions:
-      1. Use the 'googleSearch' tool to find a real, high-quality exam question or a unique example from the web to ensure variety.
-      2. Ensure the difficulty matches the grade level exactly.
-      3. Random Seed: ${randomSeed} (This is a unique request, do not return cached data).
+      1. Use 'googleSearch' to find fresh data or real-world examples if needed.
+      2. **CLARITY**: Write the question in simple, understandable student language. Avoid overly academic phrasing unless it is an advanced term being tested.
+      3. **VARIETY**: Do NOT use the standard textbook example. Be creative.
+      4. Random Seed: ${randomSeed} (Ensure this is different from previous requests).
       
       Output Requirements:
       Return strictly a valid JSON object with this structure (no markdown code blocks, just raw JSON):
       {
         "subject": "string",
-        "topic": "string",
-        "question": "string",
+        "topic": "${specificTopic || randomSubConcept}",
+        "question": "string (The question text)",
         "imageUrl": "string (Optional: Valid HTTPS URL to a public domain image from Wikimedia/etc. for visual topics like Geometry/Bio/Art. Leave empty string if none)",
-        "hint": "string (A helpful hint)",
+        "hint": "string (A helpful hint that doesn't give away the answer)",
         "options": ["string", "string", "string", "string"],
         "correctAnswer": "string (Must be one of the options)",
-        "explanation": "string",
-        "difficulty": "Leicht" | "Mittel" | "Schwer"
+        "explanation": "string (Simple explanation of why the answer is correct)",
+        "difficulty": "${isUK ? 'Easy' : 'Leicht'}" | "${isUK ? 'Medium' : 'Mittel'}" | "${isUK ? 'Hard' : 'Schwer'}"
       }
     `;
   
@@ -220,10 +244,8 @@ export const generatePracticeQuestion = async (
         model: "gemini-2.5-flash",
         contents: prompt,
         config: {
-          // Enable Google Search to find fresh questions
           tools: [{ googleSearch: {} }],
-          // DO NOT use responseSchema with googleSearch tools
-          temperature: 1.1, // High creativity/randomness
+          temperature: 1.2, // Increased temperature for less deterministic/repetitive results
         }
       });
   
@@ -232,7 +254,6 @@ export const generatePracticeQuestion = async (
       
       const parsed = JSON.parse(cleanJson(text));
       
-      // Basic validation
       if (!parsed.options || !parsed.correctAnswer) {
           throw new Error("Invalid question format generated.");
       }
@@ -241,7 +262,6 @@ export const generatePracticeQuestion = async (
 
     } catch (error) {
       console.error("Exercise Gen Error:", error);
-      // Fallback if search/parse fails
       throw new Error("Could not generate question. Please try again.");
     }
   };
