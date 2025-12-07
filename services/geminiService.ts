@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, Schema } from "@google/genai";
 import { Course, GradeLevel, AnalysisResult, Exercise, Language, UniversityCheckResult, Difficulty } from "../types";
 
@@ -170,16 +171,16 @@ export const checkUniversityAdmission = async (
 // Random sub-concepts to force variety
 const getRandomConcept = (subject: string): string => {
   const concepts: Record<string, string[]> = {
-    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics'],
-    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra'],
-    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices'],
-    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel'],
-    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms'],
-    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen'],
-    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis'],
-    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese'],
-    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages'],
-    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter']
+    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics', 'Logic Puzzles'],
+    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra', 'Logikrätsel'],
+    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices', 'Definitionen'],
+    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel', 'Definitionen'],
+    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms', 'Translations'],
+    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen', 'Übersetzung'],
+    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis', 'Terminology'],
+    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese', 'Fachbegriffe'],
+    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages', 'Dates & Events'],
+    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter', 'Daten & Fakten']
   };
 
   // Find key that matches loosely
@@ -193,7 +194,8 @@ export const generatePracticeQuestion = async (
     gradeLevel: string,
     specificTopic: string | undefined,
     language: Language,
-    difficulty: Difficulty
+    difficulty: Difficulty,
+    retryCount = 0
   ): Promise<Exercise> => {
     
     // 1. Force a random sub-concept if no specific topic is provided to prevent repetition
@@ -212,7 +214,7 @@ export const generatePracticeQuestion = async (
 
     // 3. Prompt Engineering for Clarity and Variety
     const prompt = `
-      Task: Create a UNIQUE, HIGH-QUALITY practice question for ${subject} at level ${gradeLevel}.
+      Task: Create a UNIQUE, HIGH-QUALITY practice exercise for ${subject} at level ${gradeLevel}.
       Difficulty Level: ${difficulty.toUpperCase()} (Adjust complexity relative to grade level).
       Target Language: ${isUK ? 'English' : 'German'} (Ensure content and response are in this language).
       ${contextInstruction}
@@ -220,20 +222,26 @@ export const generatePracticeQuestion = async (
       
       Instructions:
       1. Use 'googleSearch' to find fresh data or real-world examples if needed.
-      2. **CLARITY**: Write the question in simple, understandable student language. Avoid overly academic phrasing unless it is an advanced term being tested.
-      3. **VARIETY**: Do NOT use the standard textbook example. Be creative.
-      4. Random Seed: ${randomSeed} (Ensure this is different from previous requests).
+      2. **CLARITY**: Write the question in simple, understandable student language.
+      3. **VARIETY**: Randomly choose ONE of these types: 
+         - "multiple-choice" (Standard)
+         - "true-false" (Binary choice)
+         - "fill-blank" (User must type the missing word)
+         - "flashcard" (Front is term/question, Back is definition/answer)
+      
+      4. Random Seed: ${randomSeed}.
       
       Output Requirements:
       Return strictly a valid JSON object with this structure (no markdown code blocks, just raw JSON):
       {
+        "type": "multiple-choice" | "true-false" | "fill-blank" | "flashcard",
         "subject": "string",
         "topic": "${specificTopic || randomSubConcept}",
-        "question": "string (The question text)",
+        "question": "string (The question text OR the front of the flashcard OR the sentence with a ____ for fill-blank)",
         "imageUrl": "string (Optional: Valid HTTPS URL to a public domain image from Wikimedia/etc. for visual topics like Geometry/Bio/Art. Leave empty string if none)",
         "hint": "string (A helpful hint that doesn't give away the answer)",
-        "options": ["string", "string", "string", "string"],
-        "correctAnswer": "string (Must be one of the options)",
+        "options": ["string", "string", "string", "string"] (Only for multiple-choice, otherwise null/empty),
+        "correctAnswer": "string (CRITICAL: For 'true-false' use exactly 'True' or 'False' (or 'Wahr'/'Falsch'). For 'fill-blank' use the missing word. For 'flashcard' use the answer)",
         "explanation": "string (Simple explanation of why the answer is correct)",
         "difficulty": "${isUK ? 'Easy' : 'Leicht'}" | "${isUK ? 'Medium' : 'Mittel'}" | "${isUK ? 'Hard' : 'Schwer'}"
       }
@@ -252,16 +260,26 @@ export const generatePracticeQuestion = async (
       const text = response.text;
       if (!text) throw new Error("No response received.");
       
-      const parsed = JSON.parse(cleanJson(text));
+      const parsed = JSON.parse(cleanJson(text)) as Exercise;
       
-      if (!parsed.options || !parsed.correctAnswer) {
-          throw new Error("Invalid question format generated.");
+      // Validation Check
+      if (!parsed.correctAnswer || !parsed.question || !parsed.type) {
+          throw new Error("Invalid question format: missing critical fields.");
+      }
+      if (parsed.type === 'multiple-choice' && (!parsed.options || parsed.options.length < 2)) {
+          throw new Error("Invalid multiple choice: missing options.");
       }
       
-      return parsed as Exercise;
+      return parsed;
 
     } catch (error) {
-      console.error("Exercise Gen Error:", error);
+      console.error(`Exercise Gen Error (Attempt ${retryCount + 1}):`, error);
+      
+      // Retry logic (max 3 attempts)
+      if (retryCount < 2) {
+          return generatePracticeQuestion(subject, gradeLevel, specificTopic, language, difficulty, retryCount + 1);
+      }
+      
       throw new Error("Could not generate question. Please try again.");
     }
   };

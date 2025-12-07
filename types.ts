@@ -1,5 +1,4 @@
 
-
 export interface Course {
   id: string;
   name: string;
@@ -61,14 +60,17 @@ export interface AnalysisResult {
   careers: string[];
 }
 
+export type ExerciseType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'flashcard';
+
 export interface Exercise {
+  type: ExerciseType;
   subject: string;
   topic: string;
-  question: string;
+  question: string; // Front of card for flashcard
   imageUrl?: string;
   hint: string;
-  options: string[];
-  correctAnswer: string;
+  options?: string[]; // Only for MC
+  correctAnswer: string; // Back of card for flashcard
   explanation: string;
   difficulty: 'Leicht' | 'Mittel' | 'Schwer' | 'Easy' | 'Medium' | 'Hard';
 }
@@ -208,6 +210,13 @@ export const TRANSLATIONS = {
     English: "Englisch",
     Biology: "Biologie",
     History: "Geschichte",
+    // Exercise Types
+    true: "Wahr",
+    false: "Falsch",
+    fillPlaceholder: "Deine Antwort eingeben...",
+    revealCard: "Karte umdrehen",
+    gotIt: "Gewusst",
+    forgotIt: "Vergessen",
   },
   en: {
     navCheck: "Check",
@@ -277,5 +286,12 @@ export const TRANSLATIONS = {
     English: "English",
     Biology: "Biology",
     History: "History",
+    // Exercise Types
+    true: "True",
+    false: "False",
+    fillPlaceholder: "Type your answer...",
+    revealCard: "Flip Card",
+    gotIt: "Got it",
+    forgotIt: "Forgot it",
   }
 };

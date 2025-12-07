@@ -1,9 +1,8 @@
 
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { generatePracticeQuestion } from '../services/geminiService';
 import { GradeLevel, Exercise, Language, TRANSLATIONS, Difficulty } from '../types';
-import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon, Gauge } from 'lucide-react';
+import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon, Gauge, RotateCcw } from 'lucide-react';
 
 interface ExerciseHubProps {
   gradeLevel: GradeLevel;
@@ -27,11 +26,16 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(false);
+  
+  // Interaction State
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [fillInput, setFillInput] = useState('');
+  const [isFlipped, setIsFlipped] = useState(false); // For Flashcards
+  
   const [showResult, setShowResult] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [imageError, setImageError] = useState(false);
-
+  
   const t = TRANSLATIONS[language];
 
   const handleSubjectSelect = (subjectId: string) => {
@@ -47,19 +51,18 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
     setViewState('exercise');
     setExercise(null);
     setSelectedAnswer(null);
+    setFillInput('');
+    setIsFlipped(false);
     setShowResult(false);
     setShowHint(false);
     setImageError(false);
     setLoading(true);
 
     try {
-      // Add timeout race condition to prevent infinite loading
       const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("Timeout")), 15000)
+        setTimeout(() => reject(new Error("Timeout")), 20000)
       );
       
-      // Determine the correctly translated subject name for the API
-      // If language is English, send 'Math' instead of 'Mathematik'
       const subStyle = getSubjectStyle(selectedSubject);
       const apiSubject = language === 'en' 
         ? (TRANSLATIONS.en as any)[subStyle?.translationKey || ''] || selectedSubject
@@ -73,7 +76,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
       setExercise(data);
     } catch (error) {
       console.error(error);
-      alert(language === 'en' ? "Failed to generate a valid question. Please try again." : "Konnte keine Frage generieren. Bitte versuche es erneut.");
+      alert(language === 'en' ? "Could not generate a valid question. Please try again." : "Konnte keine Frage generieren. Bitte versuche es erneut.");
       setViewState('selection');
       setSelectedSubject(null);
     } finally {
@@ -87,7 +90,17 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   };
 
   const checkAnswer = () => {
-    if (selectedAnswer) setShowResult(true);
+    if (exercise?.type === 'fill-blank') {
+         if (!fillInput.trim()) return;
+         setSelectedAnswer(fillInput.trim()); // Store user input as selected
+    }
+    
+    // For flashcards, "checking" means revealing the answer
+    if (exercise?.type === 'flashcard') {
+        setIsFlipped(true);
+    }
+
+    setShowResult(true);
   };
 
   const nextQuestion = () => {
@@ -106,6 +119,181 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   };
 
   const getSubjectStyle = (id: string) => subjects.find(s => s.id === id);
+
+  // Normalize comparisons for logic (Case insensitive)
+  const isCorrect = () => {
+      if (!exercise) return false;
+      const cleanAnswer = exercise.correctAnswer.trim().toLowerCase();
+      
+      if (exercise.type === 'fill-blank') {
+          return fillInput.trim().toLowerCase() === cleanAnswer;
+      }
+      
+      if (exercise.type === 'true-false') {
+          // Map "Wahr" -> "true", "True" -> "true", "False" -> "false", "Falsch" -> "false"
+          const mapBool = (val: string | null) => {
+              if (!val) return '';
+              const v = val.toLowerCase();
+              if (v === 'wahr' || v === 'true') return 'true';
+              if (v === 'falsch' || v === 'false') return 'false';
+              return v;
+          };
+          return mapBool(selectedAnswer) === mapBool(exercise.correctAnswer);
+      }
+      
+      return selectedAnswer === exercise.correctAnswer;
+  };
+
+  // RENDER HELPERS
+  const renderExerciseContent = () => {
+    if (!exercise) return null;
+
+    switch (exercise.type) {
+        case 'multiple-choice':
+            return (
+                <div className="space-y-3 mb-6">
+                    {exercise.options?.map((option, idx) => {
+                        let btnClass = "bg-white border-2 border-slate-100 text-slate-600 hover:border-violet-200 hover:bg-violet-50/50 hover:text-violet-700";
+                        if (selectedAnswer === option) {
+                            btnClass = "bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200 transform scale-[1.02]";
+                        }
+                        if (showResult) {
+                            if (option === exercise.correctAnswer) {
+                                btnClass = "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100";
+                            } else if (option === selectedAnswer && selectedAnswer !== exercise.correctAnswer) {
+                                btnClass = "bg-rose-500 border-rose-500 text-white opacity-50";
+                            } else {
+                                btnClass = "bg-slate-50 border-slate-100 text-slate-300 opacity-50";
+                            }
+                        }
+
+                        return (
+                            <button
+                                key={idx}
+                                onClick={() => handleAnswerClick(option)}
+                                disabled={showResult}
+                                className={`w-full p-4 sm:p-5 rounded-2xl text-left font-bold transition-all duration-200 flex items-center justify-between group ${btnClass}`}
+                            >
+                                <span className="text-base sm:text-lg">{option}</span>
+                                {showResult && option === exercise.correctAnswer && <Check className="w-5 h-5 sm:w-6 sm:h-6" />}
+                                {showResult && option === selectedAnswer && option !== exercise.correctAnswer && <XIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+        
+        case 'true-false':
+            return (
+                <div className="flex gap-4 mb-6">
+                    {['True', 'False'].map((option) => {
+                        const localizedOption = language === 'de' 
+                            ? (option === 'True' ? 'Wahr' : 'Falsch') 
+                            : option;
+                        
+                        const isSelected = selectedAnswer === localizedOption;
+                        let btnClass = "bg-white border-2 border-slate-100 text-slate-600 hover:border-violet-200";
+
+                        if (isSelected) btnClass = "bg-violet-600 border-violet-600 text-white";
+                        
+                        if (showResult) {
+                            // Robust comparison
+                            const mapBool = (val: string) => {
+                                const v = val.toLowerCase();
+                                return (v === 'wahr' || v === 'true');
+                            };
+                            
+                            const isOptionCorrect = mapBool(localizedOption) === mapBool(exercise.correctAnswer);
+                            
+                            if (isOptionCorrect) {
+                                btnClass = "bg-emerald-500 border-emerald-500 text-white ring-4 ring-emerald-100";
+                            } else if (isSelected && !isOptionCorrect) {
+                                btnClass = "bg-rose-500 border-rose-500 text-white opacity-50";
+                            } else {
+                                btnClass = "bg-slate-50 border-slate-100 text-slate-300 opacity-50";
+                            }
+                        }
+
+                        return (
+                            <button
+                                key={option}
+                                onClick={() => handleAnswerClick(localizedOption)}
+                                disabled={showResult}
+                                className={`flex-1 p-6 rounded-2xl font-black text-xl transition-all ${btnClass}`}
+                            >
+                                {localizedOption}
+                            </button>
+                        );
+                    })}
+                </div>
+            );
+
+        case 'fill-blank':
+            return (
+                <div className="mb-6">
+                     <div className="relative">
+                        <input 
+                            type="text" 
+                            value={fillInput}
+                            onChange={(e) => setFillInput(e.target.value)}
+                            disabled={showResult}
+                            placeholder={t.fillPlaceholder}
+                            className={`w-full p-4 sm:p-5 rounded-2xl text-lg font-bold border-2 outline-none transition-all ${
+                                showResult 
+                                    ? (isCorrect()
+                                        ? 'border-emerald-500 bg-emerald-50 text-emerald-700' 
+                                        : 'border-rose-500 bg-rose-50 text-rose-700')
+                                    : 'border-slate-200 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 text-slate-700'
+                            }`}
+                        />
+                        {showResult && (
+                             <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                                {isCorrect()
+                                    ? <Check className="w-6 h-6 text-emerald-500" />
+                                    : <XIcon className="w-6 h-6 text-rose-500" />
+                                }
+                             </div>
+                        )}
+                     </div>
+                     {showResult && !isCorrect() && (
+                         <div className="mt-2 text-sm font-bold text-slate-500">
+                             Correct: <span className="text-emerald-600">{exercise.correctAnswer}</span>
+                         </div>
+                     )}
+                </div>
+            );
+
+        case 'flashcard':
+            return (
+                <div className="mb-6 perspective-1000">
+                    <div 
+                        onClick={() => !showResult && setIsFlipped(!isFlipped)} 
+                        className={`relative w-full h-64 transition-all duration-700 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
+                        style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                    >
+                        {/* Front */}
+                        <div className="absolute inset-0 backface-hidden bg-white border-2 border-slate-100 rounded-3xl shadow-lg flex flex-col items-center justify-center p-6 text-center">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Question / Term</span>
+                            <h3 className="text-xl sm:text-2xl font-black text-slate-800">{exercise.question}</h3>
+                            <span className="absolute bottom-4 text-xs font-bold text-violet-500 flex items-center gap-1">
+                                <RotateCcw className="w-3 h-3" /> {t.revealCard}
+                            </span>
+                        </div>
+
+                        {/* Back */}
+                        <div className="absolute inset-0 backface-hidden bg-violet-600 text-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 text-center" style={{ transform: 'rotateY(180deg)' }}>
+                            <span className="text-xs font-bold text-violet-200 uppercase tracking-widest mb-4">Answer</span>
+                            <h3 className="text-xl sm:text-2xl font-black">{exercise.correctAnswer}</h3>
+                        </div>
+                    </div>
+                </div>
+            );
+            
+        default:
+            return null;
+    }
+  };
+
 
   // VIEW: SELECTION
   if (viewState === 'selection') {
@@ -274,7 +462,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                 </div>
 
                 {/* Optional Image */}
-                {exercise.imageUrl && !imageError && (
+                {exercise.imageUrl && !imageError && exercise.type !== 'flashcard' && (
                     <div className="mb-6 rounded-2xl overflow-hidden shadow-md border border-slate-100 max-h-40 sm:max-h-48 relative bg-slate-50">
                         <img 
                             src={exercise.imageUrl} 
@@ -286,19 +474,14 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                     </div>
                 )}
                 
-                {/* Image Placeholder if Error or No Image provided by AI but topic is visual */}
-                {(!exercise.imageUrl || imageError) && ['Geometrie', 'Kunst', 'Biologie', 'Geometry', 'Art', 'Biology'].some(k => exercise.topic.includes(k) || exercise.subject.includes(k)) && (
-                     <div className="mb-6 h-20 sm:h-24 rounded-2xl bg-slate-50 border border-dashed border-slate-200 flex items-center justify-center text-slate-300 gap-2">
-                        <ImageIcon className="w-5 h-5" />
-                        <span className="text-xs font-bold">{t.noImage}</span>
-                    </div>
+                {/* Standard Question Text (Except for Flashcards which have unique layout) */}
+                {exercise.type !== 'flashcard' && (
+                    <h3 className="text-lg sm:text-2xl font-bold text-slate-800 leading-snug mb-2">
+                        {exercise.question}
+                    </h3>
                 )}
-
-                <h3 className="text-lg sm:text-2xl font-bold text-slate-800 leading-snug mb-2">
-                    {exercise.question}
-                </h3>
                 
-                {/* Hint Button */}
+                {/* Hint Button (Not for flashcards usually, or maybe yes?) */}
                 <button 
                     onClick={() => setShowHint(!showHint)}
                     className="flex items-center gap-1.5 text-xs font-bold text-amber-500 hover:text-amber-600 transition-colors mt-2"
@@ -315,49 +498,36 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                 )}
             </div>
 
-            {/* Options */}
-            <div className="space-y-3 mb-6">
-                {exercise.options.map((option, idx) => {
-                    let btnClass = "bg-white border-2 border-slate-100 text-slate-600 hover:border-violet-200 hover:bg-violet-50/50 hover:text-violet-700";
-                    if (selectedAnswer === option) {
-                        btnClass = "bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200 transform scale-[1.02]";
-                    }
-                    if (showResult) {
-                        if (option === exercise.correctAnswer) {
-                            btnClass = "bg-emerald-500 border-emerald-500 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100";
-                        } else if (option === selectedAnswer && selectedAnswer !== exercise.correctAnswer) {
-                            btnClass = "bg-rose-500 border-rose-500 text-white opacity-50";
-                        } else {
-                            btnClass = "bg-slate-50 border-slate-100 text-slate-300 opacity-50";
-                        }
-                    }
-
-                    return (
-                        <button
-                            key={idx}
-                            onClick={() => handleAnswerClick(option)}
-                            disabled={showResult}
-                            className={`w-full p-4 sm:p-5 rounded-2xl text-left font-bold transition-all duration-200 flex items-center justify-between group ${btnClass}`}
-                        >
-                            <span className="text-base sm:text-lg">{option}</span>
-                            {showResult && option === exercise.correctAnswer && <Check className="w-5 h-5 sm:w-6 sm:h-6" />}
-                            {showResult && option === selectedAnswer && option !== exercise.correctAnswer && <XIcon className="w-5 h-5 sm:w-6 sm:h-6" />}
-                        </button>
-                    );
-                })}
-            </div>
+            {/* Interaction Area based on Type */}
+            {renderExerciseContent()}
 
             {/* Feedback & Actions */}
             {showResult ? (
                 <div className="animate-in slide-in-from-bottom-4 duration-500 mt-auto">
-                    <div className={`p-5 sm:p-6 rounded-3xl border mb-6 ${selectedAnswer === exercise.correctAnswer ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                        <h4 className={`font-black text-lg mb-2 flex items-center gap-2 ${selectedAnswer === exercise.correctAnswer ? 'text-emerald-700' : 'text-rose-700'}`}>
-                            {selectedAnswer === exercise.correctAnswer ? <><Sparkles className="w-5 h-5"/> {t.correct}</> : t.incorrect}
-                        </h4>
-                        <p className={`text-sm sm:text-base font-medium leading-relaxed ${selectedAnswer === exercise.correctAnswer ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {exercise.explanation}
-                        </p>
-                    </div>
+                    {/* Feedback only shows for non-flashcards OR flashcards can have self-rating */}
+                    {exercise.type !== 'flashcard' ? (
+                         <div className={`p-5 sm:p-6 rounded-3xl border mb-6 ${
+                             isCorrect() ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
+                         }`}>
+                            <h4 className={`font-black text-lg mb-2 flex items-center gap-2 ${
+                                isCorrect() ? 'text-emerald-700' : 'text-rose-700'
+                            }`}>
+                                {isCorrect() ? <><Sparkles className="w-5 h-5"/> {t.correct}</> : t.incorrect}
+                            </h4>
+                            <p className={`text-sm sm:text-base font-medium leading-relaxed ${
+                                isCorrect() ? 'text-emerald-600' : 'text-rose-600'
+                            }`}>
+                                {exercise.explanation}
+                            </p>
+                        </div>
+                    ) : (
+                         // Simple flashcard feedback/next
+                         <div className="p-5 sm:p-6 rounded-3xl border mb-6 bg-slate-50 border-slate-100">
+                             <h4 className="font-black text-lg mb-2 text-slate-700">Explanation</h4>
+                             <p className="text-slate-600 text-sm">{exercise.explanation}</p>
+                         </div>
+                    )}
+                   
                     <button 
                         onClick={nextQuestion}
                         className="w-full py-4 sm:py-5 bg-slate-800 text-white font-bold rounded-2xl shadow-xl shadow-slate-300 hover:bg-slate-700 hover:-translate-y-1 transition-all flex items-center justify-center gap-2 text-base sm:text-lg"
@@ -368,10 +538,14 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             ) : (
                 <button 
                     onClick={checkAnswer}
-                    disabled={!selectedAnswer}
+                    // Disable check if no input provided, BUT Flashcards (Reveal) are never disabled
+                    disabled={
+                        ((exercise.type === 'multiple-choice' || exercise.type === 'true-false') && !selectedAnswer) ||
+                        (exercise.type === 'fill-blank' && !fillInput.trim())
+                    }
                     className="w-full py-4 sm:py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-bold rounded-2xl shadow-xl shadow-violet-200 disabled:opacity-50 disabled:shadow-none hover:shadow-fuchsia-300 hover:-translate-y-1 transition-all mt-auto text-base sm:text-lg"
                 >
-                    {t.checkAnswer}
+                    {exercise.type === 'flashcard' ? t.revealCard : t.checkAnswer}
                 </button>
             )}
         </div>
