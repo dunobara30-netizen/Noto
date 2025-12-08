@@ -31,8 +31,8 @@ const getTheme = (isAdmin: boolean) => isAdmin ? {
     userBubble: 'bg-slate-900 text-emerald-400 border border-emerald-900/50 font-mono',
     modelBubble: 'bg-black text-emerald-500 border border-slate-800 font-mono text-sm whitespace-pre-wrap',
 } : {
-    userBubble: 'bg-violet-600 shadow-violet-200 text-white rounded-br-none shadow-md',
-    modelBubble: 'bg-white text-slate-700 border border-slate-100 rounded-bl-none shadow-sm',
+    userBubble: 'bg-violet-600 shadow-violet-200 dark:shadow-none text-white rounded-br-none shadow-md',
+    modelBubble: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-bl-none shadow-sm',
 };
 
 // Memoized Message Item Component to prevent re-renders of list items during streaming
@@ -57,7 +57,7 @@ const MessageItem = memo(({ msg, isAdmin }: { msg: ChatMessage, isAdmin: boolean
                             href={source.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className={`flex items-center gap-1 border rounded-full px-2 py-1 text-[10px] font-medium transition-colors shadow-sm ${isAdmin ? 'bg-slate-900 border-slate-700 text-slate-400 hover:text-emerald-400 hover:border-emerald-500' : 'bg-white border-slate-200 text-slate-500 hover:text-violet-600 hover:border-violet-300'}`}
+                            className={`flex items-center gap-1 border rounded-full px-2 py-1 text-[10px] font-medium transition-colors shadow-sm ${isAdmin ? 'bg-slate-900 border-slate-700 text-slate-400 hover:text-emerald-400 hover:border-emerald-500' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-300 hover:border-violet-300'}`}
                         >
                             <Globe className="w-3 h-3" />
                             <span className="truncate max-w-[100px]">{source.title}</span>
@@ -92,12 +92,12 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
     button: 'text-emerald-500 hover:bg-slate-800',
     fab: 'bg-slate-900 text-emerald-400 shadow-emerald-900/20'
   } : {
-    header: 'bg-violet-600',
+    header: 'bg-violet-600 dark:bg-violet-800',
     headerText: 'text-white',
-    bg: 'bg-slate-50',
-    input: 'bg-slate-50 border-slate-200 text-slate-800 focus:bg-white',
-    button: 'text-violet-600 hover:bg-violet-50',
-    fab: 'bg-violet-600 text-white shadow-violet-300/50'
+    bg: 'bg-slate-50 dark:bg-slate-900',
+    input: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800',
+    button: 'text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30',
+    fab: 'bg-violet-600 dark:bg-violet-700 text-white shadow-violet-300/50 dark:shadow-none'
   };
 
   useEffect(() => {
@@ -221,7 +221,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end font-['Inter']">
       {isOpen && (
-        <div className={`w-[calc(100vw-2rem)] sm:w-96 h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden mb-4 transition-all animate-in slide-in-from-bottom-10 duration-200 ${isAdmin ? 'border-slate-800' : 'border-slate-200'}`}>
+        <div className={`w-[calc(100vw-2rem)] sm:w-96 h-[500px] max-h-[70vh] rounded-2xl shadow-2xl border flex flex-col overflow-hidden mb-4 transition-all animate-in slide-in-from-bottom-10 duration-200 ${isAdmin ? 'border-slate-800' : 'border-slate-200 dark:border-slate-700'}`}>
           {/* Header */}
           <div className={`${containerTheme.header} p-4 flex justify-between items-center transition-colors`}>
             <div className={`flex items-center gap-2 ${containerTheme.headerText}`}>
@@ -250,7 +250,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
           </div>
 
           {/* Input */}
-          <div className={`p-3 border-t ${isAdmin ? 'bg-slate-950 border-slate-800' : 'bg-white border-slate-100'}`}>
+          <div className={`p-3 border-t ${isAdmin ? 'bg-slate-950 border-slate-800' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
             <div className="relative flex items-center">
               <input
                 type="text"

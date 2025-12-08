@@ -5,7 +5,7 @@ import ChatWidget from './components/ChatWidget';
 import ExerciseHub from './components/ExerciseHub';
 import { Course, GradeLevel, AnalysisResult, Language, TRANSLATIONS } from './types';
 import { analyzeAcademicProfile } from './services/geminiService';
-import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages } from 'lucide-react';
+import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages, Moon, Sun } from 'lucide-react';
 
 const App: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -45,11 +45,23 @@ const App: React.FC = () => {
   const [sessionKey, setSessionKey] = useState(0); 
   const [isBlurred, setIsBlurred] = useState(false);
   const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
+  
+  // Theme State
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   const t = TRANSLATIONS[language];
 
-  // Handle PWA Install Prompt & QR Init
+  // Initialize Dark Mode & PWA
   useEffect(() => {
+    // Check local storage or system pref
+    if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        setIsDarkMode(true);
+        document.documentElement.classList.add('dark');
+    } else {
+        setIsDarkMode(false);
+        document.documentElement.classList.remove('dark');
+    }
+
     if (typeof window !== 'undefined') {
       setQrSource(window.location.href);
     }
@@ -59,6 +71,18 @@ const App: React.FC = () => {
       setDeferredPrompt(e);
     });
   }, []);
+
+  const toggleDarkMode = () => {
+      if (isDarkMode) {
+          document.documentElement.classList.remove('dark');
+          localStorage.theme = 'light';
+          setIsDarkMode(false);
+      } else {
+          document.documentElement.classList.add('dark');
+          localStorage.theme = 'dark';
+          setIsDarkMode(true);
+      }
+  };
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
@@ -134,28 +158,16 @@ const App: React.FC = () => {
     const newLang = language === 'de' ? 'en' : 'de';
     setLanguage(newLang);
 
-    // INTELLIGENT MAPPING: Subjects, Grades, and Level
-    
-    // 1. Map Subject Names
+    // INTELLIGENT MAPPING logic...
     const translateMapDeToEn: Record<string, string> = {
-        'Mathematik': 'Math',
-        'Deutsch': 'German',
-        'Englisch': 'English',
-        'Biologie': 'Biology',
-        'Geschichte': 'History'
+        'Mathematik': 'Math', 'Deutsch': 'German', 'Englisch': 'English', 'Biologie': 'Biology', 'Geschichte': 'History'
     };
     const translateMapEnToDe: Record<string, string> = {
-        'Math': 'Mathematik',
-        'German': 'Deutsch',
-        'English': 'Englisch',
-        'Biology': 'Biologie',
-        'History': 'Geschichte'
+        'Math': 'Mathematik', 'German': 'Deutsch', 'English': 'Englisch', 'Biology': 'Biologie', 'History': 'Geschichte'
     };
 
-    // 2. Map Grades (Heuristic)
     const mapGrade = (grade: string, toEn: boolean): string => {
         if (toEn) {
-            // DE -> UK
             if (['1+', '1', '1-'].includes(grade)) return '9';
             if (['2+', '2', '2-'].includes(grade)) return '7';
             if (['3+', '3', '3-'].includes(grade)) return '5';
@@ -164,8 +176,7 @@ const App: React.FC = () => {
             if (grade === '6') return 'U';
             return '5'; // default
         } else {
-            // UK -> DE
-            if (['9', '9+', '9-'].includes(grade)) return '1';
+            if (['9', '9+', '9'].includes(grade)) return '1';
             if (['8', '8+', '8'].includes(grade)) return '1-';
             if (['7', '7+', '7'].includes(grade)) return '2';
             if (['6', '6+', '6'].includes(grade)) return '2-';
@@ -179,22 +190,16 @@ const App: React.FC = () => {
 
     setCurrentCourses(prev => prev.map(c => ({
         ...c,
-        name: newLang === 'en' 
-            ? (translateMapDeToEn[c.name] || c.name) 
-            : (translateMapEnToDe[c.name] || c.name),
+        name: newLang === 'en' ? (translateMapDeToEn[c.name] || c.name) : (translateMapEnToDe[c.name] || c.name),
         grade: mapGrade(c.grade, newLang === 'en')
     })));
 
-    // 3. Map Grade Level (Rough Approximation)
-    // If switching systems, try to keep the "age" equivalent
     if (newLang === 'en') {
-        // DE -> UK
         if (currentGradeLevel.includes('10')) setCurrentGradeLevel(GradeLevel.Y11);
         else if (currentGradeLevel.includes('Q')) setCurrentGradeLevel(GradeLevel.Y13);
         else if (currentGradeLevel.includes('5')) setCurrentGradeLevel(GradeLevel.Y7);
         else setCurrentGradeLevel(GradeLevel.Y10);
     } else {
-        // UK -> DE
         if (currentGradeLevel.includes('11')) setCurrentGradeLevel(GradeLevel.Ten);
         else if (currentGradeLevel.includes('13') || currentGradeLevel.includes('12')) setCurrentGradeLevel(GradeLevel.Q1);
         else if (currentGradeLevel.includes('7')) setCurrentGradeLevel(GradeLevel.Five);
@@ -207,14 +212,14 @@ const App: React.FC = () => {
   const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
 
   return (
-    <div className={`min-h-screen bg-[#f0f4f8] text-slate-800 flex flex-col overflow-x-hidden relative font-['Inter'] transition-colors duration-500 ${isAdmin ? 'bg-slate-900' : ''}`}>
+    <div className={`min-h-screen bg-[#f0f4f8] dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col overflow-x-hidden relative font-['Inter'] transition-colors duration-500 ${isAdmin ? 'bg-slate-900' : ''}`}>
       
       {/* Background Ambient Blobs - Fixed to prevent scroll issues */}
-      <div className={`fixed top-[-10%] left-[-10%] w-[80vw] sm:w-[50vw] h-[80vw] sm:h-[50vw] rounded-full blur-[80px] sm:blur-[120px] animate-pulse duration-3000 pointer-events-none z-0 ${isAdmin ? 'bg-emerald-900/10' : 'bg-violet-300/30'}`}></div>
-      <div className={`fixed bottom-[-10%] right-[-10%] w-[80vw] sm:w-[50vw] h-[80vw] sm:h-[50vw] rounded-full blur-[80px] sm:blur-[120px] animate-pulse duration-5000 delay-1000 pointer-events-none z-0 ${isAdmin ? 'bg-slate-800/30' : 'bg-fuchsia-300/25'}`}></div>
+      <div className={`fixed top-[-10%] left-[-10%] w-[80vw] sm:w-[50vw] h-[80vw] sm:h-[50vw] rounded-full blur-[80px] sm:blur-[120px] animate-pulse duration-3000 pointer-events-none z-0 ${isAdmin ? 'bg-emerald-900/10' : 'bg-violet-300/30 dark:bg-violet-900/10'}`}></div>
+      <div className={`fixed bottom-[-10%] right-[-10%] w-[80vw] sm:w-[50vw] h-[80vw] sm:h-[50vw] rounded-full blur-[80px] sm:blur-[120px] animate-pulse duration-5000 delay-1000 pointer-events-none z-0 ${isAdmin ? 'bg-slate-800/30' : 'bg-fuchsia-300/25 dark:bg-fuchsia-900/10'}`}></div>
       
       {/* Navbar */}
-      <header className={`backdrop-blur-xl border-b sticky top-0 z-40 shadow-sm transition-colors ${isAdmin ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 border-white/40'}`}>
+      <header className={`backdrop-blur-xl border-b sticky top-0 z-40 shadow-sm transition-colors ${isAdmin ? 'bg-slate-900/80 border-slate-700' : 'bg-white/80 dark:bg-slate-900/80 border-white/40 dark:border-slate-800'}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           
           {/* Logo Section */}
@@ -223,25 +228,25 @@ const App: React.FC = () => {
               <GraduationCap className={`w-5 h-5 sm:w-6 sm:h-6 ${isAdmin ? 'text-emerald-500' : 'text-white'}`} />
             </div>
             <div className="hidden sm:flex flex-col justify-center">
-              <h1 className={`text-lg sm:text-2xl font-black tracking-tight ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600'}`}>
+              <h1 className={`text-lg sm:text-2xl font-black tracking-tight ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400'}`}>
                 {isAdmin ? 'SYSTEM_OVERRIDE' : 'GradePath'}
               </h1>
-              {!isAdmin && <span className="text-[10px] font-bold text-slate-400 tracking-wider leading-none">by Azez</span>}
+              {!isAdmin && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider leading-none">by Azez</span>}
             </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-slate-100/50 p-1 rounded-xl mx-2 border border-white/50 shrink-0">
+          <div className="flex items-center bg-slate-100/50 dark:bg-slate-800/50 p-1 rounded-xl mx-2 border border-white/50 dark:border-slate-700 shrink-0">
              <button
                 onClick={() => setActiveView('dashboard')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'dashboard' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white text-violet-600 shadow-sm') : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'dashboard' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm') : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="inline">{t.navCheck}</span>
              </button>
              <button
                 onClick={() => setActiveView('exercises')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'exercises' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white text-violet-600 shadow-sm') : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'exercises' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm') : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                 <BrainCircuit className="w-4 h-4" />
                 <span className="inline">{t.navPractice}</span>
@@ -251,10 +256,19 @@ const App: React.FC = () => {
           {/* Actions Section */}
           <div className="flex items-center gap-1.5 sm:gap-2">
 
+            {/* Dark Mode Toggle */}
+            <button
+                onClick={toggleDarkMode}
+                className={`p-2 rounded-lg transition-all border ${isAdmin ? 'text-slate-400 border-slate-700 hover:text-emerald-400' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400'}`}
+                title={isDarkMode ? "Light Mode" : "Dark Mode"}
+            >
+                {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
+
             {/* Language Toggle */}
              <button 
                 onClick={toggleLanguage}
-                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all border ${isAdmin ? 'text-slate-400 border-slate-700 hover:text-emerald-400' : 'bg-white text-slate-600 border-slate-200 hover:text-violet-600'}`}
+                className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all border ${isAdmin ? 'text-slate-400 border-slate-700 hover:text-emerald-400' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400'}`}
              >
                 <Languages className="w-4 h-4" />
                 <span className="text-xs font-bold uppercase">{language}</span>
@@ -266,31 +280,31 @@ const App: React.FC = () => {
                 className={`p-2 rounded-xl transition-all border hidden sm:flex ${
                     isAdmin 
                     ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/50 hover:bg-emerald-500/20' 
-                    : 'bg-white text-slate-400 border-slate-200 hover:text-violet-600 hover:border-violet-200'
+                    : 'bg-white dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-200 dark:border-slate-700 hover:text-violet-600 dark:hover:text-violet-400 hover:border-violet-200'
                 }`}
             >
                 {isAdmin ? <Unlock className="w-5 h-5" /> : <Lock className="w-5 h-5" />}
             </button>
 
             {/* Security Tools Group */}
-            <div className={`hidden md:flex items-center rounded-xl p-1 mr-2 border ${isAdmin ? 'bg-slate-800 border-slate-700' : 'bg-slate-100/50 border-white/50'}`}>
+            <div className={`hidden md:flex items-center rounded-xl p-1 mr-2 border ${isAdmin ? 'bg-slate-800 border-slate-700' : 'bg-slate-100/50 dark:bg-slate-800/50 border-white/50 dark:border-slate-700'}`}>
                <button 
                  onClick={() => setShowPrivacyInfo(true)}
-                 className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all ${isAdmin ? 'text-slate-400 hover:text-white' : 'text-emerald-600 hover:bg-emerald-50 hover:text-emerald-700'}`}
+                 className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all ${isAdmin ? 'text-slate-400 hover:text-white' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700'}`}
                  title="Privacy Status: Secure"
                >
                  <ShieldCheck className="w-4 h-4" />
                  <span className="text-xs font-bold hidden md:inline">Anon</span>
                </button>
 
-               <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-slate-600' : 'bg-slate-300'}`}></div>
+               <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-slate-600' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
 
                <button 
                  onClick={() => setIsBlurred(!isBlurred)}
                  className={`p-1.5 rounded-lg transition-all ${
                      isBlurred 
-                        ? (isAdmin ? 'bg-emerald-900/30 text-emerald-400' : 'bg-violet-100 text-violet-600') 
-                        : (isAdmin ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-200')
+                        ? (isAdmin ? 'bg-emerald-900/30 text-emerald-400' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300') 
+                        : (isAdmin ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700')
                  }`}
                  title={isBlurred ? "Show Content" : "Hide Content (Stealth Mode)"}
                >
@@ -301,7 +315,7 @@ const App: React.FC = () => {
             {/* Install Button */}
             <button 
               onClick={handleInstallClick}
-              className={`flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl transition-all ${isAdmin ? 'text-slate-500 hover:text-emerald-400' : 'text-slate-500 hover:bg-slate-100 hover:text-violet-600'}`}
+              className={`flex items-center gap-2 p-2 sm:px-3 sm:py-2 rounded-xl transition-all ${isAdmin ? 'text-slate-500 hover:text-emerald-400' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-violet-600 dark:hover:text-violet-300'}`}
               title={t.installApp}
             >
               <Download className="w-5 h-5" />
@@ -310,7 +324,7 @@ const App: React.FC = () => {
             {/* QR Code */}
             <button 
               onClick={() => setShowQr(true)}
-              className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-white shadow-lg transition-all duration-300 border border-white/20 hover:scale-105 active:scale-95 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 hover:bg-slate-700 text-emerald-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 hover:shadow-violet-300'}`}
+              className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-white shadow-lg transition-all duration-300 border border-white/20 hover:scale-105 active:scale-95 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 hover:bg-slate-700 text-emerald-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none hover:shadow-violet-300'}`}
             >
               <QrCode className="w-5 h-5" />
               <span className="font-bold text-sm hidden sm:inline">{t.mobileAccess}</span>
@@ -344,15 +358,15 @@ const App: React.FC = () => {
                 <div id="results-container" className="lg:col-span-7 flex flex-col h-full">
                     {/* Header for Results */}
                     <div className="flex items-center gap-2 mb-4 sm:mb-6 pl-1 mt-4 lg:mt-0">
-                        <div className={`p-1.5 rounded-lg shadow-sm ${isAdmin ? 'bg-slate-800' : 'bg-white'}`}>
+                        <div className={`p-1.5 rounded-lg shadow-sm ${isAdmin ? 'bg-slate-800' : 'bg-white dark:bg-slate-800'}`}>
                             <Sparkles className={`w-5 h-5 ${isAdmin ? 'text-emerald-500' : 'text-amber-500'}`} />
                         </div>
-                        <h2 className={`text-lg sm:text-xl font-bold ${isAdmin ? 'text-slate-200' : 'text-slate-700'}`}>{t.resultsHeader}</h2>
+                        <h2 className={`text-lg sm:text-xl font-bold ${isAdmin ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'}`}>{t.resultsHeader}</h2>
                     </div>
                     
                     {/* Results Card */}
-                    <div className={`flex-1 backdrop-blur-md rounded-[2rem] border shadow-xl overflow-hidden relative min-h-[400px] ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/40 border-white/60 shadow-slate-200/50'}`}>
-                        <div className={`absolute inset-0 bg-gradient-to-b pointer-events-none ${isAdmin ? 'from-slate-800/40 to-transparent' : 'from-white/40 to-transparent'}`}></div>
+                    <div className={`flex-1 backdrop-blur-md rounded-[2rem] border shadow-xl overflow-hidden relative min-h-[400px] ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/40 dark:bg-slate-800/40 border-white/60 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20'}`}>
+                        <div className={`absolute inset-0 bg-gradient-to-b pointer-events-none ${isAdmin ? 'from-slate-800/40 to-transparent' : 'from-white/40 dark:from-slate-900/40 to-transparent'}`}></div>
                         <ResultsDashboard 
                             key={`results-${sessionKey}`}
                             results={analysisResult} 
@@ -366,7 +380,7 @@ const App: React.FC = () => {
             </div>
         ) : (
             <div className="min-h-[70vh] h-full">
-                <div className={`h-full w-full max-w-6xl mx-auto backdrop-blur-md rounded-[2rem] border shadow-xl overflow-hidden relative ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/60 border-white/60 shadow-slate-200/50'}`}>
+                <div className={`h-full w-full max-w-6xl mx-auto backdrop-blur-md rounded-[2rem] border shadow-xl overflow-hidden relative ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/60 dark:bg-slate-800/60 border-white/60 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20'}`}>
                     <ExerciseHub gradeLevel={currentGradeLevel} language={language} />
                 </div>
             </div>
@@ -376,12 +390,12 @@ const App: React.FC = () => {
       {/* Lock Overlay when Blurred */}
       {isBlurred && (
         <div className="fixed inset-0 z-20 flex flex-col items-center justify-center pointer-events-none">
-          <div className="bg-white/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-white flex flex-col items-center animate-in zoom-in-95 duration-300 pointer-events-auto">
-             <div className="bg-violet-100 p-4 rounded-full mb-4">
-                <EyeOff className="w-8 h-8 text-violet-600" />
+          <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-6 rounded-3xl shadow-2xl border border-white dark:border-slate-700 flex flex-col items-center animate-in zoom-in-95 duration-300 pointer-events-auto">
+             <div className="bg-violet-100 dark:bg-violet-900/30 p-4 rounded-full mb-4">
+                <EyeOff className="w-8 h-8 text-violet-600 dark:text-violet-400" />
              </div>
-             <h3 className="text-xl font-bold text-slate-800">Privater Modus Aktiv</h3>
-             <p className="text-slate-500 text-sm mb-4">Deine Daten sind verborgen.</p>
+             <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Privater Modus Aktiv</h3>
+             <p className="text-slate-500 dark:text-slate-400 text-sm mb-4">Deine Daten sind verborgen.</p>
              <button 
                 onClick={() => setIsBlurred(false)}
                 className="px-6 py-2 bg-violet-600 text-white font-bold rounded-xl hover:bg-violet-700 transition-colors"
@@ -409,19 +423,19 @@ const App: React.FC = () => {
       {/* Login Modal */}
       {showLogin && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-           <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-xs w-full relative animate-in zoom-in-95 duration-300 border border-white/50">
+           <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 max-w-xs w-full relative animate-in zoom-in-95 duration-300 border border-white/50 dark:border-slate-700">
              <button 
                onClick={() => { setShowLogin(false); setPinInput(''); }}
-               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+               className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-all"
              >
                <X className="w-6 h-6" />
              </button>
              <div className="text-center">
-                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500 dark:text-slate-400">
                     <Lock className="w-8 h-8" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800 mb-2">Admin Access</h3>
-                <p className="text-slate-500 text-sm mb-6">Enter code to unlock Main AI.</p>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Admin Access</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Enter code to unlock Main AI.</p>
                 <form onSubmit={handleLogin} className="relative">
                     <input 
                         type="password" 
@@ -429,12 +443,12 @@ const App: React.FC = () => {
                         maxLength={4}
                         value={pinInput}
                         onChange={(e) => setPinInput(e.target.value)}
-                        className={`w-full bg-slate-50 border-2 rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-widest focus:outline-none transition-all ${loginError ? 'border-red-500 text-red-500 bg-red-50' : 'border-slate-200 focus:border-violet-500 text-slate-800'}`}
+                        className={`w-full bg-slate-50 dark:bg-slate-900 border-2 rounded-xl py-3 px-4 text-center text-2xl font-bold tracking-widest focus:outline-none transition-all ${loginError ? 'border-red-500 text-red-500 bg-red-50 dark:bg-red-900/20' : 'border-slate-200 dark:border-slate-600 focus:border-violet-500 dark:focus:border-violet-400 text-slate-800 dark:text-slate-100'}`}
                         placeholder="••••"
                         autoFocus
                     />
                     {loginError && <p className="text-red-500 text-xs font-bold mt-2 animate-pulse">Zugriff verweigert</p>}
-                    <button type="submit" className="w-full mt-4 bg-slate-800 text-white font-bold py-3 rounded-xl hover:bg-slate-700 transition-colors">
+                    <button type="submit" className="w-full mt-4 bg-slate-800 dark:bg-slate-700 text-white font-bold py-3 rounded-xl hover:bg-slate-700 dark:hover:bg-slate-600 transition-colors">
                         Unlock
                     </button>
                 </form>
@@ -446,32 +460,32 @@ const App: React.FC = () => {
       {/* Privacy Info Modal */}
       {showPrivacyInfo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50 dark:border-slate-700">
             <button 
               onClick={() => setShowPrivacyInfo(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-all"
             >
               <X className="w-6 h-6" />
             </button>
             
             <div className="text-center">
-                <div className="w-12 h-12 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-600">
+                <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3 text-emerald-600 dark:text-emerald-400">
                     <ShieldCheck className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800">Deine Sicherheit</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Deine Sicherheit</h3>
                 <div className="mt-4 space-y-3 text-left">
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex gap-3">
+                    <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 dark:border-slate-600 text-sm flex gap-3">
                         <div className="min-w-[4px] bg-emerald-400 rounded-full"></div>
                         <div>
-                            <p className="font-bold text-slate-700">Anonym & Lokal</p>
-                            <p className="text-slate-500 text-xs">Deine Noten verlassen nie dieses Gerät. Alles wird im Browser berechnet.</p>
+                            <p className="font-bold text-slate-700 dark:text-slate-200">Anonym & Lokal</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs">Deine Noten verlassen nie dieses Gerät. Alles wird im Browser berechnet.</p>
                         </div>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 text-sm flex gap-3">
+                    <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-xl border border-slate-100 dark:border-slate-600 text-sm flex gap-3">
                         <div className="min-w-[4px] bg-violet-400 rounded-full"></div>
                         <div>
-                            <p className="font-bold text-slate-700">Kein Login</p>
-                            <p className="text-slate-500 text-xs">Du benötigst keinen Account. Starte einfach und schließe den Tab, um alles zu löschen.</p>
+                            <p className="font-bold text-slate-700 dark:text-slate-200">Kein Login</p>
+                            <p className="text-slate-500 dark:text-slate-400 text-xs">Du benötigst keinen Account. Starte einfach und schließe den Tab, um alles zu löschen.</p>
                         </div>
                     </div>
                 </div>
@@ -489,71 +503,71 @@ const App: React.FC = () => {
       {/* Install Instructions Modal */}
       {showInstallModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl p-6 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-6 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50 dark:border-slate-700">
             <button 
               onClick={() => setShowInstallModal(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-all"
             >
               <X className="w-6 h-6" />
             </button>
             
             <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mx-auto mb-3 text-violet-600">
+                <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/30 rounded-2xl flex items-center justify-center mx-auto mb-3 text-violet-600 dark:text-violet-400">
                     <Download className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-800">{t.installApp}</h3>
-                <p className="text-sm text-slate-500 mt-1">Wähle dein Gerät für die Anleitung.</p>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">{t.installApp}</h3>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Wähle dein Gerät für die Anleitung.</p>
             </div>
 
             {/* OS Tabs */}
-            <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+            <div className="flex p-1 bg-slate-100 dark:bg-slate-700 rounded-xl mb-6">
               <button 
                 onClick={() => setInstallTab('android')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${installTab === 'android' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${installTab === 'android' ? 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 Android
               </button>
               <button 
                 onClick={() => setInstallTab('ios')}
-                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${installTab === 'ios' ? 'bg-white text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${installTab === 'ios' ? 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-300 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 iOS / iPhone
               </button>
             </div>
             
-            <div className="space-y-4 text-sm text-slate-600 text-left">
-              <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 min-h-[140px]">
+            <div className="space-y-4 text-sm text-slate-600 dark:text-slate-300 text-left">
+              <div className="bg-slate-50 dark:bg-slate-700/50 p-5 rounded-xl border border-slate-100 dark:border-slate-600 min-h-[140px]">
                 {installTab === 'android' ? (
                   <div className="space-y-3">
-                    <div className="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-2 mb-2">
-                        <Smartphone className="w-4 h-4 text-green-600" />
+                    <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 border-b border-slate-200 dark:border-slate-600 pb-2 mb-2">
+                        <Smartphone className="w-4 h-4 text-green-600 dark:text-green-400" />
                         Android (Chrome)
                     </div>
                     <ol className="space-y-3">
                       <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400">1</span>
-                          <span className="leading-snug">Tippe oben rechts auf das <span className="font-bold text-slate-800">Drei-Punkte-Menü</span> <MoreVertical className="w-3 h-3 inline align-middle" /></span>
+                          <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400 dark:text-slate-300">1</span>
+                          <span className="leading-snug">Tippe oben rechts auf das <span className="font-bold text-slate-800 dark:text-slate-200">Drei-Punkte-Menü</span> <MoreVertical className="w-3 h-3 inline align-middle" /></span>
                       </li>
                       <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400">2</span>
-                          <span className="leading-snug">Wähle <span className="font-bold text-slate-800">"App installieren"</span> oder <span className="font-bold text-slate-800">"Zum Startbildschirm"</span></span>
+                          <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400 dark:text-slate-300">2</span>
+                          <span className="leading-snug">Wähle <span className="font-bold text-slate-800 dark:text-slate-200">"App installieren"</span> oder <span className="font-bold text-slate-800 dark:text-slate-200">"Zum Startbildschirm"</span></span>
                       </li>
                     </ol>
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    <div className="font-bold text-slate-800 flex items-center gap-2 border-b border-slate-200 pb-2 mb-2">
-                        <Smartphone className="w-4 h-4 text-slate-800" />
+                    <div className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2 border-b border-slate-200 dark:border-slate-600 pb-2 mb-2">
+                        <Smartphone className="w-4 h-4 text-slate-800 dark:text-slate-200" />
                         iOS (Safari)
                     </div>
                     <ol className="space-y-3">
                       <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400">1</span>
-                          <span className="leading-snug">Tippe unten in der Leiste auf <span className="font-bold text-blue-600">Teilen</span> <Share className="w-3 h-3 inline align-middle" /></span>
+                          <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400 dark:text-slate-300">1</span>
+                          <span className="leading-snug">Tippe unten in der Leiste auf <span className="font-bold text-blue-600 dark:text-blue-400">Teilen</span> <Share className="w-3 h-3 inline align-middle" /></span>
                       </li>
                       <li className="flex items-start gap-3">
-                          <span className="w-6 h-6 rounded-full bg-white border border-slate-200 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400">2</span>
-                          <span className="leading-snug">Scrolle nach unten und wähle <span className="font-bold text-slate-800">"Zum Home-Bildschirm"</span></span>
+                          <span className="w-6 h-6 rounded-full bg-white dark:bg-slate-600 border border-slate-200 dark:border-slate-500 flex items-center justify-center text-xs font-bold shrink-0 text-slate-400 dark:text-slate-300">2</span>
+                          <span className="leading-snug">Scrolle nach unten und wähle <span className="font-bold text-slate-800 dark:text-slate-200">"Zum Home-Bildschirm"</span></span>
                       </li>
                     </ol>
                   </div>
@@ -567,21 +581,21 @@ const App: React.FC = () => {
       {/* QR Code Modal */}
       {showQr && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl shadow-2xl p-8 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50">
+          <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-2xl p-8 max-w-sm w-full relative animate-in zoom-in-95 duration-300 border border-white/50 dark:border-slate-700">
             <button 
               onClick={() => setShowQr(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-all"
+              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-all"
             >
               <X className="w-6 h-6" />
             </button>
             
             <div className="text-center space-y-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-800 mb-1">Auf's Handy übertragen</h3>
-                <p className="text-slate-500 text-sm">Scanne den Code mit deiner Kamera.</p>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-1">Auf's Handy übertragen</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">Scanne den Code mit deiner Kamera.</p>
               </div>
               
-              <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 shadow-inner mx-auto inline-block relative group">
+              <div className="bg-white p-3 rounded-2xl border-2 border-slate-100 dark:border-slate-600 shadow-inner mx-auto inline-block relative group">
                  <div className="absolute inset-0 bg-gradient-to-tr from-violet-500/20 to-fuchsia-500/20 rounded-xl blur-xl opacity-50"></div>
                 <img 
                   src={qrApiUrl} 
@@ -592,18 +606,18 @@ const App: React.FC = () => {
 
               {/* Editable URL Section */}
               <div className="space-y-2 pt-2">
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Verlinkte Adresse (Editierbar)</p>
-                <div className="flex items-center gap-2 bg-slate-50 p-2 pl-3 rounded-xl border border-slate-200 focus-within:ring-2 focus-within:ring-violet-200 focus-within:border-violet-400 transition-all">
-                  <div className="shrink-0 text-slate-400"><Edit2 className="w-3 h-3" /></div>
+                <p className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">Verlinkte Adresse (Editierbar)</p>
+                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-700 p-2 pl-3 rounded-xl border border-slate-200 dark:border-slate-600 focus-within:ring-2 focus-within:ring-violet-200 focus-within:border-violet-400 transition-all">
+                  <div className="shrink-0 text-slate-400 dark:text-slate-500"><Edit2 className="w-3 h-3" /></div>
                   <input 
                     type="text" 
                     value={qrSource} 
                     onChange={(e) => setQrSource(e.target.value)}
-                    className="bg-transparent w-full text-xs text-slate-600 font-mono outline-none truncate"
+                    className="bg-transparent w-full text-xs text-slate-600 dark:text-slate-300 font-mono outline-none truncate"
                   />
                   <button 
                     onClick={handleCopyUrl}
-                    className={`p-2 rounded-lg transition-all shrink-0 ${copySuccess ? 'bg-green-500 text-white' : 'bg-white shadow-sm text-slate-500 hover:text-violet-600'}`}
+                    className={`p-2 rounded-lg transition-all shrink-0 ${copySuccess ? 'bg-green-500 text-white' : 'bg-white dark:bg-slate-600 shadow-sm text-slate-500 dark:text-slate-300 hover:text-violet-600 dark:hover:text-violet-300'}`}
                   >
                     {copySuccess ? <Sparkles className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                   </button>
@@ -611,7 +625,7 @@ const App: React.FC = () => {
               </div>
 
               {isLocalhost && (
-                <div className="bg-amber-50 text-amber-700 text-[11px] font-medium p-3 rounded-xl text-left border border-amber-100 leading-tight">
+                <div className="bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-[11px] font-medium p-3 rounded-xl text-left border border-amber-100 dark:border-amber-800 leading-tight">
                   ⚠️ <strong>Localhost erkannt:</strong> Das Scannen funktioniert evtl. nicht, da dein Handy "localhost" nicht finden kann. Ersetze oben im Feld "localhost" durch die lokale IP deines PCs (z.B. 192.168.x.x).
                 </div>
               )}
