@@ -95,7 +95,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
          setSelectedAnswer(fillInput.trim()); // Store user input as selected
     }
     
-    // For flashcards, "checking" means revealing the answer
+    // For flashcards, "checking" isn't standard, but we show result to allow "Next"
     if (exercise?.type === 'flashcard') {
         setIsFlipped(true);
     }
@@ -123,6 +123,10 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   // Normalize comparisons for logic (Case insensitive)
   const isCorrect = () => {
       if (!exercise) return false;
+      
+      // Flashcards are self-graded basically
+      if (exercise.type === 'flashcard') return true; 
+      
       const cleanAnswer = exercise.correctAnswer.trim().toLowerCase();
       
       if (exercise.type === 'fill-blank') {
@@ -267,7 +271,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             return (
                 <div className="mb-6 perspective-1000">
                     <div 
-                        onClick={() => !showResult && setIsFlipped(!isFlipped)} 
+                        onClick={() => setIsFlipped(!isFlipped)} 
                         className={`relative w-full h-64 transition-all duration-700 preserve-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
                         style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
                     >
@@ -504,7 +508,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             {/* Feedback & Actions */}
             {showResult ? (
                 <div className="animate-in slide-in-from-bottom-4 duration-500 mt-auto">
-                    {/* Feedback only shows for non-flashcards OR flashcards can have self-rating */}
+                    {/* Feedback only shows for non-flashcards */}
                     {exercise.type !== 'flashcard' ? (
                          <div className={`p-5 sm:p-6 rounded-3xl border mb-6 ${
                              isCorrect() ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
@@ -521,7 +525,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                             </p>
                         </div>
                     ) : (
-                         // Simple flashcard feedback/next
+                         // Simple flashcard explanation
                          <div className="p-5 sm:p-6 rounded-3xl border mb-6 bg-slate-50 border-slate-100">
                              <h4 className="font-black text-lg mb-2 text-slate-700">Explanation</h4>
                              <p className="text-slate-600 text-sm">{exercise.explanation}</p>
@@ -538,7 +542,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             ) : (
                 <button 
                     onClick={checkAnswer}
-                    // Disable check if no input provided, BUT Flashcards (Reveal) are never disabled
+                    // Disable check if no input provided. Flashcards (Reveal) are never disabled.
                     disabled={
                         ((exercise.type === 'multiple-choice' || exercise.type === 'true-false') && !selectedAnswer) ||
                         (exercise.type === 'fill-blank' && !fillInput.trim())

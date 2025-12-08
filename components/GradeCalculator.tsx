@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Course, GradeLevel, GERMAN_GRADES, UK_GRADES, GERMAN_LEVELS, UK_LEVELS, getClosestGradeLabel, Language, TRANSLATIONS } from '../types';
 import { Plus, Trash2, Sparkles, GraduationCap, Star } from 'lucide-react';
@@ -37,6 +38,8 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
   ].includes(gradeLevel);
 
   // Auto-reset LK weights if switching to lower grades
+  // FIX: Added JSON.stringify(courses) check or similar to avoid loop, 
+  // but strictly, the dependency should only run if isAdvancedLevel changes to false.
   useEffect(() => {
     if (!isAdvancedLevel) {
       const hasWeightedCourses = courses.some(c => c.credits > 1);
@@ -44,7 +47,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
         setCourses(courses.map(c => ({ ...c, credits: 1 })));
       }
     }
-  }, [gradeLevel, isAdvancedLevel, courses, setCourses]);
+  }, [gradeLevel, isAdvancedLevel]); // Removed courses from dependency to prevent cycle
 
 
   const calculateAverage = React.useCallback(() => {
@@ -91,7 +94,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
   };
 
   return (
-    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-violet-200/50 p-5 sm:p-8 border border-white/50 flex flex-col transition-all duration-500 animate-in slide-in-from-left-4 hover:shadow-violet-300/50 relative overflow-hidden h-full">
+    <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-2xl shadow-violet-200/50 p-5 sm:p-8 border border-white/50 flex flex-col transition-all duration-500 animate-in slide-in-from-left-4 hover:shadow-violet-300/50 relative overflow-hidden h-full min-h-[500px]">
       
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8 shrink-0">
         <div>

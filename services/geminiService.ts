@@ -46,11 +46,15 @@ const analysisSchema: Schema = {
 const cleanJson = (text: string): string => {
   if (!text) return "{}";
   try {
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    // Remove Markdown code blocks if present
+    let clean = text.replace(/```json/g, '').replace(/```/g, '');
+    
+    // Extract JSON object
+    const jsonMatch = clean.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return jsonMatch[0];
     }
-    return text;
+    return clean;
   } catch (e) {
     return text;
   }
@@ -139,7 +143,7 @@ export const checkUniversityAdmission = async (
       2. Compare requirements with User Profile grades.
       3. CRITICAL: Identify exactly what grades need to improve. If they have a 5 (UK) in Math but need a 7, say "You have 5, need 7".
       
-      Output JSON strictly (no markdown):
+      Output JSON strictly (no markdown code blocks, just the raw JSON string):
       {
         "uniName": "Full Name of Uni/School",
         "likelihood": "High" | "Medium" | "Low",
@@ -171,16 +175,16 @@ export const checkUniversityAdmission = async (
 // Random sub-concepts to force variety
 const getRandomConcept = (subject: string): string => {
   const concepts: Record<string, string[]> = {
-    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics', 'Logic Puzzles'],
-    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra', 'Logikrätsel'],
-    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices', 'Definitionen'],
-    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel', 'Definitionen'],
-    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms', 'Translations'],
-    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen', 'Übersetzung'],
-    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis', 'Terminology'],
-    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese', 'Fachbegriffe'],
-    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages', 'Dates & Events'],
-    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter', 'Daten & Fakten']
+    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics', 'Logic Puzzles', 'Derivatives', 'Integrals', 'Trigonometry'],
+    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra', 'Logikrätsel', 'Ableitungen', 'Integrale', 'Trigonometrie'],
+    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices', 'Definitionen', 'Satzglieder', 'Kommasetzung'],
+    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel', 'Definitionen', 'Satzglieder', 'Kommasetzung'],
+    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms', 'Translations', 'Gerund vs Infinitive'],
+    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen', 'Übersetzung', 'Gerund vs Infinitive'],
+    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis', 'Terminology', 'Immune System', 'Nervous System'],
+    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese', 'Fachbegriffe', 'Immunsystem', 'Nervensystem'],
+    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages', 'Dates & Events', 'Weimar Republic'],
+    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter', 'Daten & Fakten', 'Weimarer Republik']
   };
 
   // Find key that matches loosely
@@ -200,12 +204,12 @@ export const generatePracticeQuestion = async (
     
     // 1. Force a random sub-concept if no specific topic is provided to prevent repetition
     const randomSubConcept = !specificTopic ? getRandomConcept(subject) : '';
-    const randomSeed = Math.floor(Math.random() * 1000000); // Technical seed
+    const randomSeed = Math.random().toString(36).substring(7) + Date.now().toString(); // Chaos seed
     
     // 2. Build the Topic Prompt
     const topicPrompt = specificTopic 
       ? `Focus SPECIFICALLY on the topic: "${specificTopic}".` 
-      : `Focus on the specific sub-topic: "${randomSubConcept}". Do NOT create a generic question.`;
+      : `Focus on the specific sub-topic: "${randomSubConcept}". Do NOT create a generic question. Avoid introductory questions.`;
 
     const isUK = language === 'en';
     const contextInstruction = isUK
@@ -221,18 +225,17 @@ export const generatePracticeQuestion = async (
       ${topicPrompt}
       
       Instructions:
-      1. Use 'googleSearch' to find fresh data or real-world examples if needed.
+      1. Use 'googleSearch' to find fresh data, facts, or image links.
       2. **CLARITY**: Write the question in simple, understandable student language.
       3. **VARIETY**: Randomly choose ONE of these types: 
          - "multiple-choice" (Standard)
          - "true-false" (Binary choice)
          - "fill-blank" (User must type the missing word)
          - "flashcard" (Front is term/question, Back is definition/answer)
-      
-      4. Random Seed: ${randomSeed}.
+      4. **CHAOS SEED**: ${randomSeed} (Do NOT generate the same question as before).
       
       Output Requirements:
-      Return strictly a valid JSON object with this structure (no markdown code blocks, just raw JSON):
+      Return strictly a valid JSON object with this structure (NO markdown, NO code blocks):
       {
         "type": "multiple-choice" | "true-false" | "fill-blank" | "flashcard",
         "subject": "string",
@@ -253,14 +256,15 @@ export const generatePracticeQuestion = async (
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          temperature: 1.2, // Increased temperature for less deterministic/repetitive results
+          temperature: 1.3, // High temperature for maximum variety
         }
       });
   
       const text = response.text;
       if (!text) throw new Error("No response received.");
       
-      const parsed = JSON.parse(cleanJson(text)) as Exercise;
+      const cleanText = cleanJson(text);
+      const parsed = JSON.parse(cleanText) as Exercise;
       
       // Validation Check
       if (!parsed.correctAnswer || !parsed.question || !parsed.type) {
