@@ -1,6 +1,6 @@
 
 import { GoogleGenAI, Type, Schema } from "@google/genai";
-import { Course, GradeLevel, AnalysisResult, Exercise, Language, UniversityCheckResult, Difficulty } from "../types";
+import { Course, GradeLevel, AnalysisResult, Exercise, Language, UniversityCheckResult, Difficulty, CareerCheckResult } from "../types";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
@@ -70,18 +70,19 @@ export const analyzeAcademicProfile = async (
   const courseList = courses.map(c => `${c.name}: ${c.grade} ${c.credits > 1 ? '(Advanced/LK)' : ''}`).join(", ");
   
   const isUK = language === 'en';
+  const targetLangName = isUK ? 'English' : 'German';
 
   const systemContext = isUK
     ? `SYSTEM: UK EDUCATION (GCSE/A-Levels).
        Grades: 9-1 Scale (9 is A**, 1 is Fail).
        Recommendation Logic: Suggest UNIVERSITIES IN THE UK (England, Scotland, Wales).
        Categories: Reach, Target, Safety.
-       Language: English.`
+       Output Language: English.`
     : `SYSTEM: DEUTSCHES SCHULSYSTEM.
        Noten: 1-6 (1 ist Bestnote).
        Recommendation Logic: Empfehle Deutsche Hochschulen/Unis.
        Categories: Optimistisch, Realistisch, Sicher.
-       Language: German.`;
+       Output Language: German.`;
 
   const prompt = `
     ${systemContext}
@@ -92,10 +93,10 @@ export const analyzeAcademicProfile = async (
     Subjects: ${courseList}.
     
     Task:
-    1. Create a "Student Archetype" title.
-    2. Suggest 3 Careers.
+    1. Create a "Student Archetype" title (in ${targetLangName}).
+    2. Suggest 3 Careers (in ${targetLangName}).
     3. Suggest 5-6 Universities/Colleges strictly in the target country (UK if English, Germany if German).
-    4. Provide academic advice.
+    4. Provide academic advice (in ${targetLangName}).
     
     JSON Response only.
   `;
@@ -127,6 +128,7 @@ export const checkUniversityAdmission = async (
   ): Promise<UniversityCheckResult> => {
     
     const isUK = language === 'en';
+    const targetLangName = isUK ? 'English' : 'German';
     const courseSummary = courses.map(c => `${c.name} (${c.grade})`).join(", ");
     
     const contextInstruction = isUK
@@ -137,6 +139,7 @@ export const checkUniversityAdmission = async (
       Task: Check admission chances for "${uniQuery}".
       User Profile: Level ${gradeLevel}, Grades: [${courseSummary}].
       ${contextInstruction}
+      IMPORTANT: Output MUST be in ${targetLangName}.
       
       Instructions:
       1. Use 'googleSearch' to find current entry requirements for "${uniQuery}".
@@ -147,9 +150,9 @@ export const checkUniversityAdmission = async (
       {
         "uniName": "Full Name of Uni/School",
         "likelihood": "High" | "Medium" | "Low",
-        "requirements": "Short summary of requirements found (e.g. 'AAA at A-Level including Math').",
-        "gapAnalysis": "Specific list of what grades to enter/improve. E.g. 'Your Math grade (5) is too low for this course, aim for 7.'",
-        "verdictText": "One sentence actionable advice."
+        "requirements": "Short summary of requirements found (in ${targetLangName}).",
+        "gapAnalysis": "Specific list of what grades to enter/improve (in ${targetLangName}).",
+        "verdictText": "One sentence actionable advice (in ${targetLangName})."
       }
     `;
   
@@ -172,19 +175,73 @@ export const checkUniversityAdmission = async (
     }
   };
 
-// Random sub-concepts to force variety
+export const checkCareerFit = async (
+    jobTitle: string,
+    courses: Course[],
+    gradeLevel: GradeLevel,
+    language: Language
+  ): Promise<CareerCheckResult> => {
+    
+    const isUK = language === 'en';
+    const targetLangName = isUK ? 'English' : 'German';
+    const courseSummary = courses.map(c => `${c.name}: ${c.grade}`).join(", ");
+    
+    const prompt = `
+      Task: Analyze probability of becoming a "${jobTitle}" based on current school grades.
+      Target Language: ${targetLangName} (Output ALL text in ${targetLangName}).
+      Context: ${isUK ? 'UK Education (Grades 9-1, 9 best)' : 'German Education (Grades 1-6, 1 best)'}.
+      User Profile: Level ${gradeLevel}, Grades: [${courseSummary}].
+      
+      Instructions:
+      1. Use 'googleSearch' to find academic requirements for "${jobTitle}" (e.g. Does a Pilot need Math? Does a Doctor need Biology?).
+      2. Compare found requirements with User Profile.
+      3. Calculate a "Match Score" (0-100). 
+         - If grades in key subjects are bad (e.g. failing Math for a Pilot), score is LOW (<30).
+         - If grades are good but not perfect, score MEDIUM (40-70).
+         - If grades match requirements well, score HIGH (>80).
+      
+      Output JSON strictly (No markdown):
+      {
+        "jobTitle": "${jobTitle}",
+        "matchScore": number (0-100),
+        "likelihood": "Very High" | "High" | "Medium" | "Low" | "Very Low",
+        "analysis": "Short text explaining the score based on their specific grades (in ${targetLangName}).",
+        "keySubjects": ["List of 2-3 most important subjects for this job (in ${targetLangName})"]
+      }
+    `;
+
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          temperature: 0.5,
+        }
+      });
+
+      const text = response.text;
+      if (!text) throw new Error("No response");
+      return JSON.parse(cleanJson(text)) as CareerCheckResult;
+    } catch (error) {
+      console.error("Career Check Error:", error);
+      throw new Error("Career Check failed");
+    }
+  };
+
+// Expanded sub-concepts to force variety
 const getRandomConcept = (subject: string): string => {
   const concepts: Record<string, string[]> = {
-    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics', 'Logic Puzzles', 'Derivatives', 'Integrals', 'Trigonometry'],
-    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra', 'Logikrätsel', 'Ableitungen', 'Integrale', 'Trigonometrie'],
-    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices', 'Definitionen', 'Satzglieder', 'Kommasetzung'],
-    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel', 'Definitionen', 'Satzglieder', 'Kommasetzung'],
-    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms', 'Translations', 'Gerund vs Infinitive'],
-    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen', 'Übersetzung', 'Gerund vs Infinitive'],
-    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis', 'Terminology', 'Immune System', 'Nervous System'],
-    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese', 'Fachbegriffe', 'Immunsystem', 'Nervensystem'],
-    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages', 'Dates & Events', 'Weimar Republic'],
-    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter', 'Daten & Fakten', 'Weimarer Republik']
+    'Math': ['Linear Functions', 'Geometry 3D', 'Stochastics', 'Percentages', 'Calculus', 'Vectors', 'Algebra Basics', 'Logic Puzzles', 'Derivatives', 'Integrals', 'Trigonometry', 'Exponentials', 'Complex Numbers', 'Differential Equations', 'Graph Theory', 'Matrices', 'Probability Trees'],
+    'Mathematik': ['Lineare Funktionen', 'Geometrie', 'Wahrscheinlichkeitsrechnung', 'Prozentrechnung', 'Analysis', 'Vektoren', 'Algebra', 'Logikrätsel', 'Ableitungen', 'Integrale', 'Trigonometrie', 'Exponentialfunktionen', 'Kurvendiskussion', 'Matrizen', 'Baumdiagramme', 'Statistik'],
+    'German': ['Poetry Analysis', 'Grammar Tenses', 'Essay Structure', 'Literature Epochs', 'Spelling Rules', 'Rhetorical Devices', 'Definitionen', 'Satzglieder', 'Kommasetzung', 'Expressionismus', 'Romantik', 'Sachtextanalyse', 'Erörterung', 'Konjunktiv', 'Fremdwörter'],
+    'Deutsch': ['Gedichtanalyse', 'Grammatik Zeitformen', 'Erörterung', 'Literaturepochen', 'Rechtschreibung', 'Rhetorische Mittel', 'Definitionen', 'Satzglieder', 'Kommasetzung', 'Expressionismus', 'Romantik', 'Sachtextanalyse', 'Konjunktiv', 'Fremdwörter', 'Inhaltsangabe'],
+    'English': ['Past Tenses', 'If-Clauses', 'Text Analysis', 'Creative Writing', 'Vocabulary: Politics', 'Idioms', 'Translations', 'Gerund vs Infinitive', 'Reported Speech', 'Passive Voice', 'Shakespeare', 'American vs British English', 'Linking Words', 'Summary Writing'],
+    'Englisch': ['Zeitformen', 'If-Clauses', 'Textanalyse', 'Creative Writing', 'Wortschatz: Politik', 'Redewendungen', 'Übersetzung', 'Gerund vs Infinitive', 'Indirekte Rede', 'Passiv', 'Shakespeare', 'Amerikanisches vs Britisches Englisch', 'Verbindungswörter', 'Summary Schreiben'],
+    'Biology': ['Cell Structure', 'Genetics', 'Ecology', 'Evolution', 'Human Anatomy', 'Photosynthesis', 'Terminology', 'Immune System', 'Nervous System', 'Enzymes', 'DNA Replication', 'Protein Synthesis', 'Mitosis vs Meiosis', 'Botany', 'Zoology'],
+    'Biologie': ['Zellaufbau', 'Genetik', 'Ökologie', 'Evolution', 'Anatomie', 'Fotosynthese', 'Fachbegriffe', 'Immunsystem', 'Nervensystem', 'Enzyme', 'DNA Replikation', 'Proteinbiosynthese', 'Mitose vs Meiose', 'Botanik', 'Zoologie'],
+    'History': ['Industrial Revolution', 'World War 1', 'Ancient Rome', 'Cold War', 'French Revolution', 'Middle Ages', 'Dates & Events', 'Weimar Republic', 'Colonization', 'Reformation', 'The 1920s', 'Ancient Greece', 'Napoleonic Wars'],
+    'Geschichte': ['Industrielle Revolution', 'Erster Weltkrieg', 'Römisches Reich', 'Kalter Krieg', 'Französische Revolution', 'Mittelalter', 'Daten & Fakten', 'Weimarer Republik', 'Kolonialisierung', 'Reformation', 'Goldene Zwanziger', 'Antikes Griechenland', 'Napoleon']
   };
 
   // Find key that matches loosely
@@ -204,23 +261,35 @@ export const generatePracticeQuestion = async (
     
     // 1. Force a random sub-concept if no specific topic is provided to prevent repetition
     const randomSubConcept = !specificTopic ? getRandomConcept(subject) : '';
-    const randomSeed = Math.random().toString(36).substring(7) + Date.now().toString(); // Chaos seed
+    // Enhanced seed: includes random math to ensure uniqueness even in rapid succession
+    const randomSeed = Math.random().toString(36).substring(7) + Date.now().toString() + Math.floor(Math.random() * 99999);
     
     // 2. Build the Topic Prompt
     const topicPrompt = specificTopic 
       ? `Focus SPECIFICALLY on the topic: "${specificTopic}".` 
-      : `Focus on the specific sub-topic: "${randomSubConcept}". Do NOT create a generic question. Avoid introductory questions.`;
+      : `Focus on the specific sub-topic: "${randomSubConcept}". Do NOT create a generic question about "${subject}". Avoid introductory questions.`;
 
     const isUK = language === 'en';
-    const contextInstruction = isUK
-      ? "Context: UK National Curriculum. Language: English."
+    
+    // LANGUAGE LOGIC OVERRIDE
+    let targetLang = isUK ? 'English' : 'German';
+    const subLower = subject.toLowerCase();
+    
+    if (subLower.includes('english') || subLower.includes('englisch')) {
+        targetLang = 'English';
+    } else if (subLower.includes('german') || subLower.includes('deutsch')) {
+        targetLang = 'German';
+    }
+
+    const contextInstruction = targetLang === 'English'
+      ? "Context: UK National Curriculum or English Subject. Language: English."
       : "Context: Deutscher Lehrplan. Language: German.";
 
     // 3. Prompt Engineering for Clarity and Variety
     const prompt = `
       Task: Create a UNIQUE, HIGH-QUALITY practice exercise for ${subject} at level ${gradeLevel}.
       Difficulty Level: ${difficulty.toUpperCase()} (Adjust complexity relative to grade level).
-      Target Language: ${isUK ? 'English' : 'German'} (Ensure content and response are in this language).
+      Target Language: ${targetLang} (CRITICAL: Content, Question, and Explanation MUST be in ${targetLang}).
       ${contextInstruction}
       ${topicPrompt}
       
@@ -232,7 +301,7 @@ export const generatePracticeQuestion = async (
          - "true-false" (Binary choice)
          - "fill-blank" (User must type the missing word)
          - "flashcard" (Front is term/question, Back is definition/answer)
-      4. **CHAOS SEED**: ${randomSeed} (Do NOT generate the same question as before).
+      4. **CHAOS SEED**: ${randomSeed} (Do NOT generate the same question as before. Be creative!).
       
       Output Requirements:
       Return strictly a valid JSON object with this structure (NO markdown, NO code blocks):
@@ -256,7 +325,7 @@ export const generatePracticeQuestion = async (
         contents: prompt,
         config: {
           tools: [{ googleSearch: {} }],
-          temperature: 1.3, // High temperature for maximum variety
+          temperature: 1.6, // High temperature for maximum variety
         }
       });
   
@@ -290,16 +359,18 @@ export const generatePracticeQuestion = async (
 
 export const createChatSession = (initialContext: string, isAdmin: boolean, language: Language) => {
   const isUK = language === 'en';
+  const targetLang = isUK ? 'English' : 'German';
 
   // ADMIN MODE
   const adminInstruction = `SYSTEM: GOD_MODE_ACTIVE.
   ACCESS LEVEL: UNRESTRICTED / DEVELOPER.
   INSTRUCTIONS: No limits. Write code, detailed essays, or complex logic. Be intelligent and precise.
+  Language: ${targetLang}.
   System Context: ${initialContext}`;
 
   // STUDENT MODE
   const studentInstruction = `You are 'Gem', a study advisor.
-  Language: ${isUK ? 'English' : 'German'}.
+  Language: ${targetLang}.
   Education System: ${isUK ? 'UK System (GCSE/A-Level)' : 'German System'}.
   Student Context: ${initialContext}.
   

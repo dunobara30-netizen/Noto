@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { MessageCircle, X, Send, Loader2, Minimize2, Globe, ExternalLink, ShieldCheck, Lock } from 'lucide-react';
 import { ChatMessage, Source, Language, TRANSLATIONS } from '../types';
@@ -35,7 +36,24 @@ const getTheme = (isAdmin: boolean) => isAdmin ? {
     modelBubble: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-100 dark:border-slate-700 rounded-bl-none shadow-sm',
 };
 
-// Memoized Message Item Component to prevent re-renders of list items during streaming
+// Theme constants for main container
+const getContainerTheme = (isAdmin: boolean) => isAdmin ? {
+    header: 'bg-slate-950',
+    headerText: 'text-emerald-500 font-mono tracking-widest',
+    bg: 'bg-slate-900',
+    input: 'bg-slate-950 text-emerald-400 border-slate-800 placeholder-slate-700 font-mono',
+    button: 'text-emerald-500 hover:bg-slate-800',
+    fab: 'bg-slate-900 text-emerald-400 shadow-emerald-900/20'
+  } : {
+    header: 'bg-violet-600 dark:bg-violet-800',
+    headerText: 'text-white',
+    bg: 'bg-slate-50 dark:bg-slate-900',
+    input: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800',
+    button: 'text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30',
+    fab: 'bg-violet-600 dark:bg-violet-700 text-white shadow-violet-300/50 dark:shadow-none'
+  };
+
+// Memoized Message Item Component
 const MessageItem = memo(({ msg, isAdmin }: { msg: ChatMessage, isAdmin: boolean }) => {
     const theme = getTheme(isAdmin);
     return (
@@ -69,36 +87,60 @@ const MessageItem = memo(({ msg, isAdmin }: { msg: ChatMessage, isAdmin: boolean
         </div>
     );
 }, (prevProps, nextProps) => {
-    // Only re-render if text or sources change
     return prevProps.msg.text === nextProps.msg.text && 
            prevProps.msg.sources?.length === nextProps.msg.sources?.length &&
            prevProps.isAdmin === nextProps.isAdmin;
 });
 
+// Separated Input Component to isolate state updates
+const ChatInput = ({ onSend, isAdmin, placeholder, isLoading }: { onSend: (text: string) => void, isAdmin: boolean, placeholder: string, isLoading: boolean }) => {
+    const [input, setInput] = useState('');
+    const theme = getContainerTheme(isAdmin);
+
+    const handleSend = () => {
+        if (!input.trim()) return;
+        onSend(input);
+        setInput('');
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            handleSend();
+        }
+    };
+
+    return (
+        <div className={`p-3 border-t ${isAdmin ? 'bg-slate-950 border-slate-800' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
+            <div className="relative flex items-center">
+                <input
+                    type="text"
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder={placeholder}
+                    disabled={isLoading}
+                    className={`w-full pl-4 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-sm ${theme.input} ${isAdmin ? 'focus:ring-emerald-500' : 'focus:ring-violet-500'}`}
+                />
+                <button
+                    onClick={handleSend}
+                    disabled={isLoading || !input.trim()}
+                    className={`absolute right-2 p-2 rounded-lg disabled:opacity-50 transition-colors ${theme.button}`}
+                >
+                    {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                </button>
+            </div>
+        </div>
+    );
+};
+
 const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOpen, isAdmin, language }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatSessionRef = useRef<Chat | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const t = TRANSLATIONS[language];
-
-  // Theme constants for main container
-  const containerTheme = isAdmin ? {
-    header: 'bg-slate-950',
-    headerText: 'text-emerald-500 font-mono tracking-widest',
-    bg: 'bg-slate-900',
-    input: 'bg-slate-950 text-emerald-400 border-slate-800 placeholder-slate-700 font-mono',
-    button: 'text-emerald-500 hover:bg-slate-800',
-    fab: 'bg-slate-900 text-emerald-400 shadow-emerald-900/20'
-  } : {
-    header: 'bg-violet-600 dark:bg-violet-800',
-    headerText: 'text-white',
-    bg: 'bg-slate-50 dark:bg-slate-900',
-    input: 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:bg-white dark:focus:bg-slate-800',
-    button: 'text-violet-600 dark:text-violet-300 hover:bg-violet-50 dark:hover:bg-violet-900/30',
-    fab: 'bg-violet-600 dark:bg-violet-700 text-white shadow-violet-300/50 dark:shadow-none'
-  };
+  const containerTheme = getContainerTheme(isAdmin);
 
   useEffect(() => {
     if (isOpen) {
@@ -106,8 +148,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
             ? t.chatGreetingAdmin
             : t.chatGreeting;
 
-        // Reset if empty or if needed, but usually we keep history. 
-        // For simple switching, we can reset.
         if (messages.length === 0) {
             setMessages([
                 { 
@@ -119,7 +159,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
             ]);
         }
 
-        // Recreate session with new context/persona
         chatSessionRef.current = createChatSession(
             contextSummary || "User has not entered grades yet.",
             isAdmin,
@@ -136,18 +175,17 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
     if (isOpen) scrollToBottom();
   }, [messages.length, isOpen]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !chatSessionRef.current) return;
+  const handleSend = async (text: string) => {
+    if (!chatSessionRef.current) return;
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      text: input,
+      text: text,
       timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
     setIsLoading(true);
 
     try {
@@ -157,7 +195,6 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
       let foundSources: Source[] = [];
       const modelMsgId = (Date.now() + 1).toString();
       
-      // Add placeholder message once
       setMessages(prev => [...prev, {
         id: modelMsgId,
         role: 'model',
@@ -167,10 +204,9 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
 
       for await (const chunk of resultStream) {
         const responseChunk = chunk as GenerateContentResponse;
-        const text = responseChunk.text || "";
-        fullResponse += text;
+        const chunkText = responseChunk.text || "";
+        fullResponse += chunkText;
         
-        // Extract grounding chunks
         const groundingChunks = responseChunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
         if (groundingChunks) {
             groundingChunks.forEach((gc: any) => {
@@ -185,12 +221,11 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
             });
         }
         
-        // Update state with new text
-        // Note: In React 18, automatic batching helps, but frequent updates can still lag.
-        // However, with Memoized MessageItem, this is much cheaper now.
         setMessages(prev => {
             const last = prev[prev.length - 1];
             if (last.id === modelMsgId) {
+                // If text hasn't changed, don't update state to save renders
+                if (last.text === fullResponse && last.sources?.length === foundSources.length) return prev;
                 return [...prev.slice(0, -1), { ...last, text: fullResponse, sources: [...foundSources] }];
             }
             return prev;
@@ -206,15 +241,7 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
       }]);
     } finally {
       setIsLoading(false);
-      // Ensure final scroll
       setTimeout(scrollToBottom, 100);
-    }
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
     }
   };
 
@@ -249,27 +276,13 @@ const ChatWidget: React.FC<ChatWidgetProps> = ({ contextSummary, isOpen, setIsOp
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Input */}
-          <div className={`p-3 border-t ${isAdmin ? 'bg-slate-950 border-slate-800' : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700'}`}>
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isAdmin ? t.chatPlaceholderAdmin : t.chatPlaceholder}
-                disabled={isLoading}
-                className={`w-full pl-4 pr-12 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-all text-sm ${containerTheme.input} ${isAdmin ? 'focus:ring-emerald-500' : 'focus:ring-violet-500'}`}
-              />
-              <button
-                onClick={handleSend}
-                disabled={isLoading || !input.trim()}
-                className={`absolute right-2 p-2 rounded-lg disabled:opacity-50 transition-colors ${containerTheme.button}`}
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
+          {/* Isolated Input Component */}
+          <ChatInput 
+            onSend={handleSend} 
+            isAdmin={isAdmin} 
+            placeholder={isAdmin ? t.chatPlaceholderAdmin : t.chatPlaceholder} 
+            isLoading={isLoading} 
+          />
         </div>
       )}
 

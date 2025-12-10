@@ -1,4 +1,5 @@
 
+
 export interface Course {
   id: string;
   name: string;
@@ -45,6 +46,14 @@ export interface UniversityCheckResult {
   requirements: string;
   gapAnalysis: string; // What is missing?
   verdictText: string;
+}
+
+export interface CareerCheckResult {
+  jobTitle: string;
+  matchScore: number; // 0-100
+  likelihood: 'Very High' | 'High' | 'Medium' | 'Low' | 'Very Low';
+  analysis: string;
+  keySubjects: string[]; // Subjects relevant to this job
 }
 
 export interface AcademicAdvice {
@@ -143,6 +152,16 @@ export const UK_LEVELS = [
 
 export const TRANSLATIONS = {
   de: {
+    // Start Screen
+    welcomeTitle: "Dein KI Studienbegleiter",
+    welcomeSubtitle: "Berechne deinen Schnitt, finde deinen Weg und trainiere für die Zukunft.",
+    getStarted: "Jetzt Starten",
+    gradeInfoBtn: "Was bedeuten meine Noten?",
+    gradeInfoTitle: "Offizielle Notenskala & Chancen",
+    backToStart: "Startmenü",
+    dailyFocus: "Tages-Impuls",
+    dailyFocusSubtitle: "Motivation für heute",
+    // App
     navCheck: "Check",
     navPractice: "Üben",
     installApp: "App installieren",
@@ -204,6 +223,12 @@ export const TRANSLATIONS = {
     admissionChance: "Deine Chance",
     requirements: "Anforderungen",
     gapAnalysis: "Was du tun musst",
+    // Career Check
+    careerCheckHeader: "Traumberuf-Check",
+    careerCheckPlaceholder: "Was willst du werden? (z.B. Pilot, Arzt)",
+    checkCareer: "Checken",
+    matchScore: "Match Score",
+    careerAnalysis: "Analyse",
     // Subject Names
     Math: "Mathematik",
     German: "Deutsch",
@@ -219,6 +244,16 @@ export const TRANSLATIONS = {
     forgotIt: "Vergessen",
   },
   en: {
+    // Start Screen
+    welcomeTitle: "Your AI Study Companion",
+    welcomeSubtitle: "Calculate your grades, find your path, and train for the future.",
+    getStarted: "Get Started",
+    gradeInfoBtn: "What do my grades mean?",
+    gradeInfoTitle: "Official Grade Scale & Outlook",
+    backToStart: "Start Menu",
+    dailyFocus: "Daily Focus",
+    dailyFocusSubtitle: "Motivation for today",
+    // App
     navCheck: "Check",
     navPractice: "Practice",
     installApp: "Install App",
@@ -280,6 +315,12 @@ export const TRANSLATIONS = {
     admissionChance: "Admissibility",
     requirements: "Requirements",
     gapAnalysis: "What you need to do",
+    // Career Check
+    careerCheckHeader: "Dream Job Reality Check",
+    careerCheckPlaceholder: "What do you want to be? (e.g. Pilot, Doctor)",
+    checkCareer: "Check",
+    matchScore: "Match Score",
+    careerAnalysis: "Analysis",
     // Subject Names
     Math: "Math",
     German: "German",
