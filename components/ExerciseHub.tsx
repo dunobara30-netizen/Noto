@@ -1,11 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { generatePracticeQuestion } from '../services/geminiService';
 import { GradeLevel, Exercise, Language, TRANSLATIONS, Difficulty } from '../types';
-import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon, Gauge, RotateCcw } from 'lucide-react';
+import { BookOpen, Calculator, Languages, FlaskConical, History, BrainCircuit, ArrowRight, RefreshCcw, Check, X as XIcon, Loader2, Sparkles, Play, Pencil, Lightbulb, Image as ImageIcon, Gauge, RotateCcw, FileText, Mic } from 'lucide-react';
+import OralTutor from './OralTutor';
 
 interface ExerciseHubProps {
   gradeLevel: GradeLevel;
   language: Language;
+  isChristmasMode?: boolean;
 }
 
 const subjects = [
@@ -16,12 +18,15 @@ const subjects = [
   { id: 'Geschichte', translationKey: 'History', icon: History, color: 'text-rose-500', bg: 'bg-rose-50', border: 'border-rose-200', gradient: 'from-rose-400 to-pink-400' },
 ];
 
-const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
+const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language, isChristmasMode = false }) => {
   // State: 'selection' -> 'config' -> 'exercise'
   const [viewState, setViewState] = useState<'selection' | 'config' | 'exercise'>('selection');
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [customTopic, setCustomTopic] = useState('');
+  
+  // Config State
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  const [sourceMode, setSourceMode] = useState<'topic' | 'notes'>('topic');
+  const [customTopic, setCustomTopic] = useState(''); // Used for topic OR notes text
   
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,6 +40,9 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   const [showHint, setShowHint] = useState(false);
   const [imageError, setImageError] = useState(false);
   
+  // Oral Tutor State
+  const [showOralTutor, setShowOralTutor] = useState(false);
+
   const t = TRANSLATIONS[language];
 
   const handleSubjectSelect = (subjectId: string) => {
@@ -42,6 +50,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
     setViewState('config');
     setCustomTopic(''); // Reset topic
     setDifficulty('medium'); // Reset difficulty
+    setSourceMode('topic');
   };
 
   const startExercise = async () => {
@@ -67,13 +76,14 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
         ? (TRANSLATIONS.en as any)[subStyle?.translationKey || ''] || selectedSubject
         : selectedSubject;
 
+      // If sourceMode is 'notes', we pass the big text block as specificTopic
       const data = await Promise.race([
           generatePracticeQuestion(apiSubject, gradeLevel, customTopic, language, difficulty),
           timeoutPromise
       ]) as Exercise;
 
       setExercise(data);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       alert(language === 'en' ? "Could not generate a valid question. Please try again." : "Konnte keine Frage generieren. Bitte versuche es erneut.");
       setViewState('selection');
@@ -122,8 +132,6 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   // Normalize comparisons for logic (Case insensitive)
   const isCorrect = () => {
       if (!exercise) return false;
-      
-      // Flashcards are self-graded basically
       if (exercise.type === 'flashcard') return true; 
       
       const cleanAnswer = exercise.correctAnswer.trim().toLowerCase();
@@ -133,7 +141,6 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
       }
       
       if (exercise.type === 'true-false') {
-          // Map "Wahr" -> "true", "True" -> "true", "False" -> "false", "Falsch" -> "false"
           const mapBool = (val: string | null) => {
               if (!val) return '';
               const v = val.toLowerCase();
@@ -143,8 +150,28 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
           };
           return mapBool(selectedAnswer) === mapBool(exercise.correctAnswer);
       }
-      
       return selectedAnswer === exercise.correctAnswer;
+  };
+
+  // Check if subject is language related for Mic support
+  const isLanguageSubject = () => {
+      if (!selectedSubject) return false;
+      const sub = selectedSubject.toLowerCase();
+      return sub.includes('englisch') || sub.includes('english') || sub.includes('deutsch') || sub.includes('german');
+  };
+
+  const getTargetLanguage = () => {
+      if (!selectedSubject) return 'English';
+      const sub = selectedSubject.toLowerCase();
+      if (sub.includes('englisch') || sub.includes('english')) return 'English';
+      if (sub.includes('deutsch') || sub.includes('german')) return 'German';
+      return 'English';
+  };
+
+  const getSelectedSubjectName = () => {
+      if (!selectedSubject) return "";
+      const subStyle = getSubjectStyle(selectedSubject);
+      return (t as any)[subStyle?.translationKey || ''] || selectedSubject;
   };
 
   // RENDER HELPERS
@@ -158,7 +185,9 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                     {exercise.options?.map((option, idx) => {
                         let btnClass = "bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-violet-200 dark:hover:border-violet-600 hover:bg-violet-50/50 dark:hover:bg-violet-900/20 hover:text-violet-700 dark:hover:text-violet-300";
                         if (selectedAnswer === option) {
-                            btnClass = "bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200 dark:shadow-none transform scale-[1.02]";
+                            btnClass = isChristmasMode 
+                                ? "bg-red-600 border-red-600 text-white shadow-lg shadow-red-200 transform scale-[1.02]"
+                                : "bg-violet-600 border-violet-600 text-white shadow-lg shadow-violet-200 dark:shadow-none transform scale-[1.02]";
                         }
                         if (showResult) {
                             if (option === exercise.correctAnswer) {
@@ -197,10 +226,13 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                         const isSelected = selectedAnswer === localizedOption;
                         let btnClass = "bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-violet-200 dark:hover:border-violet-600";
 
-                        if (isSelected) btnClass = "bg-violet-600 border-violet-600 text-white";
+                        if (isSelected) {
+                            btnClass = isChristmasMode
+                                ? "bg-red-600 border-red-600 text-white"
+                                : "bg-violet-600 border-violet-600 text-white";
+                        }
                         
                         if (showResult) {
-                            // Robust comparison
                             const mapBool = (val: string) => {
                                 const v = val.toLowerCase();
                                 return (v === 'wahr' || v === 'true');
@@ -246,7 +278,7 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                                     ? (isCorrect()
                                         ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400' 
                                         : 'border-rose-500 bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400')
-                                    : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900/20 text-slate-700 dark:text-slate-100'
+                                    : (isChristmasMode ? 'border-red-100 bg-white focus:border-red-400 focus:ring-4 focus:ring-red-50 text-slate-700' : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-violet-500 focus:ring-4 focus:ring-violet-100 dark:focus:ring-violet-900/20 text-slate-700 dark:text-slate-100')
                             }`}
                         />
                         {showResult && (
@@ -278,14 +310,14 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                         <div className="absolute inset-0 backface-hidden bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-3xl shadow-lg flex flex-col items-center justify-center p-6 text-center">
                             <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4">Question / Term</span>
                             <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-slate-100">{exercise.question}</h3>
-                            <span className="absolute bottom-4 text-xs font-bold text-violet-500 dark:text-violet-400 flex items-center gap-1">
+                            <span className={`absolute bottom-4 text-xs font-bold flex items-center gap-1 ${isChristmasMode ? 'text-red-500' : 'text-violet-500 dark:text-violet-400'}`}>
                                 <RotateCcw className="w-3 h-3" /> {t.revealCard}
                             </span>
                         </div>
 
                         {/* Back */}
-                        <div className="absolute inset-0 backface-hidden bg-violet-600 dark:bg-violet-800 text-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 text-center" style={{ transform: 'rotateY(180deg)' }}>
-                            <span className="text-xs font-bold text-violet-200 uppercase tracking-widest mb-4">Answer</span>
+                        <div className={`absolute inset-0 backface-hidden text-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-6 text-center ${isChristmasMode ? 'bg-red-600' : 'bg-violet-600 dark:bg-violet-800'}`} style={{ transform: 'rotateY(180deg)' }}>
+                            <span className={`text-xs font-bold uppercase tracking-widest mb-4 ${isChristmasMode ? 'text-red-200' : 'text-violet-200'}`}>Answer</span>
                             <h3 className="text-xl sm:text-2xl font-black">{exercise.correctAnswer}</h3>
                         </div>
                     </div>
@@ -301,10 +333,15 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   // VIEW: SELECTION
   if (viewState === 'selection') {
     return (
-      <div className="animate-in slide-in-from-bottom-4 duration-500 h-full flex flex-col p-4 sm:p-6 transition-all">
+      <div className="animate-in slide-in-from-bottom-4 duration-500 h-full flex flex-col p-4 sm:p-6 transition-all relative">
+
         <div className="mb-6 text-center space-y-2 mt-2 sm:mt-6">
-            <h2 className="text-2xl sm:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400 flex items-center justify-center gap-2">
-                <BrainCircuit className="w-7 h-7 sm:w-8 sm:h-8 text-violet-500 dark:text-violet-400" />
+            <h2 className={`text-2xl sm:text-3xl font-black text-transparent bg-clip-text flex items-center justify-center gap-2 ${
+                isChristmasMode 
+                ? 'bg-gradient-to-r from-red-600 to-emerald-600' 
+                : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400'
+            }`}>
+                <BrainCircuit className={`w-7 h-7 sm:w-8 sm:h-8 ${isChristmasMode ? 'text-emerald-500' : 'text-violet-500 dark:text-violet-400'}`} />
                 {t.studyHub}
             </h2>
             <p className="text-slate-500 dark:text-slate-400 font-medium text-sm sm:text-base">{t.chooseSubject}</p>
@@ -316,7 +353,9 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
             <button
               key={sub.id}
               onClick={() => handleSubjectSelect(sub.id)}
-              className={`p-6 sm:p-8 rounded-[2rem] border-2 shadow-sm hover:shadow-xl transition-all duration-300 group text-left relative overflow-hidden bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-violet-200 dark:hover:border-violet-700 hover:-translate-y-1 active:scale-95`}
+              className={`p-6 sm:p-8 rounded-[2rem] border-2 shadow-sm hover:shadow-xl transition-all duration-300 group text-left relative overflow-hidden bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:-translate-y-1 active:scale-95 ${
+                  isChristmasMode ? 'hover:border-red-200' : 'hover:border-violet-200 dark:hover:border-violet-700'
+              }`}
               style={{ animationDelay: `${idx * 50}ms` }}
             >
               {/* Vibrant Background Blob */}
@@ -334,7 +373,9 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
               <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 mb-1 relative z-10">
                 {(t as any)[sub.translationKey] || sub.id}
               </h3>
-              <p className="text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 group-hover:text-violet-500 dark:group-hover:text-violet-400 transition-colors">
+              <p className={`text-xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1 transition-colors ${
+                  isChristmasMode ? 'group-hover:text-red-500' : 'group-hover:text-violet-500 dark:group-hover:text-violet-400'
+              }`}>
                  {t.start} <ArrowRight className="w-4 h-4" />
               </p>
             </button>
@@ -347,10 +388,19 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
   // VIEW: CONFIGURATION (Topic Selection)
   if (viewState === 'config' && selectedSubject) {
       const subStyle = getSubjectStyle(selectedSubject);
-      const subjectName = (t as any)[subStyle?.translationKey || ''] || selectedSubject;
+      const subjectName = getSelectedSubjectName();
       
       return (
         <div className="h-full flex flex-col animate-in zoom-in-95 duration-300 relative p-4 sm:p-6 items-center justify-center text-center transition-all">
+            <OralTutor 
+                isOpen={showOralTutor} 
+                onClose={() => setShowOralTutor(false)} 
+                language={language}
+                targetLanguage={getTargetLanguage()}
+                subject={subjectName}
+                topic={sourceMode === 'notes' ? 'Custom Notes' : (customTopic || 'General Knowledge')}
+            />
+
             <button 
                 onClick={goBack}
                 className="absolute top-4 left-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 font-bold text-xs flex items-center gap-1 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors z-10"
@@ -371,20 +421,64 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
 
             <div className="w-full max-w-sm space-y-4">
                 
-                {/* Topic Input */}
-                <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Pencil className="h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
-                    </div>
-                    <input
-                        type="text"
-                        value={customTopic}
-                        onChange={(e) => setCustomTopic(e.target.value)}
-                        placeholder={t.topicPlaceholder}
-                        className="block w-full pl-12 pr-4 py-3 sm:py-4 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:border-violet-400 focus:ring-4 focus:ring-violet-50 dark:focus:ring-violet-900/20 outline-none transition-all font-bold text-base sm:text-lg shadow-sm"
-                        autoFocus
-                    />
+                {/* Source Toggle */}
+                <div className="flex p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-2 border border-slate-200 dark:border-slate-700">
+                    <button 
+                        onClick={() => setSourceMode('topic')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                            sourceMode === 'topic' 
+                            ? (isChristmasMode ? 'bg-white text-red-600 shadow-sm' : 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-300 shadow-sm')
+                            : 'text-slate-400'
+                        }`}
+                    >
+                        {t.topic}
+                    </button>
+                    <button 
+                        onClick={() => setSourceMode('notes')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                            sourceMode === 'notes' 
+                            ? (isChristmasMode ? 'bg-white text-red-600 shadow-sm' : 'bg-white dark:bg-slate-600 text-violet-600 dark:text-violet-300 shadow-sm')
+                            : 'text-slate-400'
+                        }`}
+                    >
+                        {t.fromNotes}
+                    </button>
                 </div>
+
+                {/* Input Area */}
+                {sourceMode === 'topic' ? (
+                    <div className="relative group">
+                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <Pencil className={`h-5 w-5 transition-colors ${isChristmasMode ? 'text-slate-400 group-focus-within:text-red-500' : 'text-slate-400 group-focus-within:text-violet-500'}`} />
+                        </div>
+                        <input
+                            type="text"
+                            value={customTopic}
+                            onChange={(e) => setCustomTopic(e.target.value)}
+                            placeholder={t.topicPlaceholder}
+                            className={`block w-full pl-12 pr-4 py-3 sm:py-4 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none transition-all font-bold text-base sm:text-lg shadow-sm ${
+                                isChristmasMode 
+                                ? 'focus:border-red-400 focus:ring-4 focus:ring-red-50'
+                                : 'focus:border-violet-400 focus:ring-4 focus:ring-violet-50 dark:focus:ring-violet-900/20'
+                            }`}
+                            autoFocus
+                        />
+                    </div>
+                ) : (
+                    <div className="relative group">
+                        <textarea
+                            value={customTopic}
+                            onChange={(e) => setCustomTopic(e.target.value)}
+                            placeholder={t.pasteNotes}
+                            className={`block w-full p-4 h-32 bg-white dark:bg-slate-800 border-2 border-slate-100 dark:border-slate-700 rounded-2xl text-slate-700 dark:text-slate-200 placeholder-slate-400 outline-none transition-all font-medium text-sm shadow-sm resize-none ${
+                                isChristmasMode
+                                ? 'focus:border-red-400 focus:ring-4 focus:ring-red-50'
+                                : 'focus:border-violet-400 focus:ring-4 focus:ring-violet-50 dark:focus:ring-violet-900/20'
+                            }`}
+                            autoFocus
+                        />
+                    </div>
+                )}
                 
                 {/* Difficulty Selector */}
                 <div className="bg-slate-50 dark:bg-slate-800 p-1.5 rounded-2xl flex items-center justify-between gap-1 border border-slate-100 dark:border-slate-700">
@@ -409,17 +503,36 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                     </span>
                     <span className="text-slate-300 text-[10px]">•</span>
                     <span className="text-[10px] uppercase font-bold text-slate-400 dark:text-slate-500 tracking-wider">
-                        {customTopic ? t.specificTopic : t.randomTopic}
+                        {sourceMode === 'notes' ? t.fromNotes : (customTopic ? t.specificTopic : t.randomTopic)}
                     </span>
                 </div>
 
-                <button
-                    onClick={startExercise}
-                    className="w-full py-3 sm:py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-bold rounded-2xl shadow-lg shadow-violet-200 dark:shadow-none hover:shadow-violet-300 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2 text-base sm:text-lg"
-                >
-                    <Play className="w-5 h-5 fill-white" />
-                    {t.startQuiz}
-                </button>
+                {/* Main Action Buttons */}
+                <div className="flex gap-3">
+                    {/* Oral Tutor Button - Only for Language Subjects */}
+                    {isLanguageSubject() && (
+                        <button
+                            onClick={() => setShowOralTutor(true)}
+                            className="flex-1 py-3 sm:py-4 bg-emerald-500 text-white font-bold rounded-2xl shadow-lg hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                        >
+                            <Mic className="w-5 h-5" />
+                            <span>Oral</span>
+                        </button>
+                    )}
+
+                    <button
+                        onClick={startExercise}
+                        disabled={sourceMode === 'notes' && !customTopic.trim()}
+                        className={`flex-[2] py-3 sm:py-4 text-white font-bold rounded-2xl shadow-lg dark:shadow-none hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-2 text-base sm:text-lg disabled:opacity-50 disabled:shadow-none ${
+                            isChristmasMode 
+                            ? 'bg-gradient-to-r from-red-600 to-emerald-600 shadow-red-200 hover:shadow-red-300'
+                            : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 hover:shadow-violet-300'
+                        }`}
+                    >
+                        <Play className="w-5 h-5 fill-white" />
+                        {t.startQuiz}
+                    </button>
+                </div>
             </div>
         </div>
       );
@@ -438,8 +551,8 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
       {loading ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
             <div className="relative mb-8">
-                <div className="absolute inset-0 bg-violet-200 dark:bg-violet-900/30 rounded-full blur-2xl animate-pulse"></div>
-                <Loader2 className="w-16 h-16 sm:w-20 sm:h-20 text-violet-600 dark:text-violet-400 animate-spin relative z-10" />
+                <div className={`absolute inset-0 rounded-full blur-2xl animate-pulse ${isChristmasMode ? 'bg-red-200' : 'bg-violet-200 dark:bg-violet-900/30'}`}></div>
+                <Loader2 className={`w-16 h-16 sm:w-20 sm:h-20 animate-spin relative z-10 ${isChristmasMode ? 'text-red-600' : 'text-violet-600 dark:text-violet-400'}`} />
             </div>
             <h3 className="text-xl sm:text-2xl font-black text-slate-700 dark:text-slate-200 animate-pulse mb-2">
                 {t.creatingQuiz}
@@ -452,12 +565,20 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
       ) : exercise ? (
         <div className="flex-1 flex flex-col overflow-y-auto custom-scrollbar px-3 sm:px-6 pt-12 sm:pt-16 pb-4">
             {/* Question Card */}
-            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-[2rem] p-5 sm:p-6 shadow-xl shadow-slate-200/50 dark:shadow-none border border-white dark:border-slate-700 mb-6 relative animate-in slide-in-from-right-8">
+            <div className={`backdrop-blur-sm rounded-[2rem] p-5 sm:p-6 shadow-xl border mb-6 relative animate-in slide-in-from-right-8 ${
+                isChristmasMode 
+                ? 'bg-white/90 border-red-100 shadow-red-100'
+                : 'bg-white/80 dark:bg-slate-800/80 shadow-slate-200/50 dark:shadow-none border-white dark:border-slate-700'
+            }`}>
                 
                 {/* Meta Header */}
                 <div className="flex justify-between items-start mb-4">
-                    <span className="bg-gradient-to-r from-violet-100 to-fuchsia-100 dark:from-violet-900/30 dark:to-fuchsia-900/30 text-violet-700 dark:text-violet-300 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border border-white dark:border-slate-700">
-                        {exercise.topic}
+                    <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full border truncate max-w-[200px] ${
+                        isChristmasMode 
+                        ? 'bg-gradient-to-r from-red-50 to-amber-50 text-red-700 border-red-100'
+                        : 'bg-gradient-to-r from-violet-100 to-fuchsia-100 dark:from-violet-900/30 dark:to-fuchsia-900/30 text-violet-700 dark:text-violet-300 border-white dark:border-slate-700'
+                    }`}>
+                        {exercise.topic.substring(0, 30)}{exercise.topic.length > 30 ? '...' : ''}
                     </span>
                     <span className={`text-[10px] font-bold px-3 py-1 rounded-full border ${exercise.difficulty === 'Leicht' || exercise.difficulty === 'Easy' ? 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 border-green-100 dark:border-green-800' : (exercise.difficulty === 'Mittel' || exercise.difficulty === 'Medium') ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 border-amber-100 dark:border-amber-800' : 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border-red-100 dark:border-red-800'}`}>
                         {exercise.difficulty}
@@ -546,7 +667,11 @@ const ExerciseHub: React.FC<ExerciseHubProps> = ({ gradeLevel, language }) => {
                         ((exercise.type === 'multiple-choice' || exercise.type === 'true-false') && !selectedAnswer) ||
                         (exercise.type === 'fill-blank' && !fillInput.trim())
                     }
-                    className="w-full py-4 sm:py-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-bold rounded-2xl shadow-xl shadow-violet-200 dark:shadow-none disabled:opacity-50 disabled:shadow-none hover:shadow-fuchsia-300 hover:-translate-y-1 transition-all mt-auto text-base sm:text-lg"
+                    className={`w-full py-4 sm:py-5 text-white font-bold rounded-2xl shadow-xl disabled:opacity-50 disabled:shadow-none hover:-translate-y-1 transition-all mt-auto text-base sm:text-lg ${
+                        isChristmasMode
+                        ? 'bg-gradient-to-r from-red-600 to-emerald-600 shadow-red-200 hover:shadow-emerald-200'
+                        : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none hover:shadow-fuchsia-300'
+                    }`}
                 >
                     {exercise.type === 'flashcard' ? t.revealCard : t.checkAnswer}
                 </button>

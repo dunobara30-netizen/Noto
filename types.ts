@@ -1,5 +1,4 @@
 
-
 export interface Course {
   id: string;
   name: string;
@@ -87,6 +86,24 @@ export interface Exercise {
 export interface Source {
   title: string;
   url: string;
+}
+
+export interface GroundingChunk {
+  web?: {
+    uri?: string;
+    title?: string;
+  };
+  maps?: {
+    googleMapsUri?: string;
+    place?: {
+      name?: string;
+    };
+  };
+}
+
+export interface PlaceResult {
+  text: string;
+  chunks: GroundingChunk[];
 }
 
 export interface ChatMessage {
@@ -209,7 +226,6 @@ export const TRANSLATIONS = {
     incorrect: "Nicht ganz!",
     back: "Zurück",
     quit: "Beenden",
-    noImage: "Kein Bild verfügbar",
     // Difficulty
     difficulty: "Schwierigkeit",
     easy: "Leicht",
@@ -229,6 +245,22 @@ export const TRANSLATIONS = {
     checkCareer: "Checken",
     matchScore: "Match Score",
     careerAnalysis: "Analyse",
+    // Notes
+    fromNotes: "Aus eigenen Notizen",
+    pasteNotes: "Füge hier deinen Text oder deine Notizen ein...",
+    // Music & Theme
+    lofiRadio: "Lofi Radio",
+    christmasMode: "Christmas Mode",
+    treeVideo: "Baum-Video (Hintergrund)",
+    // Oral Tutor
+    oralTutor: "Mündlicher KI-Tutor",
+    micConsentTitle: "Mikrofon-Zugriff",
+    micConsentDesc: "Um den mündlichen Tutor zu nutzen, benötigen wir Zugriff auf dein Mikrofon. Die Daten werden an Google Gemini gesendet.",
+    iAgree: "Ich stimme zu",
+    cancel: "Abbrechen",
+    listening: "Ich höre zu...",
+    speaking: "Ich spreche...",
+    endCall: "Gespräch beenden",
     // Subject Names
     Math: "Mathematik",
     German: "Deutsch",
@@ -242,6 +274,15 @@ export const TRANSLATIONS = {
     revealCard: "Karte umdrehen",
     gotIt: "Gewusst",
     forgotIt: "Vergessen",
+    // New Features
+    simulationMode: "Noten-Simulator",
+    simulationModeDesc: "Was wäre wenn?",
+    locationSearchHeader: "Unis in deiner Nähe",
+    locationPlaceholder: "Deine Stadt / Region (z.B. Köln)",
+    findNearby: "Suchen",
+    findingPlaces: "Suche Orte...",
+    noPlacesFound: "Keine Orte gefunden.",
+    mapLinks: "Karten & Details",
   },
   en: {
     // Start Screen
@@ -257,36 +298,36 @@ export const TRANSLATIONS = {
     navCheck: "Check",
     navPractice: "Practice",
     installApp: "Install App",
-    mobileAccess: "Mobile",
+    mobileAccess: "App",
     yourGrades: "Your Grades",
     enterSubjects: "Enter your subjects",
-    lkHint: "(Higher Level = ★)", 
-    yourAverage: "Predicted Grade",
-    gradeLevel: "Year Group",
+    lkHint: "(Higher = ★)",
+    yourAverage: "Your Average",
+    gradeLevel: "Grade Level / Year",
     addCourse: "Add Subject",
-    analyzeBtn: "Check Future",
+    analyzeBtn: "Analyze Future",
     analyzing: "Analyzing...",
     coursePlaceholder: "Subject",
     resultsHeader: "Your Future Analysis",
     readyToCheck: "Ready to check?",
-    readyDesc: "Enter your grades and click 'Check Future'.",
+    readyDesc: "Enter your grades and click 'Analyze Future'.",
     yourResult: "Your Result",
-    profileType: "Your Archetype",
+    profileType: "Your Profile Type",
     trend: "Your Trend",
     current: "Current",
     target: "Target",
     aiAnalysis: "AI Analysis",
-    collegesHeader: "Matching Universities & Paths",
-    hurdle: "Requirement",
-    chatGreeting: "Hi! I'm Gem. I can search the web for UK universities and admission requirements for you. What do you want to know?",
+    collegesHeader: "Matching Colleges & Paths",
+    hurdle: "Hurdle",
+    chatGreeting: "Hi! I'm Gem. I can search the web for universities and entry requirements for you. What do you want to know?",
     chatGreetingAdmin: "SYSTEM: ONLINE. Awaiting commands.",
-    chatPlaceholder: "Ask about Unis, Entry Requirements...",
+    chatPlaceholder: "Ask about Unis, requirements...",
     chatPlaceholderAdmin: "> Execute...",
     studyHub: "Study Hub",
     chooseSubject: "Choose your subject for today",
     start: "Start",
     trainingFor: "Training",
-    whatTopic: "What do you want to practice exactly?",
+    whatTopic: "What do you want to practice?",
     topicPlaceholder: "e.g. Fractions, Past Tense, Poetry...",
     specificTopic: "Specific Topic",
     randomTopic: "Random Topic",
@@ -301,26 +342,41 @@ export const TRANSLATIONS = {
     incorrect: "Not quite!",
     back: "Back",
     quit: "Quit",
-    noImage: "No image available",
     // Difficulty
     difficulty: "Difficulty",
     easy: "Easy",
     medium: "Medium",
     hard: "Hard",
     // Uni Lookup
-    uniLookupHeader: "Specific Uni Check",
-    uniLookupPlaceholder: "Which Uni/School are you interested in?",
+    uniLookupHeader: "Dream Uni Check",
+    uniLookupPlaceholder: "Which Uni/School interests you?",
     checkAdmission: "Check Admission",
     checking: "Checking...",
-    admissionChance: "Admissibility",
+    admissionChance: "Your Chance",
     requirements: "Requirements",
-    gapAnalysis: "What you need to do",
+    gapAnalysis: "Gap Analysis",
     // Career Check
-    careerCheckHeader: "Dream Job Reality Check",
+    careerCheckHeader: "Dream Job Check",
     careerCheckPlaceholder: "What do you want to be? (e.g. Pilot, Doctor)",
-    checkCareer: "Check",
+    checkCareer: "Check Fit",
     matchScore: "Match Score",
     careerAnalysis: "Analysis",
+    // Notes
+    fromNotes: "From My Notes",
+    pasteNotes: "Paste your study notes or text here...",
+    // Music & Theme
+    lofiRadio: "Lofi Radio",
+    christmasMode: "Christmas Mode",
+    treeVideo: "Tree Video (Background)",
+    // Oral Tutor
+    oralTutor: "Oral AI Tutor",
+    micConsentTitle: "Microphone Access",
+    micConsentDesc: "To use the Oral Tutor, we need access to your microphone. Audio is sent to Google Gemini for processing.",
+    iAgree: "I Agree",
+    cancel: "Cancel",
+    listening: "Listening...",
+    speaking: "Speaking...",
+    endCall: "End Call",
     // Subject Names
     Math: "Math",
     German: "German",
@@ -331,8 +387,17 @@ export const TRANSLATIONS = {
     true: "True",
     false: "False",
     fillPlaceholder: "Type your answer...",
-    revealCard: "Flip Card",
+    revealCard: "Reveal Card",
     gotIt: "Got it",
     forgotIt: "Forgot it",
+    // New Features
+    simulationMode: "Grade Simulator",
+    simulationModeDesc: "What If Mode?",
+    locationSearchHeader: "Unis Near You",
+    locationPlaceholder: "Your City / Region",
+    findNearby: "Search",
+    findingPlaces: "Finding places...",
+    noPlacesFound: "No places found.",
+    mapLinks: "Maps & Details",
   }
 };

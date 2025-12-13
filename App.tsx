@@ -6,7 +6,42 @@ import ChatWidget from './components/ChatWidget';
 import ExerciseHub from './components/ExerciseHub';
 import { Course, GradeLevel, AnalysisResult, Language, TRANSLATIONS } from './types';
 import { analyzeAcademicProfile } from './services/geminiService';
-import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages, Moon, Sun, ArrowRight, Play, Home, Info, Scale, ChevronRight, Zap, Atom, Lightbulb, Quote, Menu, Settings, MessageCircle } from 'lucide-react';
+import { GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages, Moon, Sun, ArrowRight, Play, Home, Info, Scale, ChevronRight, Zap, Atom, Lightbulb, Quote, Menu, Settings, MessageCircle, Headphones, Volume2, VolumeX, Snowflake, Trees, Gift, Music, Radio, Pause } from 'lucide-react';
+
+// --- SNOWFALL COMPONENT ---
+const Snowfall = () => {
+  // Generate static snowflakes to avoid re-renders causing jumps
+  const [flakes] = useState(() => Array.from({ length: 60 }).map((_, i) => ({
+    id: i,
+    left: `${Math.random() * 100}%`,
+    animationDuration: `${Math.random() * 5 + 10}s`, // Slower, floatier snow
+    animationDelay: `${Math.random() * 5}s`,
+    opacity: Math.random() * 0.7 + 0.3,
+    size: Math.random() * 6 + 4 + 'px'
+  })));
+
+  return (
+    <div className="fixed inset-0 pointer-events-none z-30 overflow-hidden">
+      {flakes.map(flake => (
+        <div
+          key={flake.id}
+          className="absolute text-white select-none animate-snowfall drop-shadow-md"
+          style={{
+            left: flake.left,
+            top: '-20px',
+            fontSize: flake.size,
+            opacity: flake.opacity,
+            animationDuration: flake.animationDuration,
+            animationDelay: flake.animationDelay,
+            textShadow: '0 0 4px rgba(255,255,255,0.4)' // Glow effect
+          }}
+        >
+          ❄
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   const [hasStarted, setHasStarted] = useState(false);
@@ -54,8 +89,12 @@ const App: React.FC = () => {
   const [isBlurred, setIsBlurred] = useState(false);
   const [showPrivacyInfo, setShowPrivacyInfo] = useState(false);
   
-  // Theme State
+  // Theme & Music State
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMusicPlaying, setIsMusicPlaying] = useState(false);
+  const [isChristmasMode, setIsChristmasMode] = useState(false);
+  
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = TRANSLATIONS[language];
   const menuRef = useRef<HTMLDivElement>(null);
@@ -129,6 +168,58 @@ const App: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
 
   }, []);
+
+  // --- AUDIO LOGIC ---
+  const PLAYLIST = [
+    { title: "Lofi Study", url: "https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3", icon: Radio, color: "text-rose-500" }
+  ];
+
+  const [currentSong, setCurrentSong] = useState(PLAYLIST[0]);
+
+  // Toggle Christmas Visuals ONLY
+  const toggleChristmasMode = () => {
+      setIsChristmasMode(!isChristmasMode);
+  };
+
+  // Dedicated Music Selector Function
+  const handleMusicSelect = (song: typeof PLAYLIST[0]) => {
+      // If clicking the active song, just toggle play/pause
+      if (currentSong.url === song.url) {
+          setIsMusicPlaying(!isMusicPlaying);
+      } else {
+          // Change song and play
+          setIsMusicPlaying(false);
+          setCurrentSong(song);
+          setTimeout(() => setIsMusicPlaying(true), 100); 
+      }
+  };
+
+  // Handle Playback State
+  useEffect(() => {
+      const audio = audioRef.current;
+      if (!audio) return;
+
+      if (isMusicPlaying) {
+          const playPromise = audio.play();
+          if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                  console.log("Playback interaction required or interrupted:", error);
+                  // Don't auto-stop on interaction errors immediately to allow user to try again
+                  if (error.name === 'NotAllowedError') {
+                    setIsMusicPlaying(false); 
+                  }
+              });
+          }
+      } else {
+          audio.pause();
+      }
+  }, [isMusicPlaying, currentSong]); // Depend on currentSong to re-trigger play on change
+
+  const handleAudioError = () => {
+      console.warn("Audio stream error for URL:", currentSong.url);
+      setIsMusicPlaying(false);
+      alert(`Could not play "${currentSong.title}". Please select another track.`);
+  };
 
   // Update Quote on Language Change
   useEffect(() => {
@@ -279,55 +370,134 @@ const App: React.FC = () => {
   const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(qrSource)}`;
   const isLocalhost = currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1');
 
+  // -------- RENDER SETTINGS MENU ITEM HELPERS --------
+  const SettingsMenuContent = () => {
+    return (
+    <div className="space-y-1">
+        <div className="px-3 py-1.5 text-xs font-bold text-slate-400 uppercase tracking-widest">Music Station</div>
+        
+        {/* Playlist Items */}
+        {PLAYLIST.map((song, idx) => {
+            const isActive = currentSong.url === song.url;
+            const isPlaying = isActive && isMusicPlaying;
+            
+            return (
+                <button 
+                    key={idx}
+                    onClick={() => handleMusicSelect(song)}
+                    className={`w-full flex items-center justify-between p-2.5 rounded-xl transition-all text-sm font-bold ${
+                        isActive 
+                        ? (isDarkMode ? 'bg-white/10 text-white' : 'bg-slate-100 text-slate-900') 
+                        : (isDarkMode ? 'hover:bg-white/5 text-slate-400' : 'hover:bg-slate-50 text-slate-500')
+                    }`}
+                >
+                    <div className="flex items-center gap-3">
+                        <song.icon className={`w-4 h-4 ${isActive ? song.color : ''}`} />
+                        <span>{song.title}</span>
+                    </div>
+                    {isActive && (
+                        <div className={`text-xs ${song.color}`}>
+                            {isPlaying ? <Volume2 className="w-4 h-4 animate-pulse" /> : <Pause className="w-4 h-4" />}
+                        </div>
+                    )}
+                </button>
+            );
+        })}
+
+        <div className={`h-px my-2 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
+
+        {/* Christmas MODE Button (Visuals Only) */}
+        <button onClick={toggleChristmasMode} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+            <Gift className={`w-4 h-4 ${isChristmasMode ? 'text-red-500 fill-red-500' : 'text-slate-400'}`} />
+            <span className={isChristmasMode ? 'text-red-500' : ''}>{t.christmasMode}</span>
+        </button>
+
+        <div className={`h-px my-1 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
+
+        <button onClick={toggleLanguage} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+            <Languages className="w-4 h-4 text-fuchsia-400" />
+            <span>{language === 'de' ? 'Sprache: Deutsch' : 'Language: English'}</span>
+        </button>
+
+        <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+            {isDarkMode ? <Moon className="w-4 h-4 text-violet-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+            <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+        </button>
+        
+        <button onClick={() => setShowGradeInfo(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+            <Scale className="w-4 h-4 text-blue-400" />
+            <span>Info</span>
+        </button>
+
+        <div className={`h-px my-1 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
+
+        <button onClick={isAdmin ? handleLogout : () => setShowLogin(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+            {isAdmin ? <Unlock className="w-4 h-4 text-emerald-400" /> : <Lock className="w-4 h-4 text-slate-400" />}
+            <span>{isAdmin ? 'Admin Active' : 'Admin Login'}</span>
+        </button>
+    </div>
+    );
+  };
+
   // -------- START SCREEN (MODERN VIBRANT) --------
   if (!hasStarted) {
     return (
-      <div className={`fixed inset-0 font-['Inter'] overflow-hidden flex flex-col items-center justify-center p-6 transition-colors duration-500 ${isDarkMode ? 'bg-slate-900' : 'bg-slate-50'}`}>
+      <div className={`fixed inset-0 font-['Inter'] overflow-hidden flex flex-col items-center justify-center p-6 transition-colors duration-500 ${isChristmasMode ? 'bg-transparent' : (isDarkMode ? 'bg-slate-900' : 'bg-slate-50')}`}>
          
-         {/* ADAPTIVE VIBRANT BACKGROUND */}
-         <div className={`absolute inset-0 animate-gradient-xy transition-opacity duration-1000 ${isDarkMode ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-fuchsia-900 opacity-100' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-fuchsia-50 opacity-100'}`}></div>
+         {/* Audio Player */}
+         <audio 
+            key={currentSong.url} // Force remount on song change to ensure clean state
+            ref={audioRef} 
+            src={currentSong.url} 
+            loop 
+            onError={handleAudioError}
+         />
          
-         {/* Floating Blobs for Atmosphere (Adaptive) */}
-         <div className={`absolute top-[-10%] left-[-10%] w-[50vh] h-[50vh] rounded-full blur-[100px] animate-pulse ${isDarkMode ? 'bg-violet-600/40' : 'bg-violet-400/20'}`}></div>
-         <div className={`absolute bottom-[-10%] right-[-10%] w-[50vh] h-[50vh] rounded-full blur-[100px] animate-pulse delay-1000 ${isDarkMode ? 'bg-fuchsia-600/40' : 'bg-fuchsia-400/20'}`}></div>
+         {/* SNOWFALL EFFECT */}
+         {isChristmasMode && <Snowfall />}
+
+         {/* RICH CHRISTMAS BACKGROUND (Dark Red/Green/Slate Mix) */}
+         {isChristmasMode && (
+            <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-red-950 via-slate-900 to-emerald-950"></div>
+         )}
+
+         {/* STANDARD BACKGROUND */}
+         {!isChristmasMode && (
+            <div className={`absolute inset-0 animate-gradient-xy transition-opacity duration-1000 z-[-1] ${
+                isAdmin 
+                ? 'bg-gradient-to-br from-slate-950 via-emerald-950 to-black' 
+                : (isDarkMode ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-fuchsia-900 opacity-100' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-fuchsia-50 opacity-100')
+            }`}></div>
+         )}
          
-         {/* Noise Texture for Professional Polish (Visible on Dark) */}
-         {isDarkMode && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none"></div>}
+         {/* Floating Blobs (Only if no christmas to keep it clean) */}
+         {!isChristmasMode && (
+            <>
+                <div className={`absolute top-[-10%] left-[-10%] w-[50vh] h-[50vh] rounded-full blur-[100px] animate-pulse z-0 ${
+                     isDarkMode ? 'bg-violet-600/40' : 'bg-violet-400/20'
+                }`}></div>
+                <div className={`absolute bottom-[-10%] right-[-10%] w-[50vh] h-[50vh] rounded-full blur-[100px] animate-pulse delay-1000 z-0 ${
+                     isDarkMode ? 'bg-fuchsia-600/40' : 'bg-fuchsia-400/20'
+                }`}></div>
+            </>
+         )}
+         
+         {/* Noise Texture */}
+         {isDarkMode && !isChristmasMode && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay pointer-events-none z-0"></div>}
 
          {/* HEADER - SETTINGS MENU */}
          <div className="absolute top-6 right-6 z-40" ref={menuRef}>
             <button 
                 onClick={() => setShowMenu(!showMenu)}
-                className={`p-3 rounded-full backdrop-blur-xl shadow-lg border transition-all ${isDarkMode ? 'bg-black/20 border-white/20 hover:bg-white/10 text-white' : 'bg-white/60 border-white/40 hover:bg-white/80 text-slate-700'}`}
+                className={`p-3 rounded-full backdrop-blur-xl shadow-lg border transition-all ${isDarkMode || isChristmasMode ? 'bg-black/20 border-white/20 hover:bg-white/10 text-white' : 'bg-white/60 border-white/40 hover:bg-white/80 text-slate-700'}`}
             >
                 <MoreVertical className="w-6 h-6" />
             </button>
 
             {/* Dropdown Menu */}
             {showMenu && (
-                <div className={`absolute right-0 mt-3 w-56 backdrop-blur-xl rounded-2xl shadow-2xl border p-2 animate-in zoom-in-95 origin-top-right z-50 ${isDarkMode ? 'bg-black/80 border-white/10' : 'bg-white/90 border-white/50'}`}>
-                    
-                    <button onClick={toggleLanguage} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
-                        <Languages className="w-4 h-4 text-fuchsia-400" />
-                        <span>{language === 'de' ? 'Sprache: Deutsch' : 'Language: English'}</span>
-                    </button>
-
-                    <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
-                        {isDarkMode ? <Moon className="w-4 h-4 text-violet-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                        <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
-                    </button>
-                    
-                    <button onClick={() => setShowGradeInfo(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
-                        <Scale className="w-4 h-4 text-blue-400" />
-                        <span>Info</span>
-                    </button>
-
-                    <div className={`h-px my-1 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
-
-                    <button onClick={isAdmin ? handleLogout : () => setShowLogin(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
-                        {isAdmin ? <Unlock className="w-4 h-4 text-emerald-400" /> : <Lock className="w-4 h-4 text-slate-400" />}
-                        <span>{isAdmin ? 'Admin Active' : 'Admin Login'}</span>
-                    </button>
+                <div className={`absolute right-0 mt-3 w-64 backdrop-blur-xl rounded-2xl shadow-2xl border p-2 animate-in zoom-in-95 origin-top-right z-50 ${isDarkMode || isChristmasMode ? 'bg-black/80 border-white/10' : 'bg-white/90 border-white/50'}`}>
+                    <SettingsMenuContent />
                 </div>
             )}
          </div>
@@ -337,8 +507,12 @@ const App: React.FC = () => {
              
              {/* 3D Glowing Icon */}
              <div className="relative mx-auto w-32 h-32 mb-8 group perspective-1000">
-                 <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500 animate-pulse ${isDarkMode ? 'bg-violet-500' : 'bg-violet-400'}`}></div>
-                 <div className="relative w-full h-full bg-gradient-to-br from-violet-600 to-fuchsia-500 rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-white/20 transform group-hover:rotate-6 transition-transform duration-500">
+                 <div className={`absolute inset-0 rounded-full blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500 animate-pulse ${
+                     isChristmasMode ? 'bg-red-500' : (isDarkMode ? 'bg-violet-500' : 'bg-violet-400')
+                 }`}></div>
+                 <div className={`relative w-full h-full rounded-[2.5rem] shadow-2xl flex items-center justify-center border border-white/20 transform group-hover:rotate-6 transition-transform duration-500 ${
+                     isChristmasMode ? 'bg-gradient-to-br from-red-600 to-emerald-600' : 'bg-gradient-to-br from-violet-600 to-fuchsia-500'
+                 }`}>
                     {isAdmin ? (
                         <ShieldCheck className="w-16 h-16 text-white drop-shadow-md" />
                     ) : (
@@ -347,16 +521,22 @@ const App: React.FC = () => {
                  </div>
              </div>
 
-             <h1 className={`text-6xl sm:text-7xl font-black tracking-tighter mb-2 drop-shadow-lg ${isDarkMode ? 'text-white' : 'text-slate-800'}`}>
+             <h1 className={`text-6xl sm:text-7xl font-black tracking-tighter mb-2 drop-shadow-lg ${isDarkMode || isChristmasMode ? 'text-white' : 'text-slate-800'} ${isChristmasMode ? 'text-red-500 drop-shadow-none' : ''}`}>
                 GradePath
              </h1>
-             <p className={`text-lg sm:text-xl font-medium mb-10 tracking-wide ${isDarkMode ? 'text-violet-100/80' : 'text-slate-600'}`}>
+             <p className={`text-lg sm:text-xl font-medium mb-10 tracking-wide ${
+                 isDarkMode ? 'text-white/80' : 'text-slate-600'
+             } ${isChristmasMode ? 'text-emerald-400' : ''}`}>
                  {(t as any).welcomeSubtitle}
              </p>
 
              <button
                 onClick={() => setHasStarted(true)}
-                className={`group relative inline-flex items-center justify-center px-8 py-5 text-lg font-bold transition-all duration-200 backdrop-blur-md border rounded-full hover:scale-105 active:scale-95 w-full sm:w-auto min-w-[200px] ${isDarkMode ? 'bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-[0_0_30px_rgba(167,139,250,0.3)] hover:shadow-[0_0_50px_rgba(167,139,250,0.5)]' : 'bg-white/70 border-white/60 text-violet-700 hover:bg-white/90 shadow-xl shadow-violet-200/50'}`}
+                className={`group relative inline-flex items-center justify-center px-8 py-5 text-lg font-bold transition-all duration-200 backdrop-blur-md border rounded-full hover:scale-105 active:scale-95 w-full sm:w-auto min-w-[200px] ${
+                    isChristmasMode
+                    ? 'bg-red-600 border-red-500 text-white hover:bg-red-500 shadow-xl shadow-red-900/50'
+                    : (isDarkMode ? 'bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-[0_0_30px_rgba(167,139,250,0.3)]' : 'bg-white/70 border-white/60 text-violet-700 hover:bg-white/90 shadow-xl shadow-violet-200/50')
+                }`}
              >
                 <span className="mr-3">{(t as any).getStarted}</span>
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -364,16 +544,12 @@ const App: React.FC = () => {
 
              {/* Daily Quote Pill */}
              <div className="mt-12 mx-auto max-w-sm">
-                <div className={`backdrop-blur-md rounded-2xl p-4 border text-center transition-all cursor-default ${isDarkMode ? 'bg-black/20 border-white/5 hover:bg-black/30' : 'bg-white/40 border-white/40 hover:bg-white/50'}`}>
+                <div className={`backdrop-blur-md rounded-2xl p-4 border text-center transition-all cursor-default ${isDarkMode ? 'bg-black/20 border-white/5 hover:bg-black/30' : 'bg-white/40 border-white/40 hover:bg-white/50'} ${isChristmasMode ? 'bg-white/10 border-white/20' : ''}`}>
                     <div className="flex justify-center mb-2">
-                        <Quote className={`w-4 h-4 opacity-80 ${isDarkMode ? 'text-fuchsia-300' : 'text-fuchsia-600'}`} />
+                        <Quote className={`w-4 h-4 opacity-80 ${isChristmasMode ? 'text-amber-400' : (isDarkMode ? 'text-fuchsia-300' : 'text-fuchsia-600')}`} />
                     </div>
-                    <p className={`text-sm italic leading-relaxed ${isDarkMode ? 'text-violet-100' : 'text-slate-700'}`}>"{dailyQuote.text}"</p>
+                    <p className={`text-sm italic leading-relaxed ${isDarkMode ? 'text-slate-100' : 'text-slate-700'} ${isChristmasMode ? 'text-slate-200' : ''}`}>"{dailyQuote.text}"</p>
                 </div>
-             </div>
-
-             <div className={`mt-8 text-xs font-bold tracking-widest uppercase ${isDarkMode ? 'text-white/30' : 'text-slate-400'}`}>
-                 By Azez • AI Powered
              </div>
          </div>
 
@@ -462,27 +638,46 @@ const App: React.FC = () => {
 
   // -------- MAIN APP RENDER --------
   return (
-    <div className={`min-h-screen text-slate-800 dark:text-slate-100 flex flex-col overflow-x-hidden relative font-['Inter'] transition-colors duration-500 ${isAdmin ? 'bg-slate-950' : 'bg-slate-50 dark:bg-slate-900'}`}>
+    <div className={`min-h-screen text-slate-800 dark:text-slate-100 flex flex-col overflow-x-hidden relative font-['Inter'] transition-colors duration-500 ${isAdmin ? 'bg-slate-950' : (isChristmasMode ? 'bg-transparent' : 'bg-slate-50 dark:bg-slate-900')}`}>
       
-      {/* GLOBAL BACKGROUND - FIXED TO PREVENT MOBILE SCROLL JUMP */}
-      <div className={`fixed inset-0 -z-10 ${
-          isAdmin 
-          ? 'bg-gradient-to-br from-slate-950 via-emerald-950 to-black animate-gradient-xy' 
-          : 'bg-slate-50 dark:bg-slate-900'
-      }`}></div>
+      {/* Audio Player */}
+      <audio 
+        key={currentSong.url}
+        ref={audioRef} 
+        src={currentSong.url} 
+        loop 
+        onError={handleAudioError} 
+      />
+      
+      {/* SNOWFALL */}
+      {isChristmasMode && <Snowfall />}
+
+      {/* CHRISTMAS BACKGROUND */}
+      {isChristmasMode && (
+            <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-red-950 via-slate-900 to-emerald-950"></div>
+      )}
+
+      {/* STANDARD BACKGROUND */}
+      {!isChristmasMode && (
+        <div className={`fixed inset-0 z-[-1] animate-gradient-xy transition-all duration-1000 ${
+            isAdmin 
+            ? 'bg-gradient-to-br from-slate-950 via-emerald-950 to-black' 
+            : (isDarkMode ? 'bg-gradient-to-br from-indigo-900 via-purple-900 to-fuchsia-900 opacity-100' : 'bg-gradient-to-br from-indigo-50 via-purple-50 to-fuchsia-50 opacity-100')
+        }`}></div>
+      )}
       
       {/* Noise Overlay - Admin Only */}
       {isAdmin && <div className="fixed inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay -z-10 pointer-events-none"></div>}
       
       {/* Navbar */}
-      <header className={`backdrop-blur-xl border-b sticky top-0 z-40 shadow-sm transition-colors ${isAdmin ? 'bg-slate-900/80 border-slate-700' : 'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-slate-800'}`}>
+      <header className={`backdrop-blur-xl border-b sticky top-0 z-40 shadow-sm transition-colors ${isAdmin ? 'bg-slate-900/80 border-slate-700' : (isChristmasMode ? 'bg-white/10 border-white/10' : 'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-slate-800')}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           
           <div className="flex items-center gap-2 sm:gap-4">
               {/* Home / Back to Start Button */}
               <button 
                 onClick={handleBackToStart}
-                className="p-2 rounded-xl text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white/50 dark:hover:bg-slate-800 transition-all"
+                className={`p-2 rounded-xl transition-all ${isChristmasMode ? 'text-red-400 hover:text-white hover:bg-white/10' : 'text-slate-500 dark:text-slate-400 hover:text-violet-600 dark:hover:text-violet-400 hover:bg-white/50 dark:hover:bg-slate-800'}`}
                 title={(t as any).backToStart}
               >
                   <Home className="w-5 h-5" />
@@ -490,30 +685,30 @@ const App: React.FC = () => {
 
               {/* Logo Section */}
               <div className="flex items-center gap-2 sm:gap-3 select-none">
-                <div className={`p-2 sm:p-2.5 rounded-xl shadow-lg transition-transform duration-300 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 border border-emerald-500/30' : 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-violet-500/20'}`}>
+                <div className={`p-2 sm:p-2.5 rounded-xl shadow-lg transition-transform duration-300 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 border border-emerald-500/30' : (isChristmasMode ? 'bg-gradient-to-br from-red-600 to-emerald-600 shadow-red-500/20' : 'bg-gradient-to-br from-violet-600 to-fuchsia-600 shadow-violet-500/20')}`}>
                   <GraduationCap className={`w-5 h-5 sm:w-6 sm:h-6 ${isAdmin ? 'text-emerald-500' : 'text-white'}`} />
                 </div>
                 <div className="hidden sm:flex flex-col justify-center">
-                  <h1 className={`text-lg sm:text-2xl font-black tracking-tight ${isAdmin ? 'text-emerald-500' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400'}`}>
+                  <h1 className={`text-lg sm:text-2xl font-black tracking-tight ${isAdmin ? 'text-emerald-500' : (isChristmasMode ? 'bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-emerald-400' : 'bg-clip-text text-transparent bg-gradient-to-r from-violet-700 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400')}`}>
                     {isAdmin ? 'SYSTEM_OVERRIDE' : 'GradePath'}
                   </h1>
-                  {!isAdmin && <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider leading-none">by Azez</span>}
+                  {!isAdmin && <span className={`text-[10px] font-bold tracking-wider leading-none ${isChristmasMode ? 'text-slate-400' : 'text-slate-400 dark:text-slate-500'}`}>by Ihssan</span>}
                 </div>
               </div>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex items-center bg-white/40 dark:bg-slate-800/50 p-1 rounded-xl mx-2 border border-white/50 dark:border-slate-700 shrink-0 backdrop-blur-md">
+          <div className={`flex items-center p-1 rounded-xl mx-2 border shrink-0 backdrop-blur-md ${isChristmasMode ? 'bg-black/20 border-white/10' : 'bg-white/40 dark:bg-slate-800/50 border-white/50 dark:border-slate-700'}`}>
              <button
                 onClick={() => setActiveView('dashboard')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'dashboard' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm') : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'dashboard' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : (isChristmasMode ? 'bg-red-600 text-white shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                 <LayoutDashboard className="w-4 h-4" />
                 <span className="inline">{t.navCheck}</span>
              </button>
              <button
                 onClick={() => setActiveView('exercises')}
-                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'exercises' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm') : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all ${activeView === 'exercises' ? (isAdmin ? 'bg-slate-800 text-emerald-400 shadow-sm' : (isChristmasMode ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white dark:bg-slate-700 text-violet-600 dark:text-violet-300 shadow-sm')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
              >
                 <BrainCircuit className="w-4 h-4" />
                 <span className="inline">{t.navPractice}</span>
@@ -524,24 +719,24 @@ const App: React.FC = () => {
           <div className="flex items-center gap-1.5 sm:gap-2">
 
             {/* Desktop Security Tools Group (Hidden on Mobile) */}
-            <div className={`hidden md:flex items-center rounded-xl p-1 mr-2 border ${isAdmin ? 'bg-slate-800 border-slate-700' : 'bg-white/40 dark:bg-slate-800/50 border-white/50 dark:border-slate-700 backdrop-blur-sm'}`}>
+            <div className={`hidden md:flex items-center rounded-xl p-1 mr-2 border ${isAdmin ? 'bg-slate-800 border-slate-700' : (isChristmasMode ? 'bg-black/20 border-white/10' : 'bg-white/40 dark:bg-slate-800/50 border-white/50 dark:border-slate-700 backdrop-blur-sm')}`}>
                <button 
                  onClick={() => setShowPrivacyInfo(true)}
-                 className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all ${isAdmin ? 'text-slate-400 hover:text-white' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700'}`}
+                 className={`flex items-center gap-1 px-2 py-1.5 rounded-lg transition-all ${isAdmin ? 'text-slate-400 hover:text-white' : (isChristmasMode ? 'text-emerald-400 hover:text-emerald-300 hover:bg-white/10' : 'text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700')}`}
                  title="Privacy Status: Secure"
                >
                  <ShieldCheck className="w-4 h-4" />
                  <span className="text-xs font-bold hidden md:inline">Anon</span>
                </button>
 
-               <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-slate-600' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+               <div className={`w-px h-4 mx-1 ${isAdmin ? 'bg-slate-600' : (isChristmasMode ? 'bg-white/20' : 'bg-slate-300 dark:bg-slate-700')}`}></div>
 
                <button 
                  onClick={() => setIsBlurred(!isBlurred)}
                  className={`p-1.5 rounded-lg transition-all ${
                      isBlurred 
-                        ? (isAdmin ? 'bg-emerald-900/30 text-emerald-400' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300') 
-                        : (isAdmin ? 'text-slate-500 hover:text-slate-300' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700')
+                        ? (isAdmin ? 'bg-emerald-900/30 text-emerald-400' : (isChristmasMode ? 'bg-red-500/20 text-red-400' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300')) 
+                        : (isAdmin ? 'text-slate-500 hover:text-slate-300' : (isChristmasMode ? 'text-slate-400 hover:text-white hover:bg-white/10' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'))
                  }`}
                  title={isBlurred ? "Show Content" : "Hide Content (Stealth Mode)"}
                >
@@ -560,7 +755,11 @@ const App: React.FC = () => {
 
                  {/* Mobile Dropdown */}
                  {showMobileMenu && (
-                     <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-2 z-50 animate-in zoom-in-95 origin-top-right">
+                     <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-800 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-700 p-2 z-50 animate-in zoom-in-95 origin-top-right">
+                         <SettingsMenuContent />
+                         
+                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
+
                          <button 
                             onClick={() => { setIsChatOpen(true); setShowMobileMenu(false); }}
                             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-left text-sm font-bold text-slate-700 dark:text-slate-200"
@@ -568,7 +767,6 @@ const App: React.FC = () => {
                             <MessageCircle className="w-4 h-4 text-violet-500" />
                             AI Coach
                          </button>
-                         <div className="h-px bg-slate-100 dark:bg-slate-700 my-1"></div>
                          <button 
                             onClick={() => { setIsBlurred(!isBlurred); setShowMobileMenu(false); }}
                             className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-left text-sm font-bold text-slate-700 dark:text-slate-200"
@@ -599,7 +797,7 @@ const App: React.FC = () => {
             {/* QR Code */}
             <button 
               onClick={() => setShowQr(true)}
-              className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-white shadow-lg transition-all duration-300 border border-white/20 hover:scale-105 active:scale-95 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 hover:bg-slate-700 text-emerald-500' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none hover:shadow-violet-300'}`}
+              className={`flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl text-white shadow-lg transition-all duration-300 border border-white/20 hover:scale-105 active:scale-95 ${isAdmin ? 'bg-slate-800 shadow-emerald-900/20 hover:bg-slate-700 text-emerald-500' : (isChristmasMode ? 'bg-gradient-to-r from-red-600 to-emerald-600 shadow-red-200 hover:shadow-red-300' : 'bg-gradient-to-r from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none hover:shadow-violet-300')}`}
             >
               <QrCode className="w-5 h-5" />
               <span className="font-bold text-sm hidden sm:inline">{t.mobileAccess}</span>
@@ -625,6 +823,7 @@ const App: React.FC = () => {
                         onCalculate={handleCalculateAndAnalyze} 
                         isAnalyzing={isAnalyzing}
                         language={language}
+                        isChristmasMode={isChristmasMode}
                         />
                     </div>
                 </div>
@@ -633,14 +832,14 @@ const App: React.FC = () => {
                 <div id="results-container" className="lg:col-span-7 flex flex-col h-full">
                     {/* Header for Results */}
                     <div className="flex items-center gap-2 mb-4 sm:mb-6 pl-1 mt-4 lg:mt-0">
-                        <div className={`p-1.5 rounded-lg shadow-sm ${isAdmin ? 'bg-slate-800' : 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md'}`}>
-                            <Sparkles className={`w-5 h-5 ${isAdmin ? 'text-emerald-500' : 'text-amber-500'}`} />
+                        <div className={`p-1.5 rounded-lg shadow-sm ${isAdmin ? 'bg-slate-800' : (isChristmasMode ? 'bg-white/20 backdrop-blur-md' : 'bg-white/80 dark:bg-slate-800/80 backdrop-blur-md')}`}>
+                            <Sparkles className={`w-5 h-5 ${isAdmin ? 'text-emerald-500' : (isChristmasMode ? 'text-amber-400' : 'text-amber-500')}`} />
                         </div>
-                        <h2 className={`text-lg sm:text-xl font-bold ${isAdmin ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200'}`}>{t.resultsHeader}</h2>
+                        <h2 className={`text-lg sm:text-xl font-bold ${isAdmin ? 'text-slate-200' : (isChristmasMode ? 'text-slate-200' : 'text-slate-700 dark:text-slate-200')}`}>{t.resultsHeader}</h2>
                     </div>
                     
                     {/* Results Card */}
-                    <div className={`flex-1 backdrop-blur-xl rounded-[2rem] border shadow-xl overflow-hidden relative min-h-[400px] ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20'}`}>
+                    <div className={`flex-1 backdrop-blur-xl rounded-[2rem] border shadow-xl overflow-hidden relative min-h-[400px] ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : (isChristmasMode ? 'bg-white/90 border-white/60 shadow-black/50' : 'bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20')}`}>
                         <div className={`absolute inset-0 bg-gradient-to-b pointer-events-none ${isAdmin ? 'from-slate-800/40 to-transparent' : 'from-white/20 dark:from-slate-900/20 to-transparent'}`}></div>
                         <ResultsDashboard 
                             key={`results-${sessionKey}`}
@@ -649,14 +848,15 @@ const App: React.FC = () => {
                             courses={currentCourses}
                             gradeLevel={currentGradeLevel}
                             language={language}
+                            isChristmasMode={isChristmasMode}
                         />
                     </div>
                 </div>
             </div>
         ) : (
             <div className="min-h-[70vh] h-full">
-                <div className={`h-full w-full max-w-6xl mx-auto backdrop-blur-xl rounded-[2rem] border shadow-xl overflow-hidden relative ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : 'bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20'}`}>
-                    <ExerciseHub gradeLevel={currentGradeLevel} language={language} />
+                <div className={`h-full w-full max-w-6xl mx-auto backdrop-blur-xl rounded-[2rem] border shadow-xl overflow-hidden relative ${isAdmin ? 'bg-slate-800/50 border-slate-700 shadow-black/50' : (isChristmasMode ? 'bg-white/90 border-white/60 shadow-black/50' : 'bg-white/60 dark:bg-slate-800/60 border-white/40 dark:border-slate-700/60 shadow-slate-200/50 dark:shadow-black/20')}`}>
+                    <ExerciseHub gradeLevel={currentGradeLevel} language={language} isChristmasMode={isChristmasMode} />
                 </div>
             </div>
         )}
