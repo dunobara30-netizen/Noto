@@ -133,6 +133,34 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
               if (element === 'card') return 'bg-[#fdfaff] border-2 border-violet-100 rounded-[2.5rem] shadow-xl shadow-violet-100/50';
               if (element === 'badge') return 'bg-violet-400 text-white rounded-full border-2 border-white shadow-sm';
               break;
+          case 'steampunk':
+              if (element === 'buttonPrimary') return 'bg-[#cd7f32] border-2 border-[#8b4513] text-[#1a1a1a] hover:bg-[#8b4513] hover:text-[#cd7f32] shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] font-mono tracking-widest';
+              if (element === 'buttonSecondary') return 'bg-[#2b2b2b] border-2 border-[#cd7f32] text-[#cd7f32] hover:bg-[#3d3d3d] font-mono';
+              if (element === 'input') return 'bg-[#1a1a1a] border-[#cd7f32] text-[#cd7f32] focus:border-[#eaddcf] font-mono placeholder-[#8b4513]';
+              if (element === 'card') return 'bg-[#1a1a1a]/90 border-2 border-[#cd7f32] shadow-[0_0_15px_#cd7f32] rounded-xl';
+              if (element === 'badge') return 'bg-[#2b2b2b] border border-[#cd7f32] text-[#cd7f32] font-mono shadow-inner';
+              break;
+          case 'easter':
+              if (element === 'buttonPrimary') return 'bg-yellow-300 border-b-4 border-yellow-400 text-green-700 rounded-full font-bold hover:bg-yellow-200';
+              if (element === 'buttonSecondary') return 'bg-white border-2 border-pink-200 text-pink-500 rounded-full hover:bg-pink-50';
+              if (element === 'input') return 'bg-white border-2 border-green-200 text-purple-600 rounded-full focus:border-green-400 text-center font-bold';
+              if (element === 'card') return 'bg-[#fdfbf7] border-4 border-double border-pink-200 rounded-[2.5rem]';
+              if (element === 'badge') return 'bg-purple-300 text-white rounded-full border-2 border-white';
+              break;
+          case 'circus':
+              if (element === 'buttonPrimary') return 'bg-red-600 border-4 border-yellow-400 text-white font-black uppercase tracking-wider hover:bg-red-500 shadow-md';
+              if (element === 'buttonSecondary') return 'bg-white border-2 border-blue-500 text-blue-700 font-bold hover:bg-blue-50';
+              if (element === 'input') return 'bg-white border-2 border-red-500 text-blue-900 font-bold text-center focus:ring-yellow-400';
+              if (element === 'card') return 'bg-white border-4 border-red-500 rounded-xl shadow-[8px_8px_0px_#facc15]';
+              if (element === 'badge') return 'bg-blue-600 text-white border-2 border-yellow-400';
+              break;
+          case 'newyear':
+              if (element === 'buttonPrimary') return 'bg-black border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black transition-colors font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.5)]';
+              if (element === 'buttonSecondary') return 'bg-slate-900 border border-slate-700 text-slate-400 hover:border-yellow-500 hover:text-yellow-500';
+              if (element === 'input') return 'bg-black border border-yellow-500/50 text-yellow-100 focus:border-yellow-400 text-center font-light tracking-wide placeholder-slate-700';
+              if (element === 'card') return 'bg-slate-900/90 border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.1)] rounded-none';
+              if (element === 'badge') return 'bg-black border border-yellow-500 text-yellow-400';
+              break;
           case 'christmas':
               if (element === 'buttonPrimary') return 'bg-gradient-to-r from-red-600 to-emerald-600 shadow-red-200 hover:shadow-red-300 border border-red-500 text-white font-serif';
               if (element === 'buttonSecondary') return 'border-2 border-dashed border-red-200 text-red-400 hover:border-red-400 hover:text-red-600 hover:bg-red-50/50 font-serif';
@@ -223,6 +251,8 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
           <h2 className={`text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text flex items-center gap-2 ${
               currentTheme === 'plush' ? 'text-rose-400' :
               currentTheme === 'music' ? 'text-violet-500' :
+              currentTheme === 'steampunk' ? 'text-[#cd7f32] font-mono' :
+              currentTheme === 'newyear' ? 'text-yellow-400' :
               currentTheme === 'christmas' ? 'bg-gradient-to-r from-red-600 to-emerald-600' : 
               currentTheme === 'chalkboard' ? 'text-white font-serif' :
               currentTheme === 'pixel' ? 'text-[#0f380f] font-mono tracking-tighter' :
@@ -231,16 +261,16 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
               (currentTheme === 'autumn' ? 'text-orange-900 font-serif' :
               'bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400'))
           }`}>
-            <GraduationCap className={`w-7 h-7 sm:w-8 sm:h-8 ${currentTheme === 'plush' ? 'text-rose-300' : (currentTheme === 'music' ? 'text-violet-400' : (currentTheme === 'christmas' ? 'text-red-600' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'pixel' ? 'text-[#0f380f]' : (currentTheme === 'library' ? 'text-[#5c4033]' : (currentTheme === 'autumn' ? 'text-orange-700' : 'text-violet-600 dark:text-violet-400'))))))}`} />
+            <GraduationCap className={`w-7 h-7 sm:w-8 sm:h-8 ${currentTheme === 'plush' ? 'text-rose-300' : (currentTheme === 'music' ? 'text-violet-400' : (currentTheme === 'steampunk' ? 'text-[#8b4513]' : (currentTheme === 'newyear' ? 'text-yellow-500' : (currentTheme === 'christmas' ? 'text-red-600' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'pixel' ? 'text-[#0f380f]' : (currentTheme === 'library' ? 'text-[#5c4033]' : (currentTheme === 'autumn' ? 'text-orange-700' : 'text-violet-600 dark:text-violet-400'))))))))}`} />
             {t.yourGrades}
           </h2>
-          <p className={`text-xs sm:text-sm font-medium mt-1 ${currentTheme === 'plush' ? 'text-rose-300' : (currentTheme === 'music' ? 'text-violet-400' : (currentTheme === 'chalkboard' ? 'text-gray-300' : (currentTheme === 'library' ? 'text-[#5c4033]/70' : (currentTheme === 'autumn' ? 'text-orange-800/70' : 'text-slate-500 dark:text-slate-400'))))}`}>
+          <p className={`text-xs sm:text-sm font-medium mt-1 ${currentTheme === 'plush' ? 'text-rose-300' : (currentTheme === 'music' ? 'text-violet-400' : (currentTheme === 'steampunk' ? 'text-[#8b4513]' : (currentTheme === 'newyear' ? 'text-yellow-200/70' : (currentTheme === 'chalkboard' ? 'text-gray-300' : (currentTheme === 'library' ? 'text-[#5c4033]/70' : (currentTheme === 'autumn' ? 'text-orange-800/70' : 'text-slate-500 dark:text-slate-400'))))))}`}>
             {t.enterSubjects} {isAdvancedLevel ? t.lkHint : ''}
           </p>
         </div>
         
         <div className={`p-0.5 transform hover:scale-105 transition-transform duration-300 sm:self-start shrink-0 ${getThemeStyle('badge')}`}>
-          <div className={`rounded-[12px] px-5 py-3 text-center min-w-[100px] flex sm:block items-center justify-between gap-4 sm:gap-0 ${currentTheme === 'plush' ? 'bg-white/40 border-2 border-white rounded-full text-white' : (currentTheme === 'music' ? 'bg-white/40 border-2 border-white/50 rounded-full text-white' : (currentTheme === 'chalkboard' ? 'bg-[#333]' : 'bg-white/20 backdrop-blur-sm'))}`}>
+          <div className={`rounded-[12px] px-5 py-3 text-center min-w-[100px] flex sm:block items-center justify-between gap-4 sm:gap-0 ${currentTheme === 'plush' ? 'bg-white/40 border-2 border-white rounded-full text-white' : (currentTheme === 'music' ? 'bg-white/40 border-2 border-white/50 rounded-full text-white' : (currentTheme === 'steampunk' ? 'bg-[#1a1a1a] text-[#cd7f32]' : (currentTheme === 'newyear' ? 'bg-black text-yellow-400' : (currentTheme === 'chalkboard' ? 'bg-[#333]' : 'bg-white/20 backdrop-blur-sm'))))}`}>
             <span className={`text-[10px] font-bold uppercase tracking-wider block mb-0 sm:mb-0.5 opacity-80`}>{t.yourAverage}</span>
             <div className="text-3xl font-black leading-none">
               {average > 0 ? getClosestGradeLabel(average, language) : '-'}
@@ -260,7 +290,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
             onClick={() => setIsSimulationMode(!isSimulationMode)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all border ${
                 isSimulationMode 
-                ? (currentTheme === 'plush' ? 'bg-orange-50 text-rose-500 border-rose-200' : (currentTheme === 'music' ? 'bg-violet-50 text-violet-600 border-violet-200' : (currentTheme === 'christmas' ? 'bg-red-100 text-red-700 border-red-200' : (currentTheme === 'autumn' ? 'bg-orange-100 text-orange-800 border-orange-200' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700'))))
+                ? (currentTheme === 'plush' ? 'bg-orange-50 text-rose-500 border-rose-200' : (currentTheme === 'music' ? 'bg-violet-50 text-violet-600 border-violet-200' : (currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] border-[#cd7f32]' : (currentTheme === 'christmas' ? 'bg-red-100 text-red-700 border-red-200' : (currentTheme === 'autumn' ? 'bg-orange-100 text-orange-800 border-orange-200' : 'bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700')))))
                 : 'bg-transparent text-slate-400 border-transparent hover:bg-slate-50/50 dark:hover:bg-slate-800/50'
             }`}
           >
@@ -270,7 +300,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
       </div>
 
       <div className="mb-6 sm:mb-8 shrink-0">
-        <label className={`block text-sm font-bold mb-2 sm:mb-3 uppercase tracking-wide ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-gray-300' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-600 dark:text-slate-300'))))}`}>{t.gradeLevel}</label>
+        <label className={`block text-sm font-bold mb-2 sm:mb-3 uppercase tracking-wide ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-500' : (currentTheme === 'chalkboard' ? 'text-gray-300' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-600 dark:text-slate-300'))))))}`}>{t.gradeLevel}</label>
         <div className="relative">
           <select
             value={gradeLevel}
@@ -294,6 +324,8 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
             className={`flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3 border shadow-sm transition-all duration-300 group animate-in slide-in-from-bottom-2 ${
                 currentTheme === 'plush' ? 'rounded-[1.5rem] bg-white border-2 border-dashed border-rose-100 hover:border-rose-300' :
                 currentTheme === 'music' ? 'rounded-[1.5rem] bg-white border border-violet-100 hover:border-violet-300' :
+                currentTheme === 'steampunk' ? 'rounded-lg bg-[#2b2b2b] border-[#cd7f32] hover:bg-[#3d3d3d]' :
+                currentTheme === 'newyear' ? 'bg-black border border-yellow-500/30 hover:border-yellow-500' :
                 currentTheme === 'pixel' ? 'rounded-none border-2 border-[#0f380f] bg-white/80' : 
                 currentTheme === 'chalkboard' ? 'rounded-sm bg-[#333]/80 border-gray-600' :
                 currentTheme === 'library' ? 'rounded-lg bg-[#f5f5dc]/50 border-[#8b4513]/30' :
@@ -307,6 +339,8 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
             <div className={`h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 transition-colors ${
                 currentTheme === 'plush' ? 'rounded-full bg-rose-200 text-white' :
                 currentTheme === 'music' ? 'rounded-full bg-violet-200 text-white' :
+                currentTheme === 'steampunk' ? 'rounded-none bg-[#cd7f32] text-black' :
+                currentTheme === 'newyear' ? 'rounded-full bg-yellow-500 text-black' :
                 currentTheme === 'pixel' ? 'rounded-none bg-[#0f380f] text-[#9bbc0f]' :
                 currentTheme === 'library' ? 'rounded-full bg-[#3e2b22] text-[#f5f5dc]' :
                 currentTheme === 'autumn' ? 'rounded-full bg-orange-600 text-white' :
@@ -321,7 +355,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
               placeholder={t.coursePlaceholder}
               value={course.name}
               onChange={(e) => updateCourse(course.id, 'name', e.target.value)}
-              className={`flex-1 bg-transparent border-none focus:ring-0 font-bold placeholder-slate-400 dark:placeholder-slate-500 text-base sm:text-lg min-w-0 ${currentTheme === 'plush' ? 'text-stone-600 placeholder-rose-200' : (currentTheme === 'music' ? 'text-violet-700 placeholder-violet-200' : (currentTheme === 'chalkboard' ? 'text-white placeholder-gray-500' : (currentTheme === 'library' ? 'text-[#3e2b22] placeholder-[#8b4513]/50' : (currentTheme === 'autumn' ? 'text-orange-900 placeholder-orange-300' : 'text-slate-800 dark:text-slate-100'))))}`}
+              className={`flex-1 bg-transparent border-none focus:ring-0 font-bold placeholder-slate-400 dark:placeholder-slate-500 text-base sm:text-lg min-w-0 ${currentTheme === 'plush' ? 'text-stone-600 placeholder-rose-200' : (currentTheme === 'music' ? 'text-violet-700 placeholder-violet-200' : (currentTheme === 'steampunk' ? 'text-[#cd7f32] placeholder-[#8b4513] font-mono' : (currentTheme === 'newyear' ? 'text-yellow-400 placeholder-yellow-700' : (currentTheme === 'chalkboard' ? 'text-white placeholder-gray-500' : (currentTheme === 'library' ? 'text-[#3e2b22] placeholder-[#8b4513]/50' : (currentTheme === 'autumn' ? 'text-orange-900 placeholder-orange-300' : 'text-slate-800 dark:text-slate-100'))))))}`}
             />
             
             {/* LK/Advanced Toggle */}
@@ -338,7 +372,7 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
             <div className="relative shrink-0 min-w-[80px] sm:min-w-[100px] flex justify-end">
                 {isSimulationMode ? (
                     <div className="w-full flex flex-col items-end">
-                         <span className={`text-lg font-black ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'pixel' ? 'text-[#0f380f]' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-300'))))}`}>{course.grade}</span>
+                         <span className={`text-lg font-black ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'pixel' ? 'text-[#0f380f]' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-300'))))))}`}>{course.grade}</span>
                          <input 
                             type="range" 
                             min={minGrade}
@@ -357,6 +391,8 @@ const GradeCalculator: React.FC<GradeCalculatorProps> = ({
                           className={`w-16 sm:w-20 border-none py-1.5 sm:py-2 px-2 sm:px-3 text-base sm:text-lg font-black text-center appearance-none cursor-pointer focus:ring-2 ${
                               currentTheme === 'plush' ? 'bg-rose-100 text-rose-500 rounded-2xl' :
                               currentTheme === 'music' ? 'bg-violet-100 text-violet-600 rounded-2xl' :
+                              currentTheme === 'steampunk' ? 'bg-[#1a1a1a] text-[#cd7f32] rounded-none border border-[#cd7f32]' :
+                              currentTheme === 'newyear' ? 'bg-black text-yellow-400 border border-yellow-500 rounded-lg' :
                               currentTheme === 'pixel' ? 'bg-[#9bbc0f] text-[#0f380f] rounded-none' : 
                               currentTheme === 'chalkboard' ? 'bg-[#444] text-white rounded-sm' :
                               currentTheme === 'library' ? 'bg-[#eaddcf] text-[#3e2b22] rounded-lg' :

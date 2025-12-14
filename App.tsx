@@ -7,14 +7,15 @@ import ExerciseHub from './components/ExerciseHub';
 import { Course, GradeLevel, AnalysisResult, Language, TRANSLATIONS, Theme } from './types';
 import { analyzeAcademicProfile } from './services/geminiService';
 import { 
-  GraduationCap, Sparkles, QrCode, X, Smartphone, Download, Share, MoreVertical, Copy, ShieldCheck, 
+  GraduationCap, Sparkles, X, Smartphone, Share, MoreVertical, Copy, ShieldCheck, 
   Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages, Moon, Sun, ArrowRight, 
-  Play, Home, Scale, Radio, Volume2, VolumeX, Quote, MessageCircle, 
+  Play, Home, Scale, Radio, Volume2, VolumeX, Quote, MessageCircle, PenTool, Eraser, MicOff,
   // Theme Icons
-  Ghost, Gift, Rocket, Zap, Coffee, Trees, BookOpen, PenTool, ClipboardList, Library, Gamepad2, 
+  Ghost, Gift, Rocket, Zap, Coffee, Trees, BookOpen, ClipboardList, Library, Gamepad2, 
   Leaf, CloudRain, Umbrella, Bug, Circle, Cloud, Flower2, Lamp, Search, Hourglass, CloudMoon, Star, CloudFog,
-  Heart, Music, Triangle, AlertTriangle, CloudLightning, Wind, Eraser, Ruler, Disc, Utensils, Glasses,
-  IceCream, Sprout, Droplets, Timer, Files, Puzzle, MonitorPlay
+  Heart, Music, Triangle, AlertTriangle, CloudLightning, Wind, Ruler, Disc, Utensils, Glasses,
+  IceCream, Sprout, Droplets, Timer, Files, Puzzle, MonitorPlay, Settings, Settings2, Rabbit, PartyPopper, Tent, Anchor, Save, Cpu, Terminal, Snowflake, SunDim,
+  Backpack, Monitor, Coins
 } from 'lucide-react';
 
 // --- GENERIC ANIMATED BACKGROUND COMPONENT ---
@@ -26,13 +27,12 @@ interface ThemeRainProps {
 }
 
 const ThemeRain: React.FC<ThemeRainProps> = ({ items, colors = "text-white", count = 50, glow = false }) => {
-  // Generate static items to avoid re-renders causing jumps
   const [elements] = useState(() => Array.from({ length: count }).map((_, i) => ({
     id: i,
     left: `${Math.random() * 100}%`,
-    animationDuration: `${Math.random() * 8 + 12}s`, // Slow, floaty
+    animationDuration: `${Math.random() * 8 + 12}s`, 
     animationDelay: `${Math.random() * 10}s`,
-    opacity: Math.random() * 0.6 + 0.4, // Higher opacity as requested
+    opacity: Math.random() * 0.6 + 0.4,
     size: Math.random() * 1.5 + 1 + 'rem',
     item: items[Math.floor(Math.random() * items.length)]
   })));
@@ -61,13 +61,541 @@ const ThemeRain: React.FC<ThemeRainProps> = ({ items, colors = "text-white", cou
   );
 };
 
+// --- INTERACTIVE COMPONENTS & WIDGETS ---
+
+// 1. Firework Component (New Year)
+const Firework: React.FC<{ x: number, y: number, onComplete: () => void }> = ({ x, y, onComplete }) => {
+    useEffect(() => {
+        const timer = setTimeout(onComplete, 1500); 
+        return () => clearTimeout(timer);
+    }, [onComplete]);
+
+    return (
+        <div className="absolute pointer-events-none z-50" style={{ left: x, top: y }}>
+            <div className="relative">
+                {Array.from({ length: 12 }).map((_, i) => (
+                    <div 
+                        key={i} 
+                        className="absolute w-1 h-12 bg-gradient-to-t from-yellow-500 to-transparent origin-bottom animate-ping"
+                        style={{ 
+                            transform: `rotate(${i * 30}deg) translateY(-20px)`,
+                            animationDuration: '0.8s'
+                        }}
+                    ></div>
+                ))}
+                <div className="absolute -left-2 -top-2 w-4 h-4 bg-white rounded-full animate-ping"></div>
+            </div>
+        </div>
+    );
+};
+
+// 2. Interactive Easter Egg (Easter)
+const EasterSurprise: React.FC = () => {
+    const [popped, setPopped] = useState(false);
+    
+    const handleClick = () => {
+        if (!popped) {
+            setPopped(true);
+            setTimeout(() => setPopped(false), 4000);
+        }
+    };
+
+    return (
+        <div className="fixed bottom-4 right-8 z-50 w-40 h-48 flex items-end justify-center pointer-events-none">
+            <div className="relative w-full h-full flex items-end justify-center">
+                
+                {/* The Bunny (Hidden initially) */}
+                <div className={`absolute bottom-10 z-30 transition-transform duration-700 cubic-bezier(0.68, -0.55, 0.27, 1.55) ${popped ? 'translate-y-[-50px]' : 'translate-y-[20px]'}`}>
+                    <svg width="90" height="100" viewBox="0 0 100 100">
+                        {/* Ears */}
+                        <path d="M20 60 Q 15 10 35 40" fill="#fff" stroke="#f3f4f6" strokeWidth="2" />
+                        <path d="M25 50 Q 22 25 32 45" fill="#fbcfe8" />
+                        
+                        <path d="M80 60 Q 85 10 65 40" fill="#fff" stroke="#f3f4f6" strokeWidth="2" />
+                        <path d="M75 50 Q 78 25 68 45" fill="#fbcfe8" />
+                        
+                        {/* Head */}
+                        <circle cx="50" cy="70" r="28" fill="#fff" stroke="#e5e7eb" strokeWidth="1" />
+                        
+                        {/* Eyes */}
+                        <circle cx="40" cy="65" r="3" fill="#1f2937" />
+                        <circle cx="60" cy="65" r="3" fill="#1f2937" />
+                        <circle cx="41" cy="64" r="1" fill="#fff" />
+                        <circle cx="61" cy="64" r="1" fill="#fff" />
+                        
+                        {/* Nose */}
+                        <path d="M47 72 Q 50 75 53 72" fill="#fbcfe8" stroke="#f9a8d4" strokeWidth="1" />
+                        
+                        {/* Whiskers */}
+                        <path d="M35 72 L 20 70" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
+                        <path d="M35 74 L 22 76" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
+                        <path d="M65 72 L 80 70" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
+                        <path d="M65 74 L 78 76" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
+                    </svg>
+                </div>
+
+                {/* Egg Bottom (Front) */}
+                <div 
+                    className="absolute bottom-4 z-40 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
+                    onClick={handleClick}
+                >
+                    <svg width="100" height="80" viewBox="0 0 100 80" className="drop-shadow-xl">
+                        {/* Egg Shape Bottom */}
+                        <path d="M10 30 Q 10 75 50 75 Q 90 75 90 30 L 80 40 L 70 30 L 60 40 L 50 30 L 40 40 L 30 30 L 20 40 Z" fill="url(#eggGradient)" stroke="#e5e7eb" strokeWidth="1" />
+                        <defs>
+                            <linearGradient id="eggGradient" x1="0" x2="0" y1="0" y2="1">
+                                <stop offset="0%" stopColor="#fff" />
+                                <stop offset="100%" stopColor="#f3f4f6" />
+                            </linearGradient>
+                        </defs>
+                        {/* Decorations */}
+                        <path d="M20 55 Q 50 65 80 55" fill="none" stroke="#f472b6" strokeWidth="4" strokeLinecap="round" />
+                        <path d="M25 65 Q 50 75 75 65" fill="none" stroke="#60a5fa" strokeWidth="4" strokeLinecap="round" />
+                        <circle cx="50" cy="50" r="5" fill="#fcd34d" />
+                        <circle cx="30" cy="45" r="3" fill="#a78bfa" />
+                        <circle cx="70" cy="45" r="3" fill="#a78bfa" />
+                    </svg>
+                </div>
+
+                {/* Egg Top (Pops off) */}
+                <div className={`absolute bottom-[65px] z-40 pointer-events-none transition-all duration-500 ease-out ${popped ? 'translate-y-[-30px] rotate-[-20deg] opacity-0' : 'translate-y-0 rotate-0 opacity-100'}`}>
+                     <svg width="100" height="50" viewBox="0 0 100 50">
+                        <path d="M10 35 Q 10 5 50 5 Q 90 5 90 35 L 80 25 L 70 35 L 60 25 L 50 35 L 40 25 L 30 35 L 20 25 Z" fill="#fff" stroke="#e5e7eb" strokeWidth="1" />
+                        <path d="M30 20 Q 50 10 70 20" fill="none" stroke="#fcd34d" strokeWidth="3" strokeDasharray="4,4" />
+                     </svg>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// 3. Circus Cannon (Circus)
+const CircusCannon: React.FC = () => {
+  const [bursts, setBursts] = useState<{id: number}[]>([]);
+  const fire = () => {
+    const id = Date.now();
+    setBursts(prev => [...prev, { id }]);
+    setTimeout(() => setBursts(prev => prev.filter(b => b.id !== id)), 1000);
+  };
+  return (
+    <div className="absolute bottom-10 left-10 z-50">
+      <button onClick={fire} className="group relative transition-transform active:scale-95 hover:scale-105 cursor-pointer">
+        <div className="text-6xl -rotate-12">🎪</div>
+      </button>
+      {bursts.map(burst => (
+        <div key={burst.id} className="absolute left-[60px] top-[0px] pointer-events-none">
+           {Array.from({ length: 20 }).map((_, i) => (
+             <div key={i} className="absolute w-2 h-2 rounded-sm animate-out zoom-out fade-out slide-out-to-top-10 duration-1000"
+                style={{ backgroundColor: ['#ef4444', '#3b82f6', '#eab308'][i % 3], transform: `translate(${(Math.random() * 100)}px, -${(Math.random() * 100)}px)` }} />
+           ))}
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// 4. New Year Rocket
+const NewYearRocketWidget: React.FC = () => {
+    const [state, setState] = useState<'idle' | 'launching' | 'exploded'>('idle');
+    const launch = () => {
+        if (state !== 'idle') return;
+        setState('launching');
+        setTimeout(() => { setState('exploded'); setTimeout(() => setState('idle'), 2500); }, 1000);
+    };
+    return (
+        <div className="absolute bottom-10 right-10 z-50">
+            <div className={`transition-all duration-1000 ease-in ${state === 'launching' ? '-translate-y-[80vh] opacity-0' : (state === 'exploded' ? 'opacity-0' : 'translate-y-0 opacity-100')}`}>
+                <button onClick={launch} className={`hover:scale-110 transition-transform ${state !== 'idle' ? 'cursor-default' : 'cursor-pointer'}`}>
+                    <Rocket className="w-16 h-16 text-yellow-400 fill-red-600 -rotate-45 drop-shadow-[0_0_15px_rgba(234,179,8,0.6)]" />
+                </button>
+            </div>
+            {state === 'exploded' && (
+                <div className="fixed top-20 right-20 pointer-events-none"><div className="relative"><div className="absolute inset-0 w-4 h-4 bg-white rounded-full animate-ping"></div></div></div>
+            )}
+        </div>
+    );
+};
+
+// 5. Christmas Widget (Gift + Santa Sleigh)
+const ChristmasWidget: React.FC = () => {
+    const [santaFlying, setSantaFlying] = useState(false);
+    
+    const triggerSanta = () => {
+        if (santaFlying) return;
+        setSantaFlying(true);
+        setTimeout(() => setSantaFlying(false), 6000); // Animation duration
+    };
+
+    return (
+        <>
+            {/* Santa Sleigh Animation */}
+            {santaFlying && (
+                <div className="fixed top-20 -left-60 z-[60] animate-bear-walk-in" style={{ animationDuration: '6s', animationName: 'slide-across' }}>
+                    <div className="text-6xl filter drop-shadow-lg">🎅🛷🦌🦌</div>
+                    <style>{`
+                        @keyframes slide-across {
+                            0% { transform: translateX(-10vw) translateY(0) rotate(-5deg); }
+                            25% { transform: translateX(30vw) translateY(5vh) rotate(5deg); }
+                            50% { transform: translateX(60vw) translateY(-5vh) rotate(-5deg); }
+                            100% { transform: translateX(120vw) translateY(0) rotate(0deg); }
+                        }
+                    `}</style>
+                </div>
+            )}
+
+            {/* Gift Trigger */}
+            <div className="absolute bottom-10 left-10 z-50 pointer-events-auto cursor-pointer" onClick={triggerSanta}>
+                <div className={`transition-transform duration-500 hover:scale-110 hover:-translate-y-2`}>
+                    <Gift className="w-16 h-16 text-red-600 fill-red-100 drop-shadow-xl" />
+                </div>
+            </div>
+        </>
+    );
+};
+
+// 6. Halloween Widget (Ghost + Spider)
+const HalloweenWidget: React.FC = () => {
+    const [boo, setBoo] = useState(false);
+    const trigger = () => {
+        setBoo(true);
+        setTimeout(() => setBoo(false), 2000);
+    };
+    return (
+        <>
+            {/* Dangling Spider */}
+            <div className="absolute -top-10 left-10 z-50 group cursor-pointer">
+                 <div className="h-24 w-0.5 bg-slate-300/50 mx-auto group-hover:h-64 transition-all duration-700 ease-in-out"></div>
+                 <div className="relative -mt-1 group-hover:rotate-[360deg] transition-transform duration-700">
+                    <Bug className="w-12 h-12 text-slate-800 fill-purple-900 drop-shadow-lg" />
+                 </div>
+            </div>
+
+            {/* Ghost */}
+            <div className="absolute bottom-20 right-10 z-50 pointer-events-auto cursor-pointer" onClick={trigger}>
+                <div className="relative">
+                    <Ghost className={`w-16 h-16 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] animate-float ${boo ? 'scale-125' : ''}`} />
+                    {boo && <div className="absolute -top-10 -left-10 text-orange-500 font-black text-2xl animate-bounce">BOO!</div>}
+                </div>
+            </div>
+        </>
+    );
+};
+
+// 7. Space Voyager (Rocket + Star)
+const SpaceVoyager: React.FC = () => {
+    return (
+        <>
+            <div className="absolute top-1/3 -left-20 animate-fly-across pointer-events-none z-40 opacity-80">
+                <Rocket className="w-12 h-12 text-white rotate-90" />
+                <div className="w-20 h-1 bg-gradient-to-r from-transparent to-blue-500 absolute top-5 -left-20"></div>
+            </div>
+            <div className="absolute top-20 right-20 animate-pulse">
+                <Star className="w-8 h-8 text-yellow-200 fill-yellow-100" />
+            </div>
+        </>
+    );
+};
+
+// 8. Interactive Croissant (Coffee Theme)
+const CroissantWidget: React.FC = () => {
+    const [bites, setBites] = useState(0);
+    const handleClick = () => {
+        setBites(prev => prev < 3 ? prev + 1 : 0);
+    };
+    
+    // SVG Path changes based on bites
+    return (
+        <div className="absolute bottom-10 right-10 z-50 pointer-events-auto cursor-pointer hover:scale-105 transition-transform" onClick={handleClick}>
+            <div className="relative drop-shadow-lg">
+                <svg width="100" height="80" viewBox="0 0 100 80">
+                    {bites < 3 && (
+                        <path 
+                            d={bites === 0 
+                                ? "M20 50 Q 30 20 50 20 Q 70 20 80 50 Q 70 70 50 60 Q 30 70 20 50" 
+                                : bites === 1 
+                                ? "M35 45 Q 40 20 50 20 Q 70 20 80 50 Q 70 70 50 60 Q 40 60 35 45"
+                                : "M50 30 Q 60 25 70 40 Q 65 55 55 50 Z"
+                            }
+                            fill="#d97706" 
+                            stroke="#92400e" 
+                            strokeWidth="3" 
+                        />
+                    )}
+                    {bites === 3 && <text x="25" y="50" fontSize="40">😋</text>}
+                </svg>
+                {bites < 3 && <div className="absolute -top-4 right-0 bg-white/80 px-2 py-1 rounded text-[10px] font-bold text-amber-900 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">Bite me!</div>}
+            </div>
+        </div>
+    );
+};
+
+// 9. Retro Widgets (Pixel)
+const RetroWidgets: React.FC = () => {
+    return (
+        <>
+            <div className="absolute bottom-10 left-10 z-50 pointer-events-auto cursor-pointer hover:animate-spin">
+                <Gamepad2 className="w-16 h-16 text-[#0f380f]" />
+            </div>
+            <div className="absolute top-20 right-10 z-40 animate-bounce" style={{ animationDuration: '3s' }}>
+                <div className="w-12 h-12 bg-[#0f380f] relative shadow-lg">
+                    <div className="absolute top-2 left-2 w-2 h-2 bg-[#9bbc0f]"></div>
+                    <div className="absolute top-2 right-2 w-2 h-2 bg-[#9bbc0f]"></div>
+                    <div className="absolute bottom-2 left-2 w-8 h-2 bg-[#9bbc0f]"></div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+// 10. School Ruler Widget
+const SchoolWidget: React.FC = () => {
+    return (
+        <div className="absolute bottom-20 -left-10 rotate-45 pointer-events-none opacity-90 z-40">
+            <div className="w-72 h-14 bg-yellow-400 border-2 border-orange-600 rounded-sm flex items-end justify-between px-2 shadow-2xl relative">
+                {Array.from({length: 15}).map((_, i) => (
+                    <div key={i} className={`w-0.5 bg-black/60 ${i % 5 === 0 ? 'h-6' : 'h-3'}`}></div>
+                ))}
+                <span className="absolute top-1 left-2 text-[10px] font-bold text-black/50">RULER</span>
+            </div>
+        </div>
+    );
+};
+
+// 11. Chalkboard Widgets
+const ChalkboardWidgets: React.FC = () => {
+    return (
+        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
+            <div className="absolute top-1/4 left-10 font-serif text-white/40 text-4xl -rotate-12">E = mc²</div>
+            <div className="absolute bottom-1/3 right-20 font-serif text-white/40 text-3xl rotate-6">2 + 2 = 4</div>
+            <div className="absolute top-20 right-1/3 font-serif text-white/30 text-5xl">π</div>
+        </div>
+    );
+};
+
+// 12. Library Widget
+const LibraryWidget: React.FC = () => {
+    return (
+        <div className="absolute bottom-10 right-10 z-50 bg-[#3e2b22] p-4 rounded-full border-4 border-[#5c4033] shadow-2xl text-[#f5f5dc] transform rotate-12">
+            <MicOff className="w-10 h-10" />
+            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#5c4033] text-[#f5f5dc] text-[10px] font-bold px-2 py-0.5 rounded">SHHH</div>
+        </div>
+    );
+};
+
+// 13. Exam Widget
+const ExamWidget: React.FC = () => {
+    return (
+        <div className="absolute top-24 right-6 z-40 rotate-12 bg-white p-4 border-2 border-red-600 shadow-xl rounded-lg w-24 h-32 flex flex-col items-center justify-center">
+            <div className="text-6xl font-black text-red-600 font-serif">A+</div>
+            <div className="w-16 h-1 bg-red-600 mt-1 rounded-full"></div>
+            <div className="text-xs text-red-600 font-bold mt-2 rotate-[-10deg]">Perfect!</div>
+        </div>
+    );
+};
+
+// 14. Summer Widget
+const SummerWidget: React.FC = () => {
+    return (
+        <>
+            <div className="absolute -top-20 -right-20 animate-spin-slow pointer-events-none z-0">
+                <Sun className="w-64 h-64 text-yellow-400 fill-yellow-200 opacity-90 drop-shadow-2xl" />
+            </div>
+            <div className="absolute bottom-10 right-10 z-50 hover:-translate-y-2 transition-transform cursor-pointer">
+                <div className="relative">
+                    <IceCream className="w-20 h-20 text-pink-400 fill-pink-100 drop-shadow-xl" />
+                    <div className="absolute top-0 right-0 w-3 h-3 bg-white rounded-full opacity-60"></div>
+                </div>
+            </div>
+        </>
+    );
+};
+
+// 15. Autumn Widget (Maple Leaf)
+const AutumnWidget: React.FC = () => {
+    const [flutter, setFlutter] = useState(false);
+    return (
+        <div 
+            className="absolute bottom-8 right-8 z-50 pointer-events-auto cursor-pointer"
+            onClick={() => { setFlutter(true); setTimeout(() => setFlutter(false), 1000); }}
+        >
+            <div className={`origin-bottom ${flutter ? 'animate-bounce' : 'animate-bear-waddle'}`} style={{ animationDuration: '3s' }}>
+                <svg width="100" height="100" viewBox="0 0 100 100" className="drop-shadow-xl filter saturate-150">
+                    <path 
+                        d="M50 15 
+                           C 60 5, 75 25, 70 35 
+                           C 85 30, 95 50, 85 60 
+                           C 95 70, 75 90, 60 85 
+                           C 60 95, 55 100, 50 95 
+                           C 45 100, 40 95, 40 85 
+                           C 25 90, 5 70, 15 60 
+                           C 5 50, 15 30, 30 35 
+                           C 25 25, 40 5, 50 15 Z" 
+                        fill="#ea580c" 
+                        stroke="#9a3412" 
+                        strokeWidth="2" 
+                    />
+                    <path d="M50 95 L 50 40" stroke="#9a3412" strokeWidth="2" />
+                    <path d="M50 65 L 70 50" stroke="#9a3412" strokeWidth="1" />
+                    <path d="M50 65 L 30 50" stroke="#9a3412" strokeWidth="1" />
+                    <path d="M50 50 L 50 25" stroke="#9a3412" strokeWidth="1" />
+                </svg>
+            </div>
+        </div>
+    );
+};
+
+// 16. Neon Widget
+const NeonWidget: React.FC = () => {
+    return (
+        <div className="absolute top-28 left-6 z-40 border-4 border-fuchsia-500 p-3 rounded-xl shadow-[0_0_20px_#d946ef] animate-pulse bg-black/50 backdrop-blur-md rotate-[-5deg]">
+            <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 drop-shadow-[0_0_5px_#fff] tracking-widest">OPEN</span>
+        </div>
+    );
+};
+
+// 17. Night Widget
+const NightWidget: React.FC = () => {
+    return (
+        <div className="absolute top-12 right-12 z-40 animate-pulse">
+            <Moon className="w-24 h-24 text-slate-200 fill-slate-100 drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]" />
+        </div>
+    );
+};
+
+// 18. Whiteboard Overlay
+const WhiteboardOverlay: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen, onClose }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const [isDrawing, setIsDrawing] = useState(false);
+    const [color, setColor] = useState('#000000');
+
+    useEffect(() => {
+        if (isOpen && canvasRef.current) {
+            const canvas = canvasRef.current;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+                ctx.lineCap = 'round';
+                ctx.lineWidth = 3;
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height); // White background
+            }
+        }
+    }, [isOpen]);
+
+    const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+        setIsDrawing(true);
+        draw(e);
+    };
+
+    const stopDraw = () => {
+        setIsDrawing(false);
+        const ctx = canvasRef.current?.getContext('2d');
+        if (ctx) ctx.beginPath();
+    };
+
+    const draw = (e: React.MouseEvent | React.TouchEvent) => {
+        if (!isDrawing || !canvasRef.current) return;
+        const ctx = canvasRef.current.getContext('2d');
+        if (!ctx) return;
+
+        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+
+        ctx.strokeStyle = color;
+        ctx.lineTo(clientX, clientY);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(clientX, clientY);
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] bg-white cursor-crosshair touch-none">
+            <canvas 
+                ref={canvasRef}
+                onMouseDown={startDraw}
+                onMouseUp={stopDraw}
+                onMouseMove={draw}
+                onTouchStart={startDraw}
+                onTouchEnd={stopDraw}
+                onTouchMove={draw}
+                className="absolute inset-0 w-full h-full"
+            />
+            <div className="absolute top-4 left-4 flex gap-4 p-2 bg-slate-100 rounded-xl shadow-md border border-slate-200">
+                <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg"><X className="w-5 h-5" /></button>
+                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
+                <button onClick={() => {
+                    const ctx = canvasRef.current?.getContext('2d');
+                    if (ctx && canvasRef.current) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+                }} className="p-2 hover:bg-slate-200 rounded-lg"><Eraser className="w-5 h-5" /></button>
+            </div>
+        </div>
+    );
+};
+
+// 19. Gem Avatar
+const GemAvatar: React.FC<{ mood: 'happy' | 'neutral' | 'sad' }> = ({ mood }) => {
+    return (
+        <div className="w-24 h-24 relative animate-bear-hop">
+            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
+                <circle cx="50" cy="50" r="45" fill="#a78bfa" stroke="#8b5cf6" strokeWidth="2" />
+                <circle cx="35" cy="40" r="5" fill="white" />
+                <circle cx="35" cy="40" r="2" fill="black" />
+                <circle cx="65" cy="40" r="5" fill="white" />
+                <circle cx="65" cy="40" r="2" fill="black" />
+                {mood === 'happy' && <path d="M35 60 Q 50 75 65 60" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" />}
+                {mood === 'neutral' && <line x1="35" y1="65" x2="65" y2="65" stroke="white" strokeWidth="3" strokeLinecap="round" />}
+                {mood === 'sad' && <path d="M35 70 Q 50 55 65 70" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" />}
+                <line x1="20" y1="20" x2="35" y2="35" stroke="#8b5cf6" strokeWidth="3" />
+                <circle cx="20" cy="20" r="3" fill="#c4b5fd" />
+                <line x1="80" y1="20" x2="65" y2="35" stroke="#8b5cf6" strokeWidth="3" />
+                <circle cx="80" cy="20" r="3" fill="#c4b5fd" />
+            </svg>
+        </div>
+    );
+};
+
 // --- THEME DECORATIONS (ALIVE, TRANSPARENT, SPACIOUS WIDGETS) ---
 const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ theme, isDarkMode }) => {
+    const [chestOpen, setChestOpen] = useState(false);
+    const [glitching, setGlitching] = useState(false);
+    const [gongHit, setGongHit] = useState(false);
+    const [gumballs, setGumballs] = useState<{id: number, color: string, left: string}[]>([]);
+    const [ripples, setRipples] = useState<{id: number}[]>([]);
+    const [hackMode, setHackMode] = useState(false);
+
+    const triggerHack = () => {
+        setGlitching(true);
+        setHackMode(true);
+        setTimeout(() => {
+            setHackMode(false);
+            setGlitching(false);
+        }, 3000);
+    };
+
+    const hitGong = () => {
+        setGongHit(true);
+        const id = Date.now();
+        setRipples(prev => [...prev, { id }]);
+        setTimeout(() => setGongHit(false), 300);
+        setTimeout(() => setRipples(prev => prev.filter(r => r.id !== id)), 2000);
+    };
+
+    const dispenseGumball = () => {
+        const colors = ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-green-400', 'bg-purple-400'];
+        const id = Date.now();
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const left = `${Math.random() * 60 + 20}%`;
+        setGumballs(prev => [...prev, { id, color, left }]);
+        setTimeout(() => setGumballs(prev => prev.filter(g => g.id !== id)), 2000);
+    };
+
     switch (theme) {
         case 'plush':
              return (
                  <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Sewing Button - Top Left (Restored) */}
                     <div className="absolute top-10 left-10 w-24 h-24 opacity-90 animate-in slide-in-from-left duration-[2s]">
                         <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
                             <circle cx="50" cy="50" r="40" fill="#F48FB1" stroke="#F06292" strokeWidth="2" />
@@ -80,43 +608,57 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
                             <line x1="60" y1="40" x2="40" y2="60" stroke="#EC407A" strokeWidth="4" strokeLinecap="round" />
                         </svg>
                     </div>
-                    {/* Green Wool Ball - Bottom Right (Matching Image) */}
                     <div className="absolute bottom-10 right-10 w-32 h-32 opacity-90 animate-bounce" style={{ animationDuration: '4s' }}>
                         <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
-                            {/* Main Ball Body */}
-                            <circle cx="50" cy="50" r="40" fill="#86EFAC" /> {/* Light Green */}
-                            {/* Yarn Strands */}
+                            <circle cx="50" cy="50" r="40" fill="#86EFAC" /> 
                             <path d="M20 40 Q 50 10 80 40" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
                             <path d="M15 50 Q 50 20 85 50" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
                             <path d="M20 60 Q 50 90 80 60" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
                             <path d="M30 30 Q 70 70 40 80" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
                             <path d="M60 20 Q 30 50 70 80" stroke="#86EFAC" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            {/* Loose Strand */}
                             <path d="M85 60 Q 95 70 90 90" stroke="#22C55E" strokeWidth="4" strokeLinecap="round" fill="none" />
                         </svg>
                     </div>
                  </div>
              );
+        case 'steampunk':
+            return (
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                    <div className="absolute -top-10 -right-10 w-64 h-64 opacity-40 animate-spin-slow">
+                        <Settings className="w-full h-full text-amber-700" />
+                    </div>
+                    <div className="absolute bottom-20 -left-10 w-40 h-40 opacity-30 animate-spin-reverse-slow">
+                        <Settings2 className="w-full h-full text-stone-600" />
+                    </div>
+                </div>
+            );
+        case 'easter':
+            return <EasterSurprise />; 
+        case 'circus':
+            return (
+                <>
+                    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                        <div className="absolute bottom-10 right-10 opacity-90 animate-bounce" style={{ animationDuration: '3s' }}>
+                            <div className="text-7xl drop-shadow-lg">🍿</div>
+                        </div>
+                    </div>
+                    <CircusCannon />
+                </>
+            );
         case 'music':
             return (
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Vinyl Record - Top Left */}
                     <div className="absolute top-10 left-10 w-32 h-32 opacity-90 animate-spin-slow">
                         <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl">
-                            {/* Disc */}
                             <circle cx="50" cy="50" r="48" fill="#1E1B2E" />
-                            {/* Grooves */}
                             <circle cx="50" cy="50" r="40" stroke="#2D2A3E" strokeWidth="2" />
                             <circle cx="50" cy="50" r="32" stroke="#2D2A3E" strokeWidth="2" />
                             <circle cx="50" cy="50" r="24" stroke="#2D2A3E" strokeWidth="2" />
-                            {/* Label */}
                             <circle cx="50" cy="50" r="16" fill="#F472B6" />
                             <circle cx="50" cy="50" r="3" fill="#1E1B2E" />
-                            {/* Reflection */}
                             <path d="M20 50 A 30 30 0 0 1 80 50" stroke="white" strokeWidth="4" strokeOpacity="0.1" strokeLinecap="round" />
                         </svg>
                     </div>
-                    {/* Floating Notes - Bottom Right */}
                     <div className="absolute bottom-12 right-10 w-32 h-32 opacity-90 animate-bounce" style={{ animationDuration: '3s' }}>
                         <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
                             <path d="M30 70 L30 30 L70 20 L70 60" stroke="#8B5CF6" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
@@ -127,259 +669,158 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
                     </div>
                 </div>
             );
-        case 'halloween':
+        case 'newyear':
+            return (
+                <>
+                    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                        <div className="absolute top-20 right-10 opacity-90 animate-pulse delay-500">
+                            <div className="text-7xl rotate-12 drop-shadow-[0_0_15px_rgba(253,224,71,0.5)]">🥂</div>
+                        </div>
+                        <div className="absolute bottom-20 left-10 opacity-90 animate-bounce" style={{ animationDuration: '2.5s' }}>
+                            <PartyPopper className="w-32 h-32 text-yellow-400 -rotate-45 drop-shadow-xl" />
+                        </div>
+                    </div>
+                    <NewYearRocketWidget />
+                </>
+            );
+        case 'deepsea':
             return (
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Hanging Spider - Top Right */}
-                    <div className="absolute -top-10 right-10 flex flex-col items-center animate-in slide-in-from-top duration-[2000ms] opacity-90">
-                        <div className="w-0.5 h-32 bg-slate-400/50"></div>
-                        <Bug className="w-20 h-20 text-slate-800 dark:text-slate-200 animate-bounce drop-shadow-xl" style={{ animationDuration: '3s' }} />
+                    <div className="absolute -top-10 left-20 animate-in slide-in-from-top duration-1000">
+                        <div className="w-1 h-32 bg-slate-700 mx-auto"></div>
+                        <Anchor className="w-24 h-24 text-slate-800 fill-slate-900 drop-shadow-2xl" />
                     </div>
-                    {/* Floating Ghost - Bottom Left */}
-                    <div className="absolute bottom-20 -left-6 opacity-80 animate-pulse" style={{ animationDuration: '4s' }}>
-                        <Ghost className="w-32 h-32 text-slate-300 drop-shadow-2xl rotate-12" />
+                    <div className="absolute bottom-10 left-10 pointer-events-auto cursor-pointer" onClick={() => setChestOpen(!chestOpen)}>
+                        <div className={`transition-transform duration-500 ${chestOpen ? 'scale-110' : 'hover:scale-105'}`}>
+                            <div className="text-8xl drop-shadow-2xl filter brightness-90">{chestOpen ? '💎' : '🧳'}</div>
+                            {chestOpen && <div className="absolute -top-10 left-0 animate-ping text-4xl">✨</div>}
+                        </div>
                     </div>
-                    {/* Fog - Bottom Right */}
-                    <div className="absolute -bottom-10 -right-10 opacity-60">
-                        <CloudFog className="w-64 h-64 text-purple-800/40 dark:text-purple-400/20" />
+                    <div className="absolute bottom-0 right-20 w-8 h-32 bg-yellow-600 rounded-t-full border-4 border-yellow-800 animate-pulse">
+                        <div className="w-16 h-8 bg-yellow-600 absolute top-0 left-0 rounded-r-full border-4 border-yellow-800 border-l-0"></div>
+                        <div className="w-4 h-4 bg-cyan-300 rounded-full absolute top-2 right-2 animate-pulse"></div>
                     </div>
                 </div>
             );
-        case 'christmas':
+        case 'cyberpunk':
             return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Hanging Ornament - Top Left */}
-                    <div className="absolute -top-4 left-10 flex flex-col items-center animate-in slide-in-from-top duration-[1500ms] opacity-90">
-                        <div className="w-0.5 h-24 bg-red-300/50"></div>
-                        <div className="relative group">
-                            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-red-600 to-red-800 shadow-xl border-4 border-white/20 flex items-center justify-center animate-spin-slow">
-                                <Sparkles className="w-12 h-12 text-white/60" />
+                <>
+                    <div className={`fixed inset-0 pointer-events-none overflow-hidden z-50 ${glitching ? 'animate-pulse opacity-50' : ''}`}>
+                        <div className="absolute top-20 right-20 animate-bounce" style={{ animationDuration: '3s' }}>
+                            <div className="text-green-500 drop-shadow-[0_0_10px_#22c55e]">
+                                <Cpu className="w-24 h-24" />
                             </div>
                         </div>
+                        <button 
+                            onClick={triggerHack}
+                            className="absolute bottom-20 left-10 pointer-events-auto bg-black border border-green-500 text-green-500 font-mono px-4 py-2 hover:bg-green-500 hover:text-black transition-colors shadow-[0_0_15px_#22c55e] uppercase tracking-widest flex items-center gap-2 group"
+                        >
+                            <Terminal className="w-4 h-4 group-hover:animate-pulse" />
+                            [ SYSTEM_OVERRIDE ]
+                        </button>
                     </div>
-                    {/* Gift - Bottom Right */}
-                    <div className="absolute bottom-8 right-8 rotate-[-12deg] opacity-90 hover:scale-110 transition-transform duration-500">
-                        <Gift className="w-32 h-32 text-red-600 fill-red-100 drop-shadow-2xl" />
+                    {hackMode && (
+                        <div className="fixed inset-0 z-[100] bg-black font-mono overflow-hidden flex flex-col items-center justify-center pointer-events-none">
+                            <div className="text-green-500 text-6xl font-black mb-4 animate-pulse tracking-widest">ACCESSING MAINFRAME...</div>
+                            <div className="text-green-800 text-xl opacity-70 w-full break-all p-4 text-center">
+                                {Array.from({length: 200}).map(() => Math.random() > 0.5 ? '1' : '0').join('')}
+                            </div>
+                            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-green-900/20 animate-pulse"></div>
+                        </div>
+                    )}
+                </>
+            );
+        case 'candy':
+            return (
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                    <div className="absolute top-1/4 -right-10 rotate-12 opacity-90">
+                        <div className="w-40 h-40 rounded-full bg-[conic-gradient(at_center,_red,_orange,_yellow,_green,_blue,_purple,_red)] border-4 border-white shadow-xl animate-spin-slow"></div>
+                        <div className="w-4 h-64 bg-white mx-auto mt-[-10px] relative z-[-1]"></div>
+                    </div>
+                    <div 
+                        className="absolute bottom-10 left-10 pointer-events-auto cursor-pointer active:scale-95 transition-transform"
+                        onClick={dispenseGumball}
+                    >
+                        <div className="w-32 h-32 bg-white/30 rounded-full border-4 border-pink-400 flex items-center justify-center relative overflow-hidden backdrop-blur-sm group">
+                            <div className="absolute top-4 left-4 w-6 h-6 rounded-full bg-red-400"></div>
+                            <div className="absolute bottom-8 right-8 w-8 h-8 rounded-full bg-blue-400"></div>
+                            <div className="absolute top-10 right-6 w-5 h-5 rounded-full bg-yellow-400"></div>
+                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center font-bold text-pink-600/50 rotate-[-15deg]">PUSH</div>
+                        </div>
+                        <div className="w-32 h-20 bg-red-500 rounded-b-xl mx-auto mt-[-10px] border-4 border-red-600 relative z-[-1] flex justify-center">
+                             <div className="w-10 h-6 bg-black/20 rounded-b-lg mt-1"></div>
+                        </div>
+                    </div>
+                    {gumballs.map(ball => (
+                        <div 
+                            key={ball.id} 
+                            className={`absolute w-8 h-8 rounded-full border-2 border-white shadow-md ${ball.color} animate-in zoom-in slide-in-from-bottom-20 duration-500 ease-out`}
+                            style={{ bottom: '10px', left: '100px', transformOrigin: 'center' }}
+                        >
+                            <div className="absolute top-1 left-2 w-2 h-2 bg-white rounded-full opacity-50"></div>
+                        </div>
+                    ))}
+                </div>
+            );
+        case 'vaporwave':
+            return (
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                    <div className="absolute bottom-0 right-0 opacity-80 mix-blend-overlay">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/f/f0/Head_of_Statue_of_Liberty_1984.jpg" className="w-64 h-auto grayscale contrast-125 mask-image-gradient-b" alt="Statue" style={{ maskImage: 'linear-gradient(to top, black, transparent)' }} />
+                    </div>
+                    <div className="absolute bottom-20 left-10 animate-bounce pointer-events-auto cursor-pointer hover:rotate-12 transition-transform" style={{ animationDuration: '3s' }}>
+                        <Save className="w-24 h-24 text-fuchsia-400 drop-shadow-[5px_5px_0px_#06b6d4]" />
                     </div>
                 </div>
             );
-        case 'space':
+        case 'zen':
             return (
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Rocket - Bottom Left (Launching) */}
-                    <div className="absolute -bottom-10 -left-10 transform -rotate-45 animate-in slide-in-from-bottom-20 duration-[3000ms] opacity-80">
-                        <Rocket className="w-48 h-48 text-indigo-500 drop-shadow-[0_0_50px_rgba(99,102,241,0.6)]" />
-                        <div className="absolute top-full left-1/2 -translate-x-1/2 w-10 h-40 bg-gradient-to-b from-orange-500 to-transparent blur-2xl"></div>
+                    <div className="absolute bottom-10 right-10 flex flex-col items-center opacity-90">
+                        <div className="w-12 h-8 bg-stone-400 rounded-full mb-[-2px]"></div>
+                        <div className="w-16 h-10 bg-stone-500 rounded-full mb-[-2px]"></div>
+                        <div className="w-24 h-14 bg-stone-600 rounded-full"></div>
                     </div>
-                    {/* Astronaut/Star - Top Right */}
-                    <div className="absolute top-10 right-10 animate-pulse opacity-90" style={{ animationDuration: '6s' }}>
-                        <div className="relative">
-                            <div className="absolute inset-0 bg-yellow-100/20 blur-xl rounded-full"></div>
-                            <Star className="w-32 h-32 text-yellow-200 fill-yellow-100 drop-shadow-[0_0_30px_rgba(253,224,71,0.6)] rotate-12" />
+                    <div className="absolute top-20 left-10 pointer-events-auto cursor-pointer" onClick={hitGong}>
+                        <div className={`w-32 h-32 rounded-full border-8 border-[#2c2c2c] bg-gradient-to-br from-[#d4af37] to-[#8a6e25] shadow-2xl flex items-center justify-center transition-transform origin-top ${gongHit ? 'animate-wiggle' : ''}`}>
+                            <div className="w-4 h-4 bg-[#2c2c2c] rounded-full opacity-50"></div>
                         </div>
                     </div>
+                    {ripples.map(ripple => (
+                        <div 
+                            key={ripple.id}
+                            className="absolute top-20 left-10 w-32 h-32 rounded-full border-4 border-[#d4af37]/50 animate-ping pointer-events-none"
+                            style={{ animationDuration: '2s' }}
+                        ></div>
+                    ))}
                 </div>
             );
-        case 'library':
+        // --- UPDATED WIDGETS ---
+        case 'christmas': return <ChristmasWidget />;
+        case 'halloween': return <HalloweenWidget />;
+        case 'space': return <SpaceVoyager />;
+        case 'coffee': return <CroissantWidget />;
+        case 'pixel': return <RetroWidgets />;
+        case 'school': return <SchoolWidget />;
+        case 'chalkboard': return <ChalkboardWidgets />;
+        case 'library': return <LibraryWidget />;
+        case 'exam': return <ExamWidget />;
+        case 'summer': return <SummerWidget />;
+        case 'autumn': return <AutumnWidget />;
+        case 'neon': return <NeonWidget />;
+        case 'night': return <NightWidget />;
+        
+        // --- MISSING SIMPLE WIDGETS RESTORED FOR "EVERY THEME" ---
+        case 'spring':
             return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Vintage Lamp - Top Right (Hanging) */}
-                    <div className="absolute -top-10 right-16 flex flex-col items-center animate-in slide-in-from-top duration-1000 opacity-90">
-                        <div className="w-1 h-40 bg-[#2a1b12] shadow-xl"></div>
-                        <div className="relative">
-                            <Lamp className="w-24 h-24 text-[#eaddcf] fill-[#eaddcf]/90 drop-shadow-[0_20px_60px_rgba(255,220,100,0.6)]" />
-                            {/* Glow */}
-                            <div className="absolute top-20 left-1/2 -translate-x-1/2 w-48 h-48 bg-yellow-100/10 blur-3xl rounded-full"></div>
-                        </div>
-                    </div>
-                    {/* Open Book & Quill - Bottom Left */}
-                    <div className="absolute bottom-10 left-10 opacity-80 rotate-3">
-                        <BookOpen className="w-32 h-32 text-[#5c4033] fill-[#f5f5dc] drop-shadow-xl" />
-                        <PenTool className="w-16 h-16 text-[#3e2b22] absolute -top-8 -right-4 -rotate-12 drop-shadow-md" />
-                    </div>
+                <div className="absolute bottom-12 left-8 z-50 pointer-events-auto cursor-pointer hover:-translate-y-2 transition-transform animate-bounce duration-[3s] text-pink-500">
+                    <Flower2 className="w-16 h-16" />
                 </div>
             );
         case 'nature':
             return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Hanging Vines - Top Left */}
-                    <div className="absolute -top-10 -left-10 text-emerald-800 dark:text-emerald-400 opacity-80 animate-in slide-in-from-top duration-[2s]">
-                        <Trees className="w-64 h-64 -translate-x-4 -translate-y-4 filter drop-shadow-lg" />
-                    </div>
-                    {/* Floating Leaf - Top Right */}
-                    <div className="absolute top-20 -right-10 text-emerald-600 opacity-60 transform rotate-45 blur-[1px] animate-pulse" style={{ animationDuration: '6s' }}>
-                        <Leaf className="w-32 h-32" />
-                    </div>
-                    {/* Flower - Bottom Right */}
-                    <div className="absolute bottom-10 right-10 text-pink-400 opacity-80 animate-bounce" style={{ animationDuration: '4s' }}>
-                        <Flower2 className="w-24 h-24 drop-shadow-lg" />
-                    </div>
-                </div>
-            );
-        case 'coffee':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                    {/* Steam rising - Bottom Right */}
-                    <div className="fixed bottom-0 -right-10 flex gap-4 opacity-30 z-50">
-                        <div className="w-16 h-80 bg-gradient-to-t from-white to-transparent blur-3xl rounded-full animate-pulse" style={{ animationDuration: '4s' }}></div>
-                        <div className="w-20 h-96 bg-gradient-to-t from-white to-transparent blur-3xl rounded-full animate-pulse delay-700" style={{ animationDuration: '6s' }}></div>
-                    </div>
-                    {/* Coffee Cup - Top Left */}
-                    <div className="absolute top-10 left-10 opacity-90 rotate-[-12deg]">
-                        <Coffee className="w-32 h-32 text-[#6f4e37] drop-shadow-2xl" />
-                        <div className="absolute -top-10 left-4 w-full flex justify-center gap-2 opacity-40">
-                             <div className="w-2 h-12 bg-white/50 rounded-full blur-sm animate-pulse"></div>
-                             <div className="w-2 h-16 bg-white/50 rounded-full blur-sm animate-pulse delay-300"></div>
-                        </div>
-                    </div>
-                </div>
-            );
-        case 'summer':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Blazing Sun - Top Right */}
-                    <div className="absolute -top-20 -right-20 animate-spin-slow opacity-90">
-                        <Sun className="w-64 h-64 text-orange-400/80 fill-yellow-300 drop-shadow-[0_0_50px_rgba(253,186,116,0.8)]" />
-                    </div>
-                    {/* Ice Cream - Bottom Left */}
-                    <div className="absolute bottom-10 left-10 opacity-90 rotate-12 z-50 animate-bounce" style={{ animationDuration: '3s' }}>
-                        <IceCream className="w-40 h-40 text-pink-400 fill-pink-100 drop-shadow-2xl" />
-                    </div>
-                </div>
-            );
-        case 'pixel':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50 font-mono">
-                    {/* Scanlines */}
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.1)_50%),linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03))] bg-[length:100%_4px,3px_100%] pointer-events-none z-[60]"></div>
-                    {/* Invader - Top Left */}
-                    <Gamepad2 className="absolute top-10 left-10 w-32 h-32 text-[#0f380f]/60 animate-bounce drop-shadow-md" style={{ animationDuration: '3s' }} />
-                    {/* Hearts - Top Right */}
-                    <div className="absolute top-10 right-10 flex gap-2 opacity-90">
-                        <Heart className="w-10 h-10 text-[#0f380f] fill-[#0f380f]" />
-                        <Heart className="w-10 h-10 text-[#0f380f] fill-[#0f380f]" />
-                        <Heart className="w-10 h-10 text-[#0f380f] fill-transparent border-4 border-[#0f380f] animate-pulse" />
-                    </div>
-                </div>
-            );
-        case 'neon':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Floating Triangle - Top Right */}
-                    <div className="absolute top-20 right-20 opacity-80 animate-spin-slow">
-                        <Triangle className="w-40 h-40 text-cyan-400 stroke-[1] fill-transparent drop-shadow-[0_0_20px_rgba(34,211,238,0.8)]" />
-                    </div>
-                    {/* Floating Circle - Bottom Left */}
-                    <div className="absolute bottom-20 left-20 opacity-80 animate-pulse" style={{ animationDuration: '4s' }}>
-                        <Circle className="w-32 h-32 text-fuchsia-500 stroke-[3] fill-transparent drop-shadow-[0_0_20px_rgba(232,121,249,0.8)]" />
-                    </div>
-                    {/* Lightning - Top Left (Small) */}
-                    <div className="absolute top-32 left-10 opacity-60">
-                        <Zap className="w-16 h-16 text-yellow-400 fill-yellow-200 drop-shadow-[0_0_15px_rgba(250,204,21,0.8)] -rotate-12" />
-                    </div>
-                </div>
-            );
-        case 'school':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Pencil - Bottom Left */}
-                    <div className="absolute bottom-10 -left-4 transform rotate-12 opacity-80 hover:translate-x-4 transition-transform">
-                        <Edit2 className="w-48 h-48 text-blue-600 fill-blue-100 drop-shadow-xl" />
-                    </div>
-                    {/* A+ - Top Right */}
-                    <div className="absolute top-10 right-10 opacity-30 rotate-12">
-                        <div className="text-9xl font-black text-blue-900 leading-none drop-shadow-sm">A+</div>
-                    </div>
-                    {/* Ruler - Top Left */}
-                    <div className="absolute top-20 -left-10 rotate-45 opacity-60">
-                        <Ruler className="w-40 h-40 text-slate-500/50" />
-                    </div>
-                </div>
-            );
-        case 'chalkboard':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                    {/* Formulas - Top Left */}
-                    <div className="absolute top-16 left-10 opacity-40 text-white font-serif text-7xl rotate-[-6deg] tracking-widest blur-[1px]">
-                        E = mc²
-                    </div>
-                    {/* Pen/Chalk - Bottom Right */}
-                    <div className="absolute bottom-10 right-10 opacity-80 text-white">
-                        <PenTool className="w-32 h-32 drop-shadow-2xl -rotate-90" />
-                    </div>
-                    {/* Eraser - Bottom Left */}
-                    <div className="absolute bottom-20 left-20 opacity-60 rotate-12">
-                        <Eraser className="w-24 h-24 text-stone-300 drop-shadow-lg" />
-                    </div>
-                </div>
-            );
-        case 'exam':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                    {/* Clock - Top Right */}
-                    <div className="absolute top-10 right-10 opacity-90 animate-pulse" style={{ animationDuration: '2s' }}>
-                        <Timer className="w-48 h-48 text-red-700 drop-shadow-2xl" />
-                    </div>
-                    {/* Papers - Bottom Left */}
-                    <div className="absolute bottom-10 left-10 opacity-80 rotate-6">
-                        <Files className="w-40 h-40 text-slate-700 fill-white drop-shadow-xl" />
-                    </div>
-                    {/* Warning - Top Left */}
-                    <div className="absolute top-20 left-20 opacity-40 rotate-[-12deg]">
-                        <AlertTriangle className="w-32 h-32 text-red-600" />
-                    </div>
-                </div>
-            );
-        case 'spring':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Flowers - Bottom Right */}
-                    <div className="absolute bottom-10 -right-4 text-pink-500 opacity-80 animate-bounce" style={{ animationDuration: '5s' }}>
-                        <Flower2 className="w-32 h-32 sm:w-40 sm:h-40 drop-shadow-xl -rotate-12" />
-                    </div>
-                    {/* Sprout - Top Left */}
-                    <div className="absolute top-20 left-10 opacity-90 animate-in slide-in-from-bottom duration-[3s]">
-                         <Sprout className="w-32 h-32 text-green-600 fill-green-100 drop-shadow-lg" />
-                         <Droplets className="w-8 h-8 text-blue-400 absolute -top-4 right-0 animate-bounce" style={{ animationDuration: '2s' }} />
-                    </div>
-                    {/* Floating Petal - Top Right */}
-                    <div className="absolute top-40 right-20 text-pink-300 opacity-60 rotate-45 blur-[1px]">
-                        <Circle className="w-10 h-10 sm:w-12 sm:h-12 rounded-full scale-y-50" />
-                    </div>
-                </div>
-            );
-        case 'autumn':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    {/* Falling Leaf 1 - Top Left */}
-                    <div className="absolute top-10 -left-6 text-orange-600/90 rotate-12 animate-in slide-in-from-top duration-[4s]">
-                        <Leaf className="w-40 h-40 drop-shadow-xl" />
-                    </div>
-                    {/* Falling Leaf 2 - Bottom Right */}
-                    <div className="absolute bottom-20 -right-6 text-red-700/80 -rotate-45 animate-pulse" style={{ animationDuration: '5s' }}>
-                        <Leaf className="w-56 h-56 drop-shadow-2xl" />
-                    </div>
-                    {/* Wind Swirl - Bottom Left */}
-                    <div className="absolute bottom-10 left-20 opacity-40">
-                        <Wind className="w-32 h-32 text-slate-400 rotate-12" />
-                    </div>
-                </div>
-            );
-        case 'night':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-                    {/* Moon - Top Right */}
-                    <div className="absolute top-10 right-10 text-indigo-200/60 drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-                        <CloudMoon className="w-48 h-48" />
-                    </div>
-                    {/* Star - Bottom Left */}
-                    <div className="absolute bottom-20 left-10 text-yellow-100/40 animate-pulse" style={{ animationDuration: '3s' }}>
-                        <Star className="w-24 h-24 fill-yellow-100/20" />
-                    </div>
-                    {/* Cloud - Top Left */}
-                    <div className="absolute top-32 left-0 text-slate-500/20 blur-sm">
-                        <Cloud className="w-64 h-64" />
-                    </div>
+                <div className="absolute bottom-12 left-8 z-50 pointer-events-auto cursor-pointer hover:-translate-y-2 transition-transform animate-bounce duration-[3s] text-green-600">
+                    <Trees className="w-16 h-16" />
                 </div>
             );
         default:
@@ -439,6 +880,11 @@ const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<Theme>('default');
   const [isRainActive, setIsRainActive] = useState(true); // For transition delay
   
+  // Fireworks State (New Year Theme)
+  const [fireworks, setFireworks] = useState<{id: number, x: number, y: number}[]>([]);
+  
+  // Feature States
+  const [showWhiteboard, setShowWhiteboard] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -524,6 +970,18 @@ const App: React.FC = () => {
       
       return () => clearTimeout(timer);
   }, [currentTheme]);
+
+  // Handle background clicks for Fireworks
+  const handleBackgroundClick = (e: React.MouseEvent) => {
+      if (currentTheme !== 'newyear') return;
+      
+      const newFirework = {
+          id: Date.now(),
+          x: e.clientX,
+          y: e.clientY
+      };
+      setFireworks(prev => [...prev, newFirework]);
+  };
 
   // --- AUDIO LOGIC ---
   const PLAYLIST = [
@@ -723,24 +1181,32 @@ const App: React.FC = () => {
               return 'bg-rose-300 border-b-4 border-rose-400 text-white rounded-full hover:bg-rose-400 active:border-b-0 active:translate-y-1 transition-all';
           case 'music':
               return 'bg-violet-400 border-b-4 border-violet-500 text-white rounded-full hover:bg-violet-500 active:border-b-0 active:translate-y-1 transition-all';
+          case 'steampunk':
+              return 'bg-[#2b2b2b] border-2 border-[#cd7f32] text-[#cd7f32] font-mono tracking-widest hover:bg-[#3d3d3d] shadow-[0_0_10px_#cd7f32] rounded-2xl';
+          case 'easter':
+              return 'bg-yellow-300 border-b-4 border-yellow-400 text-green-700 font-bold rounded-full hover:bg-yellow-200 active:border-b-0 active:translate-y-1';
+          case 'circus':
+              return 'bg-red-600 border-4 border-yellow-400 text-white font-black tracking-wider shadow-lg hover:bg-red-500 rounded-2xl';
+          case 'newyear':
+              return 'bg-black border border-yellow-500 text-yellow-400 font-bold tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.5)] hover:bg-slate-900 rounded-2xl';
           case 'christmas':
-              return 'bg-red-600 border-red-500 text-white hover:bg-red-500 shadow-xl shadow-red-900/50 font-serif';
+              return 'bg-red-600 border-red-500 text-white hover:bg-red-500 shadow-xl shadow-red-900/50 font-serif rounded-2xl';
           case 'school':
-              return 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-xl font-sans';
+              return 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-xl font-sans rounded-2xl';
           case 'chalkboard':
-              return 'bg-white text-black border-white hover:bg-gray-200 shadow-xl font-serif font-bold tracking-widest';
+              return 'bg-white text-black border-white hover:bg-gray-200 shadow-xl font-serif font-bold tracking-widest rounded-2xl';
           case 'exam':
-              return 'bg-black text-white border-black hover:bg-gray-800 shadow-xl font-mono uppercase tracking-tighter';
+              return 'bg-black text-white border-black hover:bg-gray-800 shadow-xl font-mono uppercase tracking-tighter rounded-2xl';
           case 'pixel':
-              return 'bg-[#8b9c0f] text-[#0f380f] border-4 border-[#0f380f] hover:bg-[#9bbc0f] shadow-[4px_4px_0px_0px_rgba(15,56,15,1)] font-mono tracking-widest uppercase rounded-none hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-none';
+              return 'bg-[#8b9c0f] text-[#0f380f] border-4 border-[#0f380f] hover:bg-[#9bbc0f] shadow-[4px_4px_0px_0px_rgba(15,56,15,1)] font-mono tracking-widest uppercase rounded-2xl hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-none transition-none';
           case 'neon':
-              return 'bg-black border border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-900/20 shadow-[0_0_15px_rgba(232,121,249,0.5)] font-sans tracking-wide rounded-none';
+              return 'bg-black border border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-900/20 shadow-[0_0_15px_rgba(232,121,249,0.5)] font-sans tracking-wide rounded-2xl';
           case 'space':
               return 'bg-indigo-900/80 border border-indigo-400 text-indigo-100 hover:bg-indigo-800 shadow-[0_0_20px_rgba(99,102,241,0.4)] backdrop-blur-md rounded-full';
           case 'halloween':
-              return 'bg-purple-900 border border-orange-500 text-orange-400 hover:bg-purple-800 font-serif tracking-wider shadow-lg rounded-xl';
+              return 'bg-purple-900 border border-orange-500 text-orange-400 hover:bg-purple-800 font-serif tracking-wider shadow-lg rounded-2xl';
           case 'coffee':
-              return 'bg-[#6f4e37] text-[#f5f5dc] border border-[#4a3525] hover:bg-[#5d4037] shadow-md font-serif rounded-lg';
+              return 'bg-[#6f4e37] text-[#f5f5dc] border border-[#4a3525] hover:bg-[#5d4037] shadow-md font-serif rounded-2xl';
           case 'nature':
               return 'bg-emerald-700 text-emerald-50 border border-emerald-600 hover:bg-emerald-600 shadow-lg font-sans rounded-2xl';
           case 'spring':
@@ -750,21 +1216,58 @@ const App: React.FC = () => {
           case 'night':
               return 'bg-slate-800 text-slate-200 border border-slate-600 hover:bg-slate-700 shadow-lg shadow-blue-900/20 rounded-full';
           case 'library':
-              return 'bg-[#8b4513] text-[#f5f5dc] border border-[#5c4033] hover:bg-[#a0522d] shadow-sm font-serif rounded-lg';
+              return 'bg-[#8b4513] text-[#f5f5dc] border border-[#5c4033] hover:bg-[#a0522d] shadow-sm font-serif rounded-2xl';
           case 'autumn':
-              return 'bg-orange-600 text-white border border-orange-500 hover:bg-orange-500 shadow-lg font-serif rounded-xl';
+              return 'bg-orange-600 text-white border border-orange-500 hover:bg-orange-500 shadow-lg font-serif rounded-3xl';
+          case 'deepsea':
+              return 'bg-blue-900 border-2 border-blue-400 text-blue-100 rounded-3xl shadow-lg shadow-blue-900/50 hover:bg-blue-800';
+          case 'cyberpunk':
+              return 'bg-black border border-green-500 text-green-500 font-mono uppercase hover:bg-green-500 hover:text-black shadow-[0_0_10px_#22c55e] rounded-2xl';
+          case 'candy':
+              return 'bg-pink-300 border-b-4 border-pink-400 text-white rounded-full font-bold hover:bg-pink-400 active:border-b-0 active:translate-y-1';
+          case 'vaporwave':
+              return 'bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white rounded-2xl border-b-4 border-fuchsia-700 hover:brightness-110';
+          case 'zen':
+              return 'bg-[#a8a29e] text-white border border-[#78716c] rounded-full hover:bg-[#78716c] shadow-sm font-serif tracking-wide';
           default:
               return isDarkMode 
-                ? 'bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-[0_0_30px_rgba(167,139,250,0.3)]' 
-                : 'bg-white/70 border-white/60 text-violet-700 hover:bg-white/90 shadow-xl shadow-violet-200/50';
+                ? 'bg-white/10 border-white/30 text-white hover:bg-white/20 shadow-[0_0_30px_rgba(167,139,250,0.3)] rounded-2xl' 
+                : 'bg-white/70 border-white/60 text-violet-700 hover:bg-white/90 shadow-xl shadow-violet-200/50 rounded-2xl';
       }
   };
+
+  // Dynamic Theme Icon for Header
+  const ThemeIcon = () => {
+      switch(currentTheme) {
+          case 'school': return <Backpack className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'chalkboard': return <Edit2 className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'library': return <Library className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'exam': return <Files className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'summer': return <SunDim className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'autumn': return <Wind className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'halloween': return <Ghost className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'christmas': return <Gift className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'easter': return <Rabbit className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'pixel': return <Gamepad2 className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'space': return <Rocket className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'neon': return <Zap className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'coffee': return <Coffee className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'nature': return <Trees className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'night': return <Moon className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'cyberpunk': return <Terminal className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'steampunk': return <Settings className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'music': return <Music className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'plush': return <Heart className="w-8 h-8 sm:w-10 sm:h-10" />;
+          case 'newyear': return <PartyPopper className="w-8 h-8 sm:w-10 sm:h-10" />;
+          default: return <GraduationCap className="w-8 h-8 sm:w-10 sm:h-10" />;
+      }
+  }
 
   // -------- RENDER SETTINGS MENU ITEM HELPERS --------
   const ThemeButton = ({ themeId, label, color }: { themeId: Theme, label: string, color: string }) => (
       <button 
         onClick={() => setCurrentTheme(themeId)}
-        className={`p-2 rounded-lg text-[10px] font-bold border transition-all truncate ${currentTheme === themeId ? `ring-2 ring-offset-1 ring-violet-400 ${color} shadow-sm` : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
+        className={`p-2 rounded-2xl text-[10px] font-bold border transition-all truncate ${currentTheme === themeId ? `ring-2 ring-offset-1 ring-violet-400 ${color} shadow-sm` : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'}`}
         style={currentTheme === themeId ? {} : {}}
       >
         {label}
@@ -799,6 +1302,8 @@ const App: React.FC = () => {
                 <ThemeButton themeId="autumn" label="Autumn" color="bg-orange-100 text-orange-800 border-orange-300" />
                 <ThemeButton themeId="halloween" label="Spooky" color="bg-purple-900 text-orange-400 border-orange-500" />
                 <ThemeButton themeId="christmas" label="Xmas" color="bg-red-100 text-red-700 border-red-300" />
+                <ThemeButton themeId="easter" label="Easter" color="bg-yellow-100 text-green-700 border-yellow-300" />
+                <ThemeButton themeId="newyear" label="New Year" color="bg-black text-yellow-400 border-yellow-500" />
             </div>
         </div>
 
@@ -814,13 +1319,20 @@ const App: React.FC = () => {
                 <ThemeButton themeId="coffee" label="Coffee" color="bg-[#dcc8b8] text-[#4a3525] border-[#9c7c64]" />
                 <ThemeButton themeId="nature" label="Nature" color="bg-green-100 text-green-800 border-green-300" />
                 <ThemeButton themeId="night" label="Night" color="bg-slate-800 text-slate-300 border-slate-600" />
+                <ThemeButton themeId="steampunk" label="Steam" color="bg-[#2b2b2b] text-[#cd7f32] border-[#cd7f32]" />
+                <ThemeButton themeId="circus" label="Circus" color="bg-red-100 text-red-700 border-yellow-400" />
+                <ThemeButton themeId="deepsea" label="Deep Sea" color="bg-blue-900 text-blue-200 border-blue-700" />
+                <ThemeButton themeId="cyberpunk" label="Cyber" color="bg-black text-green-500 border-green-500 font-mono" />
+                <ThemeButton themeId="candy" label="Candy" color="bg-pink-200 text-pink-600 border-pink-400" />
+                <ThemeButton themeId="vaporwave" label="Vapor" color="bg-fuchsia-200 text-cyan-700 border-cyan-400" />
+                <ThemeButton themeId="zen" label="Zen" color="bg-[#d6cfc7] text-[#5c5552] border-[#a8a29e]" />
             </div>
         </div>
 
         <div className={`h-px my-2 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
 
         {/* Lofi Radio */}
-        <button onClick={handleMusicSelect} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+        <button onClick={handleMusicSelect} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isMusicPlaying ? <Volume2 className="w-5 h-5 text-emerald-400 shrink-0 animate-pulse" /> : <VolumeX className="w-5 h-5 text-slate-400 shrink-0" />}
             <div className="flex flex-col">
                 <span>{t.lofiRadio}</span>
@@ -828,24 +1340,24 @@ const App: React.FC = () => {
             </div>
         </button>
 
-        <button onClick={toggleLanguage} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+        <button onClick={toggleLanguage} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             <Languages className="w-5 h-5 text-fuchsia-400 shrink-0" />
             <span>{language === 'de' ? 'Sprache: Deutsch' : 'Language: English'}</span>
         </button>
 
-        <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+        <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isDarkMode ? <Moon className="w-5 h-5 text-violet-400 shrink-0" /> : <Sun className="w-5 h-5 text-amber-500 shrink-0" />}
             <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
         </button>
         
-        <button onClick={() => setShowGradeInfo(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+        <button onClick={() => setShowGradeInfo(true)} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             <Scale className="w-5 h-5 text-blue-400 shrink-0" />
             <span>Info</span>
         </button>
 
         <div className={`h-px my-1 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
 
-        <button onClick={isAdmin ? handleLogout : () => setShowLogin(true)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
+        <button onClick={isAdmin ? handleLogout : () => setShowLogin(true)} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isAdmin ? <Unlock className="w-5 h-5 text-emerald-400 shrink-0" /> : <Lock className="w-5 h-5 text-slate-400 shrink-0" />}
             <span>{isAdmin ? 'Admin Active' : 'Admin Login'}</span>
         </button>
@@ -880,7 +1392,6 @@ const App: React.FC = () => {
                       }}></div>
                   </div>
               );
-              // Updated to match the provided image (Bows, Stars, etc.)
               if (isRainActive) animLayer = <ThemeRain items={['🎀', '✨', '🧶', '🧁', '☁️']} colors="text-rose-300 opacity-80" count={40} />;
               break;
           case 'music':
@@ -893,6 +1404,45 @@ const App: React.FC = () => {
                   </div>
               );
               if (isRainActive) animLayer = <ThemeRain items={['🎵', '🎶', '🎹', '🎸', '🎧', '🎼']} colors="text-violet-400 opacity-80" count={40} />;
+              break;
+          case 'steampunk':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-[#1a1a1a]">
+                      <div className="absolute inset-0 opacity-20" style={{
+                          backgroundImage: 'repeating-linear-gradient(45deg, #cd7f32 0, #cd7f32 1px, transparent 0, transparent 50%)',
+                          backgroundSize: '20px 20px'
+                      }}></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-black opacity-80"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['⚙️', '🗝️', '🕰️', '🔩', '🎩']} colors="text-[#cd7f32] opacity-60" count={30} />;
+              break;
+          case 'easter':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-blue-100 to-green-100">
+                      <div className="absolute bottom-0 w-full h-1/3 bg-[#86efac] rounded-t-[50%] scale-150"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🥚', '🐰', '🐣', '🌷', '🥕']} colors="text-pink-400 opacity-80" count={40} />;
+              break;
+          case 'circus':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-white">
+                      <div className="absolute inset-0 opacity-20" style={{
+                          backgroundImage: 'repeating-conic-gradient(#ef4444 0 15deg, #ffffff 15deg 30deg)'
+                      }}></div>
+                      <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white/50"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🍿', '🎪', '🎈', '🤹', '🎟️']} colors="text-red-500 opacity-90" count={40} />;
+              break;
+          case 'newyear':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-slate-950 overflow-hidden cursor-crosshair" onClick={handleBackgroundClick}>
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🥂', '🎉', '🎆', '🌟', '2025']} colors="text-yellow-200 opacity-70" count={40} glow />;
               break;
           case 'christmas':
               bgLayer = <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-red-950 via-slate-900 to-emerald-950"></div>;
@@ -978,7 +1528,8 @@ const App: React.FC = () => {
                     <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                 </div>
               );
-              if (isRainActive) animLayer = <ThemeRain items={['🍂', '🍁', '🍄', '🌰', '🧣', '🌧️']} colors="text-orange-800 opacity-80" />;
+              // Just leaves for Autumn rain as requested
+              if (isRainActive) animLayer = <ThemeRain items={['🍂', '🍁', '🍃', '🪵']} colors="text-orange-800 opacity-80" />;
               break;
           case 'halloween':
               bgLayer = <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-purple-900 to-black"></div>;
@@ -1050,6 +1601,68 @@ const App: React.FC = () => {
               );
               if (isRainActive) animLayer = <ThemeRain items={['☕', '🥐', '🥯', '🍪', '🤎', '🍂']} colors="text-[#5d4037] opacity-60" />;
               break;
+          case 'deepsea':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-slate-900 to-blue-900 overflow-hidden">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.2),_transparent_50%)]"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🫧', '🐟', '🐠', '🐚', '🦀']} colors="text-blue-300 opacity-50" />;
+              break;
+          case 'cyberpunk':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-black font-mono overflow-hidden">
+                      <div className="absolute inset-0 opacity-20" style={{
+                          backgroundImage: 'linear-gradient(0deg, transparent 24%, rgba(34, 197, 94, .3) 25%, rgba(34, 197, 94, .3) 26%, transparent 27%, transparent 74%, rgba(34, 197, 94, .3) 75%, rgba(34, 197, 94, .3) 76%, transparent 77%, transparent), linear-gradient(90deg, transparent 24%, rgba(34, 197, 94, .3) 25%, rgba(34, 197, 94, .3) 26%, transparent 27%, transparent 74%, rgba(34, 197, 94, .3) 75%, rgba(34, 197, 94, .3) 76%, transparent 77%, transparent)',
+                          backgroundSize: '50px 50px'
+                      }}></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['0', '1', '█', '▓', '▒']} colors="text-green-500 font-mono opacity-80" count={60} glow />;
+              break;
+          case 'candy':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-[#ffe4e6]">
+                      <div className="absolute inset-0" style={{
+                          backgroundImage: 'radial-gradient(#f472b6 2px, transparent 2px)',
+                          backgroundSize: '30px 30px'
+                      }}></div>
+                      <div className="absolute bottom-0 w-full h-1/3 bg-gradient-to-t from-pink-200 to-transparent"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🍬', '🍭', '🧁', '🍩', '🍪']} colors="text-pink-500 opacity-80" />;
+              break;
+          case 'vaporwave':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-fuchsia-900 via-purple-900 to-cyan-900 overflow-hidden">
+                      <div className="absolute bottom-0 w-full h-1/2 perspective-[500px]">
+                          <div className="w-full h-full bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:40px_40px] transform-gpu rotate-x-60 origin-bottom scale-150"></div>
+                      </div>
+                      <div className="absolute top-20 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full bg-gradient-to-b from-yellow-400 to-pink-500 blur-xl opacity-80"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['💾', '🌴', '🗿', '🐬', '📼']} colors="text-cyan-300 opacity-80" glow />;
+              break;
+          case 'zen':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-[#e7e5e4]">
+                      <div className="absolute inset-0 opacity-10" style={{
+                          backgroundImage: 'repeating-radial-gradient(circle at center, #78716c 0, #78716c 1px, transparent 2px, transparent 20px)'
+                      }}></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🌸', '🍃', '🎋', '🪷', '🍵']} colors="text-stone-600 opacity-60" />;
+              break;
+          case 'nature':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-gradient-to-b from-sky-300 to-emerald-300">
+                      <div className="absolute inset-0 opacity-30 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+                      <div className="absolute top-10 left-10 w-32 h-16 bg-white/40 rounded-full blur-xl"></div>
+                      <div className="absolute top-20 right-20 w-48 h-20 bg-white/30 rounded-full blur-xl"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🍃', '🌿', '🌱', '🌳', '🦜']} colors="text-emerald-800 opacity-60" />;
+              break;
           // DEFAULT CASE MUST PROVIDE A BACKGROUND IF ONE DOESN'T EXIST
           default:
               bgLayer = (
@@ -1062,6 +1675,15 @@ const App: React.FC = () => {
         <>
             {bgLayer}
             {animLayer}
+            {/* Render Fireworks Layer */}
+            {currentTheme === 'newyear' && fireworks.map(fw => (
+                <Firework 
+                    key={fw.id} 
+                    x={fw.x} 
+                    y={fw.y} 
+                    onComplete={() => setFireworks(prev => prev.filter(p => p.id !== fw.id))} 
+                />
+            ))}
             <div className={`fixed inset-0 pointer-events-none transition-colors duration-1000 z-[-2] ${getAppBackground()}`}></div>
         </>
       );
@@ -1075,6 +1697,9 @@ const App: React.FC = () => {
       {/* Backgrounds */}
       {renderThemeBackgrounds()}
       <ThemeDecorations theme={currentTheme} isDarkMode={isDarkMode} />
+      
+      {/* Overlays */}
+      <WhiteboardOverlay isOpen={showWhiteboard} onClose={() => setShowWhiteboard(false)} />
       
       {/* Login Modal */}
       {showLogin && (
@@ -1164,58 +1789,46 @@ const App: React.FC = () => {
 
           <div className="max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
              <div className="mb-8 relative inline-block">
-                <div className={`absolute inset-0 blur-3xl rounded-full opacity-50 ${currentTheme === 'plush' ? 'bg-rose-300' : (currentTheme === 'music' ? 'bg-violet-300' : (isDarkMode ? 'bg-violet-900' : 'bg-violet-200'))}`}></div>
-                <div className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-6 duration-500 ${currentTheme === 'plush' ? 'bg-white text-rose-300 border-4 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white text-violet-500 border-4 border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'))}`}>
-                   <GraduationCap className="w-12 h-12 sm:w-16 sm:h-16" />
+                <div className={`absolute inset-0 blur-3xl rounded-full opacity-50 ${currentTheme === 'plush' ? 'bg-rose-300' : (currentTheme === 'music' ? 'bg-violet-300' : (currentTheme === 'newyear' ? 'bg-yellow-500' : (isDarkMode ? 'bg-violet-900' : 'bg-violet-200')))}`}></div>
+                <div className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-6 duration-500 ${currentTheme === 'plush' ? 'bg-rose-200 text-rose-500' : (currentTheme === 'music' ? 'bg-violet-200 text-violet-600' : (currentTheme === 'steampunk' ? 'bg-[#1a1a1a] border-2 border-[#cd7f32] text-[#cd7f32]' : (currentTheme === 'newyear' ? 'bg-black border border-yellow-500 text-yellow-400' : (currentTheme === 'christmas' ? 'bg-red-100 text-red-600' : 'bg-white text-violet-600'))))}`}>
+                    <ThemeIcon />
                 </div>
              </div>
              
-             <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tight leading-tight">
-               <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentTheme === 'plush' ? 'from-rose-400 to-rose-300' : (currentTheme === 'music' ? 'from-violet-500 to-fuchsia-500' : 'from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400')}`}>
-                  Grade
-               </span>
-               <span className={isDarkMode ? 'text-white' : 'text-slate-800'}>Path</span>
+             <h1 className={`text-4xl sm:text-5xl font-black mb-1 tracking-tight ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32] font-mono' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'christmas' ? 'text-white drop-shadow-md' : 'text-slate-800 dark:text-white'))))}`}>
+                GradePath
              </h1>
-             <p className="text-xs font-bold text-slate-400 mb-6 tracking-widest uppercase">by Ihssan</p>
-             
-             <p className="text-lg text-slate-500 dark:text-slate-400 font-medium mb-8 leading-relaxed">
-               {t.welcomeSubtitle}
+             <p className={`text-xs font-bold uppercase tracking-widest mb-4 opacity-70 ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-400'}`}>by Ihssan</p>
+             <p className={`text-lg sm:text-xl font-medium mb-10 leading-relaxed ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-300'}`}>
+                {t.welcomeSubtitle}
              </p>
 
-             {/* Daily Focus Card */}
-             <div className={`mb-8 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-left relative overflow-hidden group hover:-translate-y-1 transition-transform ${currentTheme === 'plush' ? 'border-dashed border-rose-200' : (currentTheme === 'music' ? 'border-violet-200' : '')}`}>
-                 <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${currentTheme === 'plush' ? 'from-rose-400 to-rose-200' : (currentTheme === 'music' ? 'from-violet-500 to-fuchsia-500' : 'from-violet-500 to-fuchsia-500')}`}></div>
-                 <div className="flex items-center gap-2 mb-2">
-                     <Quote className={`w-4 h-4 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : 'text-violet-500')}`} />
-                     <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t.dailyFocus}</span>
+             <button 
+                onClick={() => setHasStarted(true)}
+                className={`w-full py-4 text-lg font-bold shadow-xl hover:-translate-y-1 active:scale-95 transition-all duration-300 flex items-center justify-center gap-3 ${getThemeButtonClass()}`}
+             >
+                {t.getStarted} <ArrowRight className="w-5 h-5" />
+             </button>
+
+             <div className="mt-12 opacity-80 hover:opacity-100 transition-opacity">
+                 <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t.dailyFocus}</p>
+                 <div className={`p-4 rounded-2xl border backdrop-blur-sm ${currentTheme === 'plush' ? 'bg-white/60 border-rose-200' : (currentTheme === 'music' ? 'bg-white/60 border-violet-200' : (currentTheme === 'steampunk' ? 'bg-[#1a1a1a]/80 border-[#cd7f32]' : 'bg-white/40 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700'))}`}>
+                     <Quote className={`w-5 h-5 mb-2 ${currentTheme === 'plush' ? 'text-rose-300' : 'text-slate-300'}`} />
+                     <p className={`text-sm italic font-medium mb-2 ${currentTheme === 'steampunk' ? 'text-[#cd7f32]' : 'text-slate-600 dark:text-slate-300'}`}>"{dailyQuote.text}"</p>
+                     <p className="text-xs font-bold text-slate-400">— {dailyQuote.author}</p>
                  </div>
-                 <p className="text-slate-700 dark:text-slate-200 font-serif italic text-lg leading-relaxed mb-2">
-                     "{dailyQuote.text}"
-                 </p>
-                 <p className="text-xs font-bold text-slate-400 text-right">— {dailyQuote.author}</p>
              </div>
-
-             <button
-               onClick={() => setHasStarted(true)}
-               className={`w-full py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group ${getThemeButtonClass()} ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''}`}
-             >
-                <span className="relative z-10 flex items-center gap-2">
-                   {t.getStarted} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-             </button>
-             
-             <button
-                onClick={() => setShowGradeInfo(true)}
-                className="mt-4 text-sm font-bold text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
-             >
-                 {t.gradeInfoBtn}
-             </button>
-
-             <div className="mt-12 flex justify-center gap-4 opacity-50">
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Apple_logo_grey.svg/172px-Apple_logo_grey.svg.png" className={`h-6 ${isDarkMode ? 'invert' : ''}`} alt="iOS" />
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Android_robot.svg/172px-Android_robot.svg.png" className={`h-6 ${isDarkMode ? 'brightness-0 invert' : ''}`} alt="Android" />
-             </div>
+          </div>
+          
+          {/* Footer */}
+          <div className="absolute bottom-6 text-xs font-bold text-slate-400 dark:text-slate-600 flex gap-4">
+              <button onClick={() => setShowGradeInfo(true)} className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
+                  {t.gradeInfoBtn}
+              </button>
+              <span>•</span>
+              <button onClick={handleInstallClick} className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors flex items-center gap-1">
+                  <Smartphone className="w-3 h-3" /> {t.installApp}
+              </button>
           </div>
         </div>
       ) : (
@@ -1226,42 +1839,54 @@ const App: React.FC = () => {
            <header className="py-6 flex flex-col relative z-20 gap-4">
                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${currentTheme === 'plush' ? 'bg-white text-rose-300 rounded-full border-2 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white text-violet-500 rounded-full border-2 border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'))}`}>
-                            <GraduationCap className="w-6 h-6" />
+                        {/* BIGGER MAIN ICON */}
+                        <div className={`w-14 h-14 rounded-[1.2rem] flex items-center justify-center shadow-lg ${currentTheme === 'plush' ? 'bg-white text-rose-300 border-2 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white text-violet-500 border-2 border-violet-200' : (currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] border border-[#cd7f32]' : (currentTheme === 'newyear' ? 'bg-black text-yellow-400 border border-yellow-500' : (isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'))))}`}>
+                            <ThemeIcon />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className="font-black text-xl leading-none dark:text-white">GradePath</h1>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{currentGradeLevel}</span>
+                            <h1 className={`font-black text-2xl leading-none ${currentTheme === 'newyear' || currentTheme === 'steampunk' ? 'text-white' : 'dark:text-white'}`}>GradePath</h1>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">by Ihssan</span>
                         </div>
-                        {/* Home Button Moved Here */}
+                        {/* Home Button moved here from header cluster */}
                         <button 
                                 onClick={() => setHasStarted(false)} 
-                                className="ml-2 p-2 rounded-xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300 shadow-sm" 
+                                className="ml-2 p-2 rounded-2xl bg-white/50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300 shadow-sm" 
                                 title="Home"
                             >
-                                <Home className="w-4 h-4" />
+                                <Home className="w-5 h-5" />
                         </button>
                     </div>
                     
-                    <button 
-                        onClick={() => setShowMobileMenu(!showMobileMenu)}
-                        className={`p-3 rounded-xl transition-all shadow-sm ${currentTheme === 'plush' ? 'bg-white text-rose-400 border border-rose-100' : (currentTheme === 'music' ? 'bg-white text-violet-500 border border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-100'))}`}
-                    >
-                        <MoreVertical className="w-5 h-5" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {/* MOVED FLOATING BUTTONS HERE */}
+                        <button
+                            onClick={() => setShowWhiteboard(true)}
+                            className={`p-3 rounded-2xl transition-all shadow-sm ${currentTheme === 'steampunk' ? 'bg-[#1a1a1a] text-[#cd7f32] border border-[#cd7f32]' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
+                            title="Whiteboard"
+                        >
+                            <PenTool className="w-6 h-6" />
+                        </button>
+
+                        <button 
+                            onClick={() => setShowMobileMenu(!showMobileMenu)}
+                            className={`p-3 rounded-2xl transition-all shadow-sm ${currentTheme === 'plush' ? 'bg-white text-rose-400 border border-rose-100' : (currentTheme === 'music' ? 'bg-white text-violet-500 border border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-100'))}`}
+                        >
+                            <MoreVertical className="w-6 h-6" />
+                        </button>
+                    </div>
                </div>
 
                {/* Top Navigation Tabs */}
-               <div className={`p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl flex relative backdrop-blur-md w-full ${currentTheme === 'plush' ? 'bg-white/50 border-2 border-dashed border-rose-200 rounded-full' : (currentTheme === 'music' ? 'bg-white/50 border border-violet-200 rounded-full' : '')}`}>
+               <div className={`p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-3xl flex relative backdrop-blur-md w-full ${currentTheme === 'plush' ? 'bg-white/50 border-2 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white/50 border border-violet-200' : '')}`}>
                     <button 
                         onClick={() => setActiveView('dashboard')}
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''} ${activeView === 'dashboard' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' || currentTheme === 'easter' ? 'rounded-full' : ''} ${activeView === 'dashboard' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : (currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] border border-[#cd7f32]' : (currentTheme === 'newyear' ? 'bg-black text-yellow-400 border border-yellow-500' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')))) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         {t.navCheck}
                     </button>
                     <button 
                         onClick={() => setActiveView('exercises')}
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''} ${activeView === 'exercises' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        className={`flex-1 py-3 rounded-2xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' || currentTheme === 'easter' ? 'rounded-full' : ''} ${activeView === 'exercises' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : (currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] border border-[#cd7f32]' : (currentTheme === 'newyear' ? 'bg-black text-yellow-400 border border-yellow-500' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')))) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         {t.navPractice}
                     </button>
@@ -1278,7 +1903,7 @@ const App: React.FC = () => {
                    >
                         <SettingsMenuContent />
                         <div className="h-px bg-slate-100 dark:bg-slate-700"></div>
-                        <button onClick={() => setHasStarted(false)} className="w-full py-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                        <button onClick={() => setHasStarted(false)} className="w-full py-3 text-red-500 font-bold hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2">
                             <Home className="w-4 h-4" />
                             {t.backToStart}
                         </button>
@@ -1305,22 +1930,36 @@ const App: React.FC = () => {
                            />
                        </div>
 
+                        {/* Gem Avatar - Reactive to GPA */}
+                        <div className="flex justify-center -my-2 z-10 relative">
+                            <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                                <GemAvatar mood={currentAverage === 0 ? 'neutral' : (currentAverage < 2.5 ? 'happy' : 'sad')} />
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 max-w-[150px]">
+                                    {currentAverage === 0 ? "Enter your grades, let's see where you stand!" : (currentAverage < 2.5 ? "Wow! You're crushing it! Keep going!" : "Don't worry, we can improve this together.")}
+                                </div>
+                            </div>
+                        </div>
+
                        {/* 2. Results Section (Scroll Down Target) */}
                        <div id="results-container" className={`w-full min-h-[500px] rounded-[2.5rem] shadow-2xl p-4 sm:p-8 relative transition-all duration-500 border ${
                             currentTheme === 'plush' ? 'bg-[#fffbf7] border-rose-100 shadow-rose-100 border-4 border-dashed' :
                             currentTheme === 'music' ? 'bg-[#fdfaff] border-violet-200 shadow-violet-100 border-2' :
+                            currentTheme === 'steampunk' ? 'bg-[#1a1a1a] border-[#cd7f32] shadow-[#cd7f32]/20 border-2' :
+                            currentTheme === 'easter' ? 'bg-[#fdfbf7] border-pink-200 shadow-yellow-100 border-4 border-double' :
+                            currentTheme === 'circus' ? 'bg-[#fff] border-red-500 shadow-yellow-200 border-4' :
+                            currentTheme === 'newyear' ? 'bg-slate-900 border-yellow-500/50 shadow-yellow-500/20 border' :
                             currentTheme === 'christmas' ? 'bg-white/80 border-red-100 shadow-red-100' :
                             currentTheme === 'school' ? 'bg-white/80 border-blue-100 shadow-blue-100' :
                             currentTheme === 'chalkboard' ? 'bg-[#333]/90 border-[#444] shadow-black' :
-                            currentTheme === 'pixel' ? 'bg-white border-4 border-[#0f380f] rounded-none' :
-                            currentTheme === 'neon' ? 'bg-black/60 border-fuchsia-500/30 shadow-[0_0_30px_rgba(232,121,249,0.1)] rounded-none backdrop-blur-xl' :
+                            currentTheme === 'pixel' ? 'bg-white border-4 border-[#0f380f] rounded-2xl' :
+                            currentTheme === 'neon' ? 'bg-black/60 border-fuchsia-500/30 shadow-[0_0_30px_rgba(232,121,249,0.1)] rounded-2xl backdrop-blur-xl' :
                             currentTheme === 'library' ? 'bg-[#fdfbf7]/90 border-[#dcc8b8] shadow-[#dcc8b8]' :
                             'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-slate-700/40 backdrop-blur-xl'
                         }`}>
                             <ResultsDashboard 
                                 results={analysisResult} 
                                 gpa={currentAverage} 
-                                courses={currentCourses}
+                                courses={currentCourses} 
                                 gradeLevel={currentGradeLevel}
                                 language={language}
                                 currentTheme={currentTheme}
@@ -1332,11 +1971,15 @@ const App: React.FC = () => {
                    <div className={`w-full min-h-[600px] rounded-[2.5rem] shadow-2xl p-4 sm:p-8 relative transition-all duration-500 border ${
                         currentTheme === 'plush' ? 'bg-[#fffbf7] border-rose-100 shadow-rose-100 border-4 border-dashed' :
                         currentTheme === 'music' ? 'bg-[#fdfaff] border-violet-200 shadow-violet-100 border-2' :
+                        currentTheme === 'steampunk' ? 'bg-[#1a1a1a] border-[#cd7f32] shadow-[#cd7f32]/20 border-2' :
+                        currentTheme === 'easter' ? 'bg-[#fdfbf7] border-pink-200 shadow-yellow-100 border-4 border-double' :
+                        currentTheme === 'circus' ? 'bg-[#fff] border-red-500 shadow-yellow-200 border-4' :
+                        currentTheme === 'newyear' ? 'bg-slate-900 border-yellow-500/50 shadow-yellow-500/20 border' :
                         currentTheme === 'christmas' ? 'bg-white/80 border-red-100 shadow-red-100' :
                         currentTheme === 'school' ? 'bg-white/80 border-blue-100 shadow-blue-100' :
                         currentTheme === 'chalkboard' ? 'bg-[#333]/90 border-[#444] shadow-black' :
-                        currentTheme === 'pixel' ? 'bg-white border-4 border-[#0f380f] rounded-none' :
-                        currentTheme === 'neon' ? 'bg-black/60 border-fuchsia-500/30 shadow-[0_0_30px_rgba(232,121,249,0.1)] rounded-none backdrop-blur-xl' :
+                        currentTheme === 'pixel' ? 'bg-white border-4 border-[#0f380f] rounded-2xl' :
+                        currentTheme === 'neon' ? 'bg-black/60 border-fuchsia-500/30 shadow-[0_0_30px_rgba(232,121,249,0.1)] rounded-2xl backdrop-blur-xl' :
                         currentTheme === 'library' ? 'bg-[#fdfbf7]/90 border-[#dcc8b8] shadow-[#dcc8b8]' :
                         'bg-white/60 dark:bg-slate-900/60 border-white/40 dark:border-slate-700/40 backdrop-blur-xl'
                    }`}>
@@ -1347,17 +1990,6 @@ const App: React.FC = () => {
                         />
                    </div>
                )}
-           </div>
-
-           {/* Mobile Bottom Nav (Optional: Removed since we have top tabs now, or can keep as redundancy, but user asked for Top Buttons) */}
-           {/* Keeping minimal floating action button for Chat if needed, but navigation is handled at top now */}
-           <div className="fixed bottom-6 right-6 z-50">
-               <button 
-                  onClick={() => setIsChatOpen(true)}
-                  className={`w-14 h-14 bg-gradient-to-r rounded-full shadow-lg flex items-center justify-center border-4 ${currentTheme === 'plush' ? 'from-rose-300 to-rose-200 border-white shadow-rose-200' : (currentTheme === 'music' ? 'from-violet-400 to-fuchsia-400 border-white shadow-violet-200' : 'from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none border-white dark:border-slate-900')}`}
-               >
-                   <MessageCircle className="w-7 h-7 text-white" />
-               </button>
            </div>
            
            <ChatWidget 

@@ -39,6 +39,30 @@ const getThemeStyle = (theme: Theme, element: 'input' | 'button' | 'card' | 'ico
             if (element === 'card') return 'bg-[#fdfaff] border-2 border-violet-100 rounded-[2.5rem]';
             if (element === 'iconBg') return 'bg-violet-100 text-violet-500 rounded-full';
             break;
+        case 'steampunk':
+            if (element === 'input') return 'bg-[#1a1a1a] border-[#cd7f32] text-[#cd7f32] font-mono placeholder-[#8b4513] focus:border-[#eaddcf]';
+            if (element === 'button') return 'bg-[#cd7f32] text-[#1a1a1a] border border-[#8b4513] hover:bg-[#8b4513] hover:text-[#cd7f32] font-mono shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]';
+            if (element === 'card') return 'bg-[#1a1a1a]/90 border-2 border-[#cd7f32] shadow-[0_0_15px_#cd7f32] rounded-xl';
+            if (element === 'iconBg') return 'bg-[#2b2b2b] text-[#cd7f32] border border-[#cd7f32]';
+            break;
+        case 'easter':
+            if (element === 'input') return 'bg-white border-2 border-green-200 text-purple-600 rounded-full font-bold';
+            if (element === 'button') return 'bg-yellow-300 text-green-700 font-bold rounded-full hover:bg-yellow-200 shadow-sm border-b-4 border-yellow-400';
+            if (element === 'card') return 'bg-[#fdfbf7] border-4 border-double border-pink-200 rounded-[2.5rem]';
+            if (element === 'iconBg') return 'bg-purple-100 text-purple-600 rounded-full';
+            break;
+        case 'circus':
+            if (element === 'input') return 'bg-white border-2 border-red-500 text-blue-900 font-bold text-center';
+            if (element === 'button') return 'bg-red-600 text-white font-black uppercase hover:bg-red-500 border-4 border-yellow-400 shadow-md';
+            if (element === 'card') return 'bg-white border-4 border-red-500 rounded-xl shadow-[8px_8px_0px_#facc15]';
+            if (element === 'iconBg') return 'bg-blue-600 text-white border-2 border-yellow-400';
+            break;
+        case 'newyear':
+            if (element === 'input') return 'bg-black border border-yellow-500/50 text-yellow-100 focus:border-yellow-400 font-light';
+            if (element === 'button') return 'bg-black border border-yellow-500 text-yellow-400 hover:bg-yellow-500 hover:text-black font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.5)]';
+            if (element === 'card') return 'bg-slate-900/90 border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.1)] rounded-none';
+            if (element === 'iconBg') return 'bg-black text-yellow-400 border border-yellow-500';
+            break;
         case 'christmas':
             if (element === 'input') return 'focus:ring-red-400 bg-white/70';
             if (element === 'button') return 'bg-red-600 hover:bg-red-700 shadow-red-200 text-white rounded-2xl';
@@ -109,7 +133,7 @@ const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, 
           <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
               <Building2 className="w-5 h-5" />
           </div>
-          <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.uniLookupHeader}</h3>
+          <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))))}`}>{t.uniLookupHeader}</h3>
       </div>
       
       <div className="flex gap-2 mb-4">
@@ -232,6 +256,10 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                 <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 animate-pulse ${
                     currentTheme === 'plush' ? 'bg-rose-100 text-rose-300 rounded-full' :
                     currentTheme === 'music' ? 'bg-violet-100 text-violet-300 rounded-full' :
+                    currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] rounded-none' :
+                    currentTheme === 'easter' ? 'bg-yellow-200 text-green-600 rounded-[40%]' :
+                    currentTheme === 'circus' ? 'bg-red-500 text-yellow-300' :
+                    currentTheme === 'newyear' ? 'bg-slate-900 text-yellow-400' :
                     currentTheme === 'christmas' ? 'bg-red-50 text-red-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
                 }`}>
                    <Target className="w-10 h-10" />
@@ -253,6 +281,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             ? 'bg-rose-100 text-rose-600 border border-rose-200' :
                             currentTheme === 'music' 
                             ? 'bg-violet-100 text-violet-600 border border-violet-200' :
+                            currentTheme === 'steampunk' ? 'bg-[#2b2b2b] text-[#cd7f32] border border-[#cd7f32]' :
+                            currentTheme === 'newyear' ? 'bg-black text-yellow-400 border border-yellow-500' :
                             currentTheme === 'christmas' 
                             ? 'bg-red-100 text-red-600' 
                             : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300'
@@ -260,7 +290,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             {t.aiAnalysis}
                         </span>
                     </div>
-                    <h2 className={`text-3xl font-black ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-100')))}`}>{results.archetype}</h2>
+                    <h2 className={`text-3xl font-black ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-white' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-100')))))}`}>{results.archetype}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Career Tags */}
@@ -278,12 +308,14 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                 ? 'bg-rose-50 border-rose-200 border-2 border-dashed' :
                 currentTheme === 'music' 
                 ? 'bg-violet-50 border-violet-200 border-2' :
+                currentTheme === 'steampunk' ? 'bg-[#1a1a1a] border-[#cd7f32]' :
+                currentTheme === 'newyear' ? 'bg-slate-900 border-yellow-500/50' :
                 currentTheme === 'christmas' 
                 ? 'bg-emerald-50/50 border-emerald-100' 
                 : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-700'
             }`}>
-                <h3 className={`font-bold mb-2 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))}`}>
-                    <Rocket className={`w-5 h-5 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'christmas' ? 'text-emerald-500' : (currentTheme === 'autumn' ? 'text-orange-600' : 'text-violet-500')))}`} />
+                <h3 className={`font-bold mb-2 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'steampunk' ? 'text-[#eaddcf]' : (currentTheme === 'newyear' ? 'text-white' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))))}`}>
+                    <Rocket className={`w-5 h-5 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-500' : (currentTheme === 'christmas' ? 'text-emerald-500' : (currentTheme === 'autumn' ? 'text-orange-600' : 'text-violet-500')))))}`} />
                     Strategy
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
@@ -338,7 +370,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                         <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                             <Briefcase className="w-5 h-5" />
                         </div>
-                        <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.careerCheckHeader}</h3>
+                        <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))))}`}>{t.careerCheckHeader}</h3>
                     </div>
                     
                     <div className="flex gap-2 mb-4">
@@ -392,7 +424,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                     <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                         <MapPin className="w-5 h-5" />
                     </div>
-                    <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.locationSearchHeader}</h3>
+                    <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))))}`}>{t.locationSearchHeader}</h3>
                 </div>
 
                 <div className="flex gap-2 mb-4">
@@ -458,8 +490,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
 
             {/* University Recommendations List */}
             <div>
-                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))}`}>
-                    <Building2 className={`w-6 h-6 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'christmas' ? 'text-red-500' : 'text-violet-500'))}`} />
+                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-white' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))))}`}>
+                    <Building2 className={`w-6 h-6 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32]' : (currentTheme === 'newyear' ? 'text-yellow-500' : (currentTheme === 'christmas' ? 'text-red-500' : 'text-violet-500'))))}`} />
                     {t.collegesHeader}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -469,6 +501,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             className={`p-5 rounded-2xl border transition-all hover:shadow-lg group ${
                                 currentTheme === 'plush' ? 'bg-[#fffbf7] border-2 border-dashed border-rose-200' :
                                 currentTheme === 'music' ? 'bg-[#fdfaff] border-2 border-violet-100 hover:border-violet-300' :
+                                currentTheme === 'steampunk' ? 'bg-[#2b2b2b] border border-[#cd7f32] hover:bg-[#3d3d3d]' :
+                                currentTheme === 'newyear' ? 'bg-slate-900 border border-yellow-500/30 hover:border-yellow-500' :
                                 currentTheme === 'christmas' 
                                 ? 'bg-white/70 hover:border-red-200 shadow-sm backdrop-blur-sm' 
                                 : 'bg-white/30 dark:bg-slate-800/30 hover:border-violet-200 dark:hover:border-violet-700 shadow-sm border-slate-100 dark:border-slate-700 backdrop-blur-sm'

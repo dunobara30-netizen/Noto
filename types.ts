@@ -49,7 +49,16 @@ export type Theme =
   | 'coffee'
   | 'nature'
   | 'plush'
-  | 'music';
+  | 'music'
+  | 'steampunk'
+  | 'easter'
+  | 'circus'
+  | 'newyear'
+  | 'deepsea'
+  | 'cyberpunk'
+  | 'candy'
+  | 'vaporwave'
+  | 'zen';
 
 export interface CollegeRecommendation {
   name: string;
@@ -303,6 +312,10 @@ export const TRANSLATIONS = {
     findingPlaces: "Suche Orte...",
     noPlacesFound: "Keine Orte gefunden.",
     mapLinks: "Karten & Details",
+    // Panic Mode
+    panicBreathe: "ATMEN",
+    panicInstruction: "Fokussiere dich auf den Kreis. Atme ein, wenn er wächst. Atme aus, wenn er schrumpft. Du machst das super.",
+    imCalmNow: "Ich bin wieder ruhig",
   },
   en: {
     // Start Screen
@@ -419,5 +432,9 @@ export const TRANSLATIONS = {
     findingPlaces: "Finding places...",
     noPlacesFound: "No places found.",
     mapLinks: "Maps & Details",
+    // Panic Mode
+    panicBreathe: "BREATHE",
+    panicInstruction: "Focus on the circle. Inhale as it expands. Exhale as it shrinks. You are doing great.",
+    imCalmNow: "I'm calm now",
   }
 };
