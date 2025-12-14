@@ -61,448 +61,81 @@ const ThemeRain: React.FC<ThemeRainProps> = ({ items, colors = "text-white", cou
   );
 };
 
-// --- INTERACTIVE COMPONENTS & WIDGETS ---
+// --- MISSING COMPONENTS DEFINITIONS ---
 
-// 1. Firework Component (New Year)
-const Firework: React.FC<{ x: number, y: number, onComplete: () => void }> = ({ x, y, onComplete }) => {
-    useEffect(() => {
-        const timer = setTimeout(onComplete, 1500); 
-        return () => clearTimeout(timer);
-    }, [onComplete]);
+const Firework = ({ x, y, onComplete }: { x: number, y: number, onComplete: () => void }) => {
+  useEffect(() => {
+    const t = setTimeout(onComplete, 1000);
+    return () => clearTimeout(t);
+  }, [onComplete]);
 
-    return (
-        <div className="absolute pointer-events-none z-50" style={{ left: x, top: y }}>
-            <div className="relative">
-                {Array.from({ length: 12 }).map((_, i) => (
-                    <div 
-                        key={i} 
-                        className="absolute w-1 h-12 bg-gradient-to-t from-yellow-500 to-transparent origin-bottom animate-ping"
-                        style={{ 
-                            transform: `rotate(${i * 30}deg) translateY(-20px)`,
-                            animationDuration: '0.8s'
-                        }}
-                    ></div>
-                ))}
-                <div className="absolute -left-2 -top-2 w-4 h-4 bg-white rounded-full animate-ping"></div>
-            </div>
-        </div>
-    );
-};
-
-// 2. Interactive Easter Egg (Easter)
-const EasterSurprise: React.FC = () => {
-    const [popped, setPopped] = useState(false);
-    
-    const handleClick = () => {
-        if (!popped) {
-            setPopped(true);
-            setTimeout(() => setPopped(false), 4000);
-        }
-    };
-
-    return (
-        <div className="fixed bottom-4 right-8 z-50 w-40 h-48 flex items-end justify-center pointer-events-none">
-            <div className="relative w-full h-full flex items-end justify-center">
-                
-                {/* The Bunny (Hidden initially) */}
-                <div className={`absolute bottom-10 z-30 transition-transform duration-700 cubic-bezier(0.68, -0.55, 0.27, 1.55) ${popped ? 'translate-y-[-50px]' : 'translate-y-[20px]'}`}>
-                    <svg width="90" height="100" viewBox="0 0 100 100">
-                        {/* Ears */}
-                        <path d="M20 60 Q 15 10 35 40" fill="#fff" stroke="#f3f4f6" strokeWidth="2" />
-                        <path d="M25 50 Q 22 25 32 45" fill="#fbcfe8" />
-                        
-                        <path d="M80 60 Q 85 10 65 40" fill="#fff" stroke="#f3f4f6" strokeWidth="2" />
-                        <path d="M75 50 Q 78 25 68 45" fill="#fbcfe8" />
-                        
-                        {/* Head */}
-                        <circle cx="50" cy="70" r="28" fill="#fff" stroke="#e5e7eb" strokeWidth="1" />
-                        
-                        {/* Eyes */}
-                        <circle cx="40" cy="65" r="3" fill="#1f2937" />
-                        <circle cx="60" cy="65" r="3" fill="#1f2937" />
-                        <circle cx="41" cy="64" r="1" fill="#fff" />
-                        <circle cx="61" cy="64" r="1" fill="#fff" />
-                        
-                        {/* Nose */}
-                        <path d="M47 72 Q 50 75 53 72" fill="#fbcfe8" stroke="#f9a8d4" strokeWidth="1" />
-                        
-                        {/* Whiskers */}
-                        <path d="M35 72 L 20 70" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
-                        <path d="M35 74 L 22 76" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
-                        <path d="M65 72 L 80 70" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
-                        <path d="M65 74 L 78 76" stroke="#9ca3af" strokeWidth="1" opacity="0.5" />
-                    </svg>
-                </div>
-
-                {/* Egg Bottom (Front) */}
-                <div 
-                    className="absolute bottom-4 z-40 cursor-pointer pointer-events-auto hover:scale-105 transition-transform"
-                    onClick={handleClick}
-                >
-                    <svg width="100" height="80" viewBox="0 0 100 80" className="drop-shadow-xl">
-                        {/* Egg Shape Bottom */}
-                        <path d="M10 30 Q 10 75 50 75 Q 90 75 90 30 L 80 40 L 70 30 L 60 40 L 50 30 L 40 40 L 30 30 L 20 40 Z" fill="url(#eggGradient)" stroke="#e5e7eb" strokeWidth="1" />
-                        <defs>
-                            <linearGradient id="eggGradient" x1="0" x2="0" y1="0" y2="1">
-                                <stop offset="0%" stopColor="#fff" />
-                                <stop offset="100%" stopColor="#f3f4f6" />
-                            </linearGradient>
-                        </defs>
-                        {/* Decorations */}
-                        <path d="M20 55 Q 50 65 80 55" fill="none" stroke="#f472b6" strokeWidth="4" strokeLinecap="round" />
-                        <path d="M25 65 Q 50 75 75 65" fill="none" stroke="#60a5fa" strokeWidth="4" strokeLinecap="round" />
-                        <circle cx="50" cy="50" r="5" fill="#fcd34d" />
-                        <circle cx="30" cy="45" r="3" fill="#a78bfa" />
-                        <circle cx="70" cy="45" r="3" fill="#a78bfa" />
-                    </svg>
-                </div>
-
-                {/* Egg Top (Pops off) */}
-                <div className={`absolute bottom-[65px] z-40 pointer-events-none transition-all duration-500 ease-out ${popped ? 'translate-y-[-30px] rotate-[-20deg] opacity-0' : 'translate-y-0 rotate-0 opacity-100'}`}>
-                     <svg width="100" height="50" viewBox="0 0 100 50">
-                        <path d="M10 35 Q 10 5 50 5 Q 90 5 90 35 L 80 25 L 70 35 L 60 25 L 50 35 L 40 25 L 30 35 L 20 25 Z" fill="#fff" stroke="#e5e7eb" strokeWidth="1" />
-                        <path d="M30 20 Q 50 10 70 20" fill="none" stroke="#fcd34d" strokeWidth="3" strokeDasharray="4,4" />
-                     </svg>
-                </div>
-            </div>
-        </div>
-    );
-};
-
-// 3. Circus Cannon (Circus)
-const CircusCannon: React.FC = () => {
-  const [bursts, setBursts] = useState<{id: number}[]>([]);
-  const fire = () => {
-    const id = Date.now();
-    setBursts(prev => [...prev, { id }]);
-    setTimeout(() => setBursts(prev => prev.filter(b => b.id !== id)), 1000);
-  };
   return (
-    <div className="absolute bottom-10 left-10 z-50">
-      <button onClick={fire} className="group relative transition-transform active:scale-95 hover:scale-105 cursor-pointer">
-        <div className="text-6xl -rotate-12">🎪</div>
-      </button>
-      {bursts.map(burst => (
-        <div key={burst.id} className="absolute left-[60px] top-[0px] pointer-events-none">
-           {Array.from({ length: 20 }).map((_, i) => (
-             <div key={i} className="absolute w-2 h-2 rounded-sm animate-out zoom-out fade-out slide-out-to-top-10 duration-1000"
-                style={{ backgroundColor: ['#ef4444', '#3b82f6', '#eab308'][i % 3], transform: `translate(${(Math.random() * 100)}px, -${(Math.random() * 100)}px)` }} />
-           ))}
-        </div>
+    <div className="fixed pointer-events-none z-50" style={{ left: x, top: y }}>
+      {[...Array(8)].map((_, i) => (
+        <div
+            key={i}
+            className="absolute w-2 h-2 bg-yellow-400 rounded-full animate-ping"
+            style={{
+                transform: `rotate(${i * 45}deg) translate(30px)`,
+                opacity: 0.8
+            }}
+        ></div>
       ))}
+      <div className="absolute w-3 h-3 bg-white rounded-full animate-ping"></div>
     </div>
   );
 };
 
-// 4. New Year Rocket
-const NewYearRocketWidget: React.FC = () => {
-    const [state, setState] = useState<'idle' | 'launching' | 'exploded'>('idle');
-    const launch = () => {
-        if (state !== 'idle') return;
-        setState('launching');
-        setTimeout(() => { setState('exploded'); setTimeout(() => setState('idle'), 2500); }, 1000);
-    };
-    return (
-        <div className="absolute bottom-10 right-10 z-50">
-            <div className={`transition-all duration-1000 ease-in ${state === 'launching' ? '-translate-y-[80vh] opacity-0' : (state === 'exploded' ? 'opacity-0' : 'translate-y-0 opacity-100')}`}>
-                <button onClick={launch} className={`hover:scale-110 transition-transform ${state !== 'idle' ? 'cursor-default' : 'cursor-pointer'}`}>
-                    <Rocket className="w-16 h-16 text-yellow-400 fill-red-600 -rotate-45 drop-shadow-[0_0_15px_rgba(234,179,8,0.6)]" />
-                </button>
-            </div>
-            {state === 'exploded' && (
-                <div className="fixed top-20 right-20 pointer-events-none"><div className="relative"><div className="absolute inset-0 w-4 h-4 bg-white rounded-full animate-ping"></div></div></div>
-            )}
-        </div>
-    );
-};
-
-// 5. Christmas Widget (Gift + Santa Sleigh)
-const ChristmasWidget: React.FC = () => {
-    const [santaFlying, setSantaFlying] = useState(false);
-    
-    const triggerSanta = () => {
-        if (santaFlying) return;
-        setSantaFlying(true);
-        setTimeout(() => setSantaFlying(false), 6000); // Animation duration
-    };
-
-    return (
-        <>
-            {/* Santa Sleigh Animation */}
-            {santaFlying && (
-                <div className="fixed top-20 -left-60 z-[60] animate-bear-walk-in" style={{ animationDuration: '6s', animationName: 'slide-across' }}>
-                    <div className="text-6xl filter drop-shadow-lg">🎅🛷🦌🦌</div>
-                    <style>{`
-                        @keyframes slide-across {
-                            0% { transform: translateX(-10vw) translateY(0) rotate(-5deg); }
-                            25% { transform: translateX(30vw) translateY(5vh) rotate(5deg); }
-                            50% { transform: translateX(60vw) translateY(-5vh) rotate(-5deg); }
-                            100% { transform: translateX(120vw) translateY(0) rotate(0deg); }
-                        }
-                    `}</style>
-                </div>
-            )}
-
-            {/* Gift Trigger */}
-            <div className="absolute bottom-10 left-10 z-50 pointer-events-auto cursor-pointer" onClick={triggerSanta}>
-                <div className={`transition-transform duration-500 hover:scale-110 hover:-translate-y-2`}>
-                    <Gift className="w-16 h-16 text-red-600 fill-red-100 drop-shadow-xl" />
-                </div>
-            </div>
-        </>
-    );
-};
-
-// 6. Halloween Widget (Ghost + Spider)
-const HalloweenWidget: React.FC = () => {
-    const [boo, setBoo] = useState(false);
-    const trigger = () => {
-        setBoo(true);
-        setTimeout(() => setBoo(false), 2000);
-    };
-    return (
-        <>
-            {/* Dangling Spider */}
-            <div className="absolute -top-10 left-10 z-50 group cursor-pointer">
-                 <div className="h-24 w-0.5 bg-slate-300/50 mx-auto group-hover:h-64 transition-all duration-700 ease-in-out"></div>
-                 <div className="relative -mt-1 group-hover:rotate-[360deg] transition-transform duration-700">
-                    <Bug className="w-12 h-12 text-slate-800 fill-purple-900 drop-shadow-lg" />
-                 </div>
-            </div>
-
-            {/* Ghost */}
-            <div className="absolute bottom-20 right-10 z-50 pointer-events-auto cursor-pointer" onClick={trigger}>
-                <div className="relative">
-                    <Ghost className={`w-16 h-16 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] animate-float ${boo ? 'scale-125' : ''}`} />
-                    {boo && <div className="absolute -top-10 -left-10 text-orange-500 font-black text-2xl animate-bounce">BOO!</div>}
-                </div>
-            </div>
-        </>
-    );
-};
-
-// 7. Space Voyager (Rocket + Star)
-const SpaceVoyager: React.FC = () => {
-    return (
-        <>
-            <div className="absolute top-1/3 -left-20 animate-fly-across pointer-events-none z-40 opacity-80">
-                <Rocket className="w-12 h-12 text-white rotate-90" />
-                <div className="w-20 h-1 bg-gradient-to-r from-transparent to-blue-500 absolute top-5 -left-20"></div>
-            </div>
-            <div className="absolute top-20 right-20 animate-pulse">
-                <Star className="w-8 h-8 text-yellow-200 fill-yellow-100" />
-            </div>
-        </>
-    );
-};
-
-// 8. Interactive Croissant (Coffee Theme)
-const CroissantWidget: React.FC = () => {
-    const [bites, setBites] = useState(0);
-    const handleClick = () => {
-        setBites(prev => prev < 3 ? prev + 1 : 0);
-    };
-    
-    // SVG Path changes based on bites
-    return (
-        <div className="absolute bottom-10 right-10 z-50 pointer-events-auto cursor-pointer hover:scale-105 transition-transform" onClick={handleClick}>
-            <div className="relative drop-shadow-lg">
-                <svg width="100" height="80" viewBox="0 0 100 80">
-                    {bites < 3 && (
-                        <path 
-                            d={bites === 0 
-                                ? "M20 50 Q 30 20 50 20 Q 70 20 80 50 Q 70 70 50 60 Q 30 70 20 50" 
-                                : bites === 1 
-                                ? "M35 45 Q 40 20 50 20 Q 70 20 80 50 Q 70 70 50 60 Q 40 60 35 45"
-                                : "M50 30 Q 60 25 70 40 Q 65 55 55 50 Z"
-                            }
-                            fill="#d97706" 
-                            stroke="#92400e" 
-                            strokeWidth="3" 
-                        />
-                    )}
-                    {bites === 3 && <text x="25" y="50" fontSize="40">😋</text>}
-                </svg>
-                {bites < 3 && <div className="absolute -top-4 right-0 bg-white/80 px-2 py-1 rounded text-[10px] font-bold text-amber-900 opacity-0 hover:opacity-100 transition-opacity pointer-events-none">Bite me!</div>}
-            </div>
-        </div>
-    );
-};
-
-// 9. Retro Widgets (Pixel)
-const RetroWidgets: React.FC = () => {
-    return (
-        <>
-            <div className="absolute bottom-10 left-10 z-50 pointer-events-auto cursor-pointer hover:animate-spin">
-                <Gamepad2 className="w-16 h-16 text-[#0f380f]" />
-            </div>
-            <div className="absolute top-20 right-10 z-40 animate-bounce" style={{ animationDuration: '3s' }}>
-                <div className="w-12 h-12 bg-[#0f380f] relative shadow-lg">
-                    <div className="absolute top-2 left-2 w-2 h-2 bg-[#9bbc0f]"></div>
-                    <div className="absolute top-2 right-2 w-2 h-2 bg-[#9bbc0f]"></div>
-                    <div className="absolute bottom-2 left-2 w-8 h-2 bg-[#9bbc0f]"></div>
-                </div>
-            </div>
-        </>
-    );
-};
-
-// 10. School Ruler Widget
-const SchoolWidget: React.FC = () => {
-    return (
-        <div className="absolute bottom-20 -left-10 rotate-45 pointer-events-none opacity-90 z-40">
-            <div className="w-72 h-14 bg-yellow-400 border-2 border-orange-600 rounded-sm flex items-end justify-between px-2 shadow-2xl relative">
-                {Array.from({length: 15}).map((_, i) => (
-                    <div key={i} className={`w-0.5 bg-black/60 ${i % 5 === 0 ? 'h-6' : 'h-3'}`}></div>
-                ))}
-                <span className="absolute top-1 left-2 text-[10px] font-bold text-black/50">RULER</span>
-            </div>
-        </div>
-    );
-};
-
-// 11. Chalkboard Widgets
-const ChalkboardWidgets: React.FC = () => {
-    return (
-        <div className="fixed inset-0 pointer-events-none z-40 overflow-hidden">
-            <div className="absolute top-1/4 left-10 font-serif text-white/40 text-4xl -rotate-12">E = mc²</div>
-            <div className="absolute bottom-1/3 right-20 font-serif text-white/40 text-3xl rotate-6">2 + 2 = 4</div>
-            <div className="absolute top-20 right-1/3 font-serif text-white/30 text-5xl">π</div>
-        </div>
-    );
-};
-
-// 12. Library Widget
-const LibraryWidget: React.FC = () => {
-    return (
-        <div className="absolute bottom-10 right-10 z-50 bg-[#3e2b22] p-4 rounded-full border-4 border-[#5c4033] shadow-2xl text-[#f5f5dc] transform rotate-12">
-            <MicOff className="w-10 h-10" />
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-[#5c4033] text-[#f5f5dc] text-[10px] font-bold px-2 py-0.5 rounded">SHHH</div>
-        </div>
-    );
-};
-
-// 13. Exam Widget
-const ExamWidget: React.FC = () => {
-    return (
-        <div className="absolute top-24 right-6 z-40 rotate-12 bg-white p-4 border-2 border-red-600 shadow-xl rounded-lg w-24 h-32 flex flex-col items-center justify-center">
-            <div className="text-6xl font-black text-red-600 font-serif">A+</div>
-            <div className="w-16 h-1 bg-red-600 mt-1 rounded-full"></div>
-            <div className="text-xs text-red-600 font-bold mt-2 rotate-[-10deg]">Perfect!</div>
-        </div>
-    );
-};
-
-// 14. Summer Widget
-const SummerWidget: React.FC = () => {
-    return (
-        <>
-            <div className="absolute -top-20 -right-20 animate-spin-slow pointer-events-none z-0">
-                <Sun className="w-64 h-64 text-yellow-400 fill-yellow-200 opacity-90 drop-shadow-2xl" />
-            </div>
-            <div className="absolute bottom-10 right-10 z-50 hover:-translate-y-2 transition-transform cursor-pointer">
-                <div className="relative">
-                    <IceCream className="w-20 h-20 text-pink-400 fill-pink-100 drop-shadow-xl" />
-                    <div className="absolute top-0 right-0 w-3 h-3 bg-white rounded-full opacity-60"></div>
-                </div>
-            </div>
-        </>
-    );
-};
-
-// 15. Autumn Widget (Maple Leaf)
-const AutumnWidget: React.FC = () => {
-    const [flutter, setFlutter] = useState(false);
-    return (
-        <div 
-            className="absolute bottom-8 right-8 z-50 pointer-events-auto cursor-pointer"
-            onClick={() => { setFlutter(true); setTimeout(() => setFlutter(false), 1000); }}
-        >
-            <div className={`origin-bottom ${flutter ? 'animate-bounce' : 'animate-bear-waddle'}`} style={{ animationDuration: '3s' }}>
-                <svg width="100" height="100" viewBox="0 0 100 100" className="drop-shadow-xl filter saturate-150">
-                    <path 
-                        d="M50 15 
-                           C 60 5, 75 25, 70 35 
-                           C 85 30, 95 50, 85 60 
-                           C 95 70, 75 90, 60 85 
-                           C 60 95, 55 100, 50 95 
-                           C 45 100, 40 95, 40 85 
-                           C 25 90, 5 70, 15 60 
-                           C 5 50, 15 30, 30 35 
-                           C 25 25, 40 5, 50 15 Z" 
-                        fill="#ea580c" 
-                        stroke="#9a3412" 
-                        strokeWidth="2" 
-                    />
-                    <path d="M50 95 L 50 40" stroke="#9a3412" strokeWidth="2" />
-                    <path d="M50 65 L 70 50" stroke="#9a3412" strokeWidth="1" />
-                    <path d="M50 65 L 30 50" stroke="#9a3412" strokeWidth="1" />
-                    <path d="M50 50 L 50 25" stroke="#9a3412" strokeWidth="1" />
-                </svg>
-            </div>
-        </div>
-    );
-};
-
-// 16. Neon Widget
-const NeonWidget: React.FC = () => {
-    return (
-        <div className="absolute top-28 left-6 z-40 border-4 border-fuchsia-500 p-3 rounded-xl shadow-[0_0_20px_#d946ef] animate-pulse bg-black/50 backdrop-blur-md rotate-[-5deg]">
-            <span className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-400 to-cyan-400 drop-shadow-[0_0_5px_#fff] tracking-widest">OPEN</span>
-        </div>
-    );
-};
-
-// 17. Night Widget
-const NightWidget: React.FC = () => {
-    return (
-        <div className="absolute top-12 right-12 z-40 animate-pulse">
-            <Moon className="w-24 h-24 text-slate-200 fill-slate-100 drop-shadow-[0_0_30px_rgba(255,255,255,0.6)]" />
-        </div>
-    );
-};
-
-// 18. Whiteboard Overlay
-const WhiteboardOverlay: React.FC<{ isOpen: boolean, onClose: () => void }> = ({ isOpen, onClose }) => {
+const WhiteboardOverlay = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [isDrawing, setIsDrawing] = useState(false);
-    const [color, setColor] = useState('#000000');
 
     useEffect(() => {
-        if (isOpen && canvasRef.current) {
-            const canvas = canvasRef.current;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-                ctx.lineCap = 'round';
-                ctx.lineWidth = 3;
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, canvas.width, canvas.height); // White background
-            }
+        const canvas = canvasRef.current;
+        if (canvas && isOpen) {
+            const resize = () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                const ctx = canvas.getContext('2d');
+                if (ctx) {
+                    ctx.lineCap = 'round';
+                    ctx.strokeStyle = '#000';
+                    ctx.lineWidth = 4;
+                }
+            };
+            resize();
+            window.addEventListener('resize', resize);
+            return () => window.removeEventListener('resize', resize);
         }
     }, [isOpen]);
 
-    const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
+    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
         setIsDrawing(true);
         draw(e);
     };
 
-    const stopDraw = () => {
+    const stopDrawing = () => {
         setIsDrawing(false);
         const ctx = canvasRef.current?.getContext('2d');
-        if (ctx) ctx.beginPath();
+        ctx?.beginPath();
     };
 
     const draw = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!isDrawing || !canvasRef.current) return;
-        const ctx = canvasRef.current.getContext('2d');
+        if (!isDrawing) return;
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
-        const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-        const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+        let clientX, clientY;
+        if ('touches' in e) {
+            clientX = e.touches[0].clientX;
+            clientY = e.touches[0].clientY;
+        } else {
+            clientX = (e as React.MouseEvent).clientX;
+            clientY = (e as React.MouseEvent).clientY;
+        }
 
-        ctx.strokeStyle = color;
         ctx.lineTo(clientX, clientY);
         ctx.stroke();
         ctx.beginPath();
@@ -512,52 +145,73 @@ const WhiteboardOverlay: React.FC<{ isOpen: boolean, onClose: () => void }> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-white cursor-crosshair touch-none">
-            <canvas 
-                ref={canvasRef}
-                onMouseDown={startDraw}
-                onMouseUp={stopDraw}
-                onMouseMove={draw}
-                onTouchStart={startDraw}
-                onTouchEnd={stopDraw}
-                onTouchMove={draw}
-                className="absolute inset-0 w-full h-full"
-            />
-            <div className="absolute top-4 left-4 flex gap-4 p-2 bg-slate-100 rounded-xl shadow-md border border-slate-200">
-                <button onClick={onClose} className="p-2 hover:bg-slate-200 rounded-lg"><X className="w-5 h-5" /></button>
-                <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-8 h-8 rounded cursor-pointer" />
-                <button onClick={() => {
-                    const ctx = canvasRef.current?.getContext('2d');
-                    if (ctx && canvasRef.current) ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-                }} className="p-2 hover:bg-slate-200 rounded-lg"><Eraser className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-[100] bg-white cursor-crosshair touch-none animate-in fade-in duration-200">
+            <div className="absolute top-4 right-4 flex gap-2">
+                 <button onClick={() => {
+                     const canvas = canvasRef.current;
+                     const ctx = canvas?.getContext('2d');
+                     if(canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
+                 }} className="p-3 bg-slate-100 text-slate-600 rounded-full shadow-lg hover:bg-slate-200 transition-colors">
+                    <Eraser className="w-6 h-6" />
+                 </button>
+                 <button onClick={onClose} className="p-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors">
+                    <X className="w-6 h-6" />
+                </button>
             </div>
+             <div className="absolute top-4 left-4 pointer-events-none opacity-50 text-sm font-bold text-slate-400">
+                Whiteboard
+            </div>
+            <canvas
+                ref={canvasRef}
+                onMouseDown={startDrawing}
+                onMouseUp={stopDrawing}
+                onMouseMove={draw}
+                onTouchStart={startDrawing}
+                onTouchEnd={stopDrawing}
+                onTouchMove={draw}
+                className="w-full h-full block"
+            />
         </div>
     );
 };
 
-// 19. Gem Avatar
-const GemAvatar: React.FC<{ mood: 'happy' | 'neutral' | 'sad' }> = ({ mood }) => {
+const GemAvatar = ({ mood }: { mood: 'neutral' | 'happy' | 'sad' }) => {
     return (
-        <div className="w-24 h-24 relative animate-bear-hop">
-            <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-xl">
-                <circle cx="50" cy="50" r="45" fill="#a78bfa" stroke="#8b5cf6" strokeWidth="2" />
-                <circle cx="35" cy="40" r="5" fill="white" />
-                <circle cx="35" cy="40" r="2" fill="black" />
-                <circle cx="65" cy="40" r="5" fill="white" />
-                <circle cx="65" cy="40" r="2" fill="black" />
-                {mood === 'happy' && <path d="M35 60 Q 50 75 65 60" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" />}
-                {mood === 'neutral' && <line x1="35" y1="65" x2="65" y2="65" stroke="white" strokeWidth="3" strokeLinecap="round" />}
-                {mood === 'sad' && <path d="M35 70 Q 50 55 65 70" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" />}
-                <line x1="20" y1="20" x2="35" y2="35" stroke="#8b5cf6" strokeWidth="3" />
-                <circle cx="20" cy="20" r="3" fill="#c4b5fd" />
-                <line x1="80" y1="20" x2="65" y2="35" stroke="#8b5cf6" strokeWidth="3" />
-                <circle cx="80" cy="20" r="3" fill="#c4b5fd" />
-            </svg>
+        <div className={`w-14 h-14 rounded-full flex items-center justify-center text-3xl shadow-inner border-2 transition-colors duration-500 ${
+            mood === 'happy' ? 'bg-emerald-100 border-emerald-200' : mood === 'sad' ? 'bg-rose-100 border-rose-200' : 'bg-violet-100 border-violet-200'
+        }`}>
+            {mood === 'happy' ? '🤩' : mood === 'sad' ? '🥺' : '🤖'}
         </div>
     );
 };
 
 // --- THEME DECORATIONS (ALIVE, TRANSPARENT, SPACIOUS WIDGETS) ---
+// Reusable Layout Component for Steampunk-style placement
+const BackgroundWidgetLayout = ({ 
+    topRightIcon, 
+    bottomLeftIcon, 
+    trColor, 
+    blColor, 
+    trAnim = "animate-spin-slow", 
+    blAnim = "animate-spin-reverse-slow" 
+}: { 
+    topRightIcon: React.ReactNode, 
+    bottomLeftIcon: React.ReactNode, 
+    trColor: string, 
+    blColor: string,
+    trAnim?: string,
+    blAnim?: string
+}) => (
+    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+        <div className={`absolute -top-10 -right-10 w-64 h-64 opacity-40 ${trAnim} ${trColor}`}>
+            {topRightIcon}
+        </div>
+        <div className={`absolute bottom-20 -left-10 w-40 h-40 opacity-30 ${blAnim} ${blColor}`}>
+            {bottomLeftIcon}
+        </div>
+    </div>
+);
+
 const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ theme, isDarkMode }) => {
     const [chestOpen, setChestOpen] = useState(false);
     const [glitching, setGlitching] = useState(false);
@@ -592,58 +246,19 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
         setTimeout(() => setGumballs(prev => prev.filter(g => g.id !== id)), 2000);
     };
 
+    // Helper for icons to fill container
+    const FullIcon = ({ Icon }: { Icon: React.ElementType }) => <Icon className="w-full h-full" />;
+
     switch (theme) {
-        case 'plush':
-             return (
-                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    <div className="absolute top-10 left-10 w-24 h-24 opacity-90 animate-in slide-in-from-left duration-[2s]">
-                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
-                            <circle cx="50" cy="50" r="40" fill="#F48FB1" stroke="#F06292" strokeWidth="2" />
-                            <circle cx="50" cy="50" r="32" stroke="#F06292" strokeWidth="1" strokeDasharray="3 2" opacity="0.6" />
-                            <circle cx="40" cy="40" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
-                            <circle cx="60" cy="40" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
-                            <circle cx="40" cy="60" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
-                            <circle cx="60" cy="60" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
-                            <line x1="40" y1="40" x2="60" y2="60" stroke="#EC407A" strokeWidth="4" strokeLinecap="round" />
-                            <line x1="60" y1="40" x2="40" y2="60" stroke="#EC407A" strokeWidth="4" strokeLinecap="round" />
-                        </svg>
-                    </div>
-                    <div className="absolute bottom-10 right-10 w-32 h-32 opacity-90 animate-bounce" style={{ animationDuration: '4s' }}>
-                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
-                            <circle cx="50" cy="50" r="40" fill="#86EFAC" /> 
-                            <path d="M20 40 Q 50 10 80 40" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <path d="M15 50 Q 50 20 85 50" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <path d="M20 60 Q 50 90 80 60" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <path d="M30 30 Q 70 70 40 80" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <path d="M60 20 Q 30 50 70 80" stroke="#86EFAC" strokeWidth="3" fill="none" strokeLinecap="round" />
-                            <path d="M85 60 Q 95 70 90 90" stroke="#22C55E" strokeWidth="4" strokeLinecap="round" fill="none" />
-                        </svg>
-                    </div>
-                 </div>
-             );
+        // --- PRESERVED THEMES (NO CHANGE) ---
         case 'steampunk':
             return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    <div className="absolute -top-10 -right-10 w-64 h-64 opacity-40 animate-spin-slow">
-                        <Settings className="w-full h-full text-amber-700" />
-                    </div>
-                    <div className="absolute bottom-20 -left-10 w-40 h-40 opacity-30 animate-spin-reverse-slow">
-                        <Settings2 className="w-full h-full text-stone-600" />
-                    </div>
-                </div>
-            );
-        case 'easter':
-            return <EasterSurprise />; 
-        case 'circus':
-            return (
-                <>
-                    <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                        <div className="absolute bottom-10 right-10 opacity-90 animate-bounce" style={{ animationDuration: '3s' }}>
-                            <div className="text-7xl drop-shadow-lg">🍿</div>
-                        </div>
-                    </div>
-                    <CircusCannon />
-                </>
+                <BackgroundWidgetLayout 
+                    topRightIcon={<FullIcon Icon={Settings} />}
+                    bottomLeftIcon={<FullIcon Icon={Settings2} />}
+                    trColor="text-amber-700"
+                    blColor="text-stone-600"
+                />
             );
         case 'music':
             return (
@@ -669,38 +284,20 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
                     </div>
                 </div>
             );
-        case 'newyear':
+        case 'circus':
             return (
                 <>
                     <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                        <div className="absolute top-20 right-10 opacity-90 animate-pulse delay-500">
-                            <div className="text-7xl rotate-12 drop-shadow-[0_0_15px_rgba(253,224,71,0.5)]">🥂</div>
-                        </div>
-                        <div className="absolute bottom-20 left-10 opacity-90 animate-bounce" style={{ animationDuration: '2.5s' }}>
-                            <PartyPopper className="w-32 h-32 text-yellow-400 -rotate-45 drop-shadow-xl" />
+                        <div className="absolute bottom-10 right-10 opacity-90 animate-bounce" style={{ animationDuration: '3s' }}>
+                            <div className="text-7xl drop-shadow-lg">🍿</div>
                         </div>
                     </div>
-                    <NewYearRocketWidget />
+                    <div className="absolute bottom-10 left-10 z-50">
+                        <button className="group relative transition-transform active:scale-95 hover:scale-105 cursor-pointer">
+                            <div className="text-6xl -rotate-12">🎪</div>
+                        </button>
+                    </div>
                 </>
-            );
-        case 'deepsea':
-            return (
-                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
-                    <div className="absolute -top-10 left-20 animate-in slide-in-from-top duration-1000">
-                        <div className="w-1 h-32 bg-slate-700 mx-auto"></div>
-                        <Anchor className="w-24 h-24 text-slate-800 fill-slate-900 drop-shadow-2xl" />
-                    </div>
-                    <div className="absolute bottom-10 left-10 pointer-events-auto cursor-pointer" onClick={() => setChestOpen(!chestOpen)}>
-                        <div className={`transition-transform duration-500 ${chestOpen ? 'scale-110' : 'hover:scale-105'}`}>
-                            <div className="text-8xl drop-shadow-2xl filter brightness-90">{chestOpen ? '💎' : '🧳'}</div>
-                            {chestOpen && <div className="absolute -top-10 left-0 animate-ping text-4xl">✨</div>}
-                        </div>
-                    </div>
-                    <div className="absolute bottom-0 right-20 w-8 h-32 bg-yellow-600 rounded-t-full border-4 border-yellow-800 animate-pulse">
-                        <div className="w-16 h-8 bg-yellow-600 absolute top-0 left-0 rounded-r-full border-4 border-yellow-800 border-l-0"></div>
-                        <div className="w-4 h-4 bg-cyan-300 rounded-full absolute top-2 right-2 animate-pulse"></div>
-                    </div>
-                </div>
             );
         case 'cyberpunk':
             return (
@@ -795,34 +392,47 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
                     ))}
                 </div>
             );
-        // --- UPDATED WIDGETS ---
-        case 'christmas': return <ChristmasWidget />;
-        case 'halloween': return <HalloweenWidget />;
-        case 'space': return <SpaceVoyager />;
-        case 'coffee': return <CroissantWidget />;
-        case 'pixel': return <RetroWidgets />;
-        case 'school': return <SchoolWidget />;
-        case 'chalkboard': return <ChalkboardWidgets />;
-        case 'library': return <LibraryWidget />;
-        case 'exam': return <ExamWidget />;
-        case 'summer': return <SummerWidget />;
-        case 'autumn': return <AutumnWidget />;
-        case 'neon': return <NeonWidget />;
-        case 'night': return <NightWidget />;
-        
-        // --- MISSING SIMPLE WIDGETS RESTORED FOR "EVERY THEME" ---
+
+        // --- CONVERTED THEMES (STEAMPUNK LAYOUT) ---
+        case 'plush':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Heart} />} bottomLeftIcon={<FullIcon Icon={Cloud} />} trColor="text-rose-400" blColor="text-pink-300" trAnim="animate-pulse" blAnim="animate-bounce" />;
+        case 'newyear':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={PartyPopper} />} bottomLeftIcon={<FullIcon Icon={Star} />} trColor="text-yellow-400" blColor="text-yellow-600" trAnim="animate-pulse" blAnim="animate-spin-slow" />;
+        case 'deepsea':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Anchor} />} bottomLeftIcon={<FullIcon Icon={Cloud} />} trColor="text-blue-300" blColor="text-cyan-600" trAnim="animate-pulse" blAnim="animate-bounce" />; // Cloud used as generic organic shape/bubble
+        case 'christmas':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Snowflake} />} bottomLeftIcon={<FullIcon Icon={Gift} />} trColor="text-white" blColor="text-red-600" trAnim="animate-spin-slow" blAnim="animate-bounce" />;
+        case 'halloween':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Ghost} />} bottomLeftIcon={<FullIcon Icon={Bug} />} trColor="text-white" blColor="text-purple-600" trAnim="animate-bounce" blAnim="animate-spin-slow" />;
+        case 'space':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Rocket} />} bottomLeftIcon={<FullIcon Icon={Moon} />} trColor="text-white" blColor="text-yellow-200" trAnim="animate-spin-slow" blAnim="animate-pulse" />;
+        case 'coffee':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Coffee} />} bottomLeftIcon={<FullIcon Icon={Utensils} />} trColor="text-[#4a3525]" blColor="text-[#8b4513]" trAnim="animate-pulse" blAnim="animate-bounce" />;
+        case 'pixel':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Gamepad2} />} bottomLeftIcon={<FullIcon Icon={Monitor} />} trColor="text-[#0f380f]" blColor="text-[#9bbc0f]" trAnim="animate-bounce" blAnim="animate-pulse" />;
+        case 'school':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Backpack} />} bottomLeftIcon={<FullIcon Icon={Ruler} />} trColor="text-blue-600" blColor="text-yellow-500" trAnim="animate-pulse" blAnim="animate-spin-slow" />;
+        case 'chalkboard':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Edit2} />} bottomLeftIcon={<FullIcon Icon={Eraser} />} trColor="text-white" blColor="text-gray-400" trAnim="animate-bounce" blAnim="animate-pulse" />;
+        case 'library':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Library} />} bottomLeftIcon={<FullIcon Icon={BookOpen} />} trColor="text-[#5c4033]" blColor="text-[#8b4513]" trAnim="animate-pulse" blAnim="animate-bounce" />;
+        case 'exam':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Files} />} bottomLeftIcon={<FullIcon Icon={Timer} />} trColor="text-black" blColor="text-red-600" trAnim="animate-pulse" blAnim="animate-spin-slow" />;
+        case 'summer':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Sun} />} bottomLeftIcon={<FullIcon Icon={IceCream} />} trColor="text-yellow-400" blColor="text-pink-400" trAnim="animate-spin-slow" blAnim="animate-bounce" />;
+        case 'autumn':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Wind} />} bottomLeftIcon={<FullIcon Icon={Leaf} />} trColor="text-orange-300" blColor="text-orange-600" trAnim="animate-pulse" blAnim="animate-bounce" />;
+        case 'neon':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Zap} />} bottomLeftIcon={<FullIcon Icon={Triangle} />} trColor="text-fuchsia-400" blColor="text-cyan-400" trAnim="animate-pulse" blAnim="animate-spin-slow" />;
+        case 'night':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Moon} />} bottomLeftIcon={<FullIcon Icon={CloudMoon} />} trColor="text-slate-200" blColor="text-indigo-400" trAnim="animate-pulse" blAnim="animate-bounce" />;
         case 'spring':
-            return (
-                <div className="absolute bottom-12 left-8 z-50 pointer-events-auto cursor-pointer hover:-translate-y-2 transition-transform animate-bounce duration-[3s] text-pink-500">
-                    <Flower2 className="w-16 h-16" />
-                </div>
-            );
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Flower2} />} bottomLeftIcon={<FullIcon Icon={Sprout} />} trColor="text-pink-400" blColor="text-green-500" trAnim="animate-spin-slow" blAnim="animate-bounce" />;
         case 'nature':
-            return (
-                <div className="absolute bottom-12 left-8 z-50 pointer-events-auto cursor-pointer hover:-translate-y-2 transition-transform animate-bounce duration-[3s] text-green-600">
-                    <Trees className="w-16 h-16" />
-                </div>
-            );
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Trees} />} bottomLeftIcon={<FullIcon Icon={Leaf} />} trColor="text-green-700" blColor="text-emerald-500" trAnim="animate-pulse" blAnim="animate-bounce" />;
+        case 'easter':
+            return <BackgroundWidgetLayout topRightIcon={<FullIcon Icon={Rabbit} />} bottomLeftIcon={<FullIcon Icon={Circle} />} trColor="text-white" blColor="text-pink-300" trAnim="animate-bounce" blAnim="animate-pulse" />;
+        
         default:
             return null;
     }
