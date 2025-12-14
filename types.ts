@@ -47,7 +47,9 @@ export type Theme =
   | 'space'
   | 'neon'
   | 'coffee'
-  | 'nature';
+  | 'nature'
+  | 'plush'
+  | 'music';
 
 export interface CollegeRecommendation {
   name: string;

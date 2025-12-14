@@ -27,6 +27,18 @@ interface UniLookupProps {
 
 const getThemeStyle = (theme: Theme, element: 'input' | 'button' | 'card' | 'iconBg') => {
     switch (theme) {
+        case 'plush':
+            if (element === 'input') return 'focus:ring-rose-200 border-2 border-dashed border-rose-200 bg-white text-stone-600 rounded-full font-bold';
+            if (element === 'button') return 'bg-rose-300 hover:bg-rose-400 text-white shadow-sm border-b-4 border-rose-400 active:border-b-0 active:translate-y-1 rounded-full';
+            if (element === 'card') return 'bg-[#fffbf7] border-4 border-dashed border-rose-100 rounded-[2.5rem]';
+            if (element === 'iconBg') return 'bg-rose-100 text-rose-500 rounded-full';
+            break;
+        case 'music':
+            if (element === 'input') return 'focus:ring-violet-200 border-2 border-violet-200 bg-white text-violet-700 rounded-full font-bold';
+            if (element === 'button') return 'bg-violet-400 hover:bg-violet-500 text-white shadow-sm border-b-4 border-violet-500 active:border-b-0 active:translate-y-1 rounded-full';
+            if (element === 'card') return 'bg-[#fdfaff] border-2 border-violet-100 rounded-[2.5rem]';
+            if (element === 'iconBg') return 'bg-violet-100 text-violet-500 rounded-full';
+            break;
         case 'christmas':
             if (element === 'input') return 'focus:ring-red-400 bg-white/70';
             if (element === 'button') return 'bg-red-600 hover:bg-red-700 shadow-red-200 text-white rounded-2xl';
@@ -97,7 +109,7 @@ const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, 
           <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
               <Building2 className="w-5 h-5" />
           </div>
-          <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.uniLookupHeader}</h3>
+          <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.uniLookupHeader}</h3>
       </div>
       
       <div className="flex gap-2 mb-4">
@@ -218,6 +230,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
         return (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-6">
                 <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 animate-pulse ${
+                    currentTheme === 'plush' ? 'bg-rose-100 text-rose-300 rounded-full' :
+                    currentTheme === 'music' ? 'bg-violet-100 text-violet-300 rounded-full' :
                     currentTheme === 'christmas' ? 'bg-red-50 text-red-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
                 }`}>
                    <Target className="w-10 h-10" />
@@ -235,6 +249,10 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            currentTheme === 'plush'
+                            ? 'bg-rose-100 text-rose-600 border border-rose-200' :
+                            currentTheme === 'music' 
+                            ? 'bg-violet-100 text-violet-600 border border-violet-200' :
                             currentTheme === 'christmas' 
                             ? 'bg-red-100 text-red-600' 
                             : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300'
@@ -242,7 +260,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             {t.aiAnalysis}
                         </span>
                     </div>
-                    <h2 className={`text-3xl font-black ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-100')}`}>{results.archetype}</h2>
+                    <h2 className={`text-3xl font-black ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-100')))}`}>{results.archetype}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Career Tags */}
@@ -256,12 +274,16 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
 
             {/* Advice Section */}
             <div className={`p-5 rounded-2xl border ${
+                currentTheme === 'plush'
+                ? 'bg-rose-50 border-rose-200 border-2 border-dashed' :
+                currentTheme === 'music' 
+                ? 'bg-violet-50 border-violet-200 border-2' :
                 currentTheme === 'christmas' 
                 ? 'bg-emerald-50/50 border-emerald-100' 
                 : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-700'
             }`}>
-                <h3 className={`font-bold mb-2 flex items-center gap-2 ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')}`}>
-                    <Rocket className={`w-5 h-5 ${currentTheme === 'christmas' ? 'text-emerald-500' : (currentTheme === 'autumn' ? 'text-orange-600' : 'text-violet-500')}`} />
+                <h3 className={`font-bold mb-2 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))}`}>
+                    <Rocket className={`w-5 h-5 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'christmas' ? 'text-emerald-500' : (currentTheme === 'autumn' ? 'text-orange-600' : 'text-violet-500')))}`} />
                     Strategy
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
@@ -316,7 +338,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                         <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                             <Briefcase className="w-5 h-5" />
                         </div>
-                        <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.careerCheckHeader}</h3>
+                        <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.careerCheckHeader}</h3>
                     </div>
                     
                     <div className="flex gap-2 mb-4">
@@ -370,7 +392,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                     <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                         <MapPin className="w-5 h-5" />
                     </div>
-                    <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.locationSearchHeader}</h3>
+                    <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'plush' ? 'text-rose-500' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))))}`}>{t.locationSearchHeader}</h3>
                 </div>
 
                 <div className="flex gap-2 mb-4">
@@ -436,8 +458,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
 
             {/* University Recommendations List */}
             <div>
-                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')}`}>
-                    <Building2 className={`w-6 h-6 ${currentTheme === 'christmas' ? 'text-red-500' : 'text-violet-500'}`} />
+                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${currentTheme === 'plush' ? 'text-stone-700' : (currentTheme === 'music' ? 'text-violet-700' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')))}`}>
+                    <Building2 className={`w-6 h-6 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'christmas' ? 'text-red-500' : 'text-violet-500'))}`} />
                     {t.collegesHeader}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -445,6 +467,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                         <div 
                             key={idx} 
                             className={`p-5 rounded-2xl border transition-all hover:shadow-lg group ${
+                                currentTheme === 'plush' ? 'bg-[#fffbf7] border-2 border-dashed border-rose-200' :
+                                currentTheme === 'music' ? 'bg-[#fdfaff] border-2 border-violet-100 hover:border-violet-300' :
                                 currentTheme === 'christmas' 
                                 ? 'bg-white/70 hover:border-red-200 shadow-sm backdrop-blur-sm' 
                                 : 'bg-white/30 dark:bg-slate-800/30 hover:border-violet-200 dark:hover:border-violet-700 shadow-sm border-slate-100 dark:border-slate-700 backdrop-blur-sm'

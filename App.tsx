@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import GradeCalculator from './components/GradeCalculator';
 import ResultsDashboard from './components/ResultsDashboard';
@@ -63,6 +64,69 @@ const ThemeRain: React.FC<ThemeRainProps> = ({ items, colors = "text-white", cou
 // --- THEME DECORATIONS (ALIVE, TRANSPARENT, SPACIOUS WIDGETS) ---
 const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ theme, isDarkMode }) => {
     switch (theme) {
+        case 'plush':
+             return (
+                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                    {/* Sewing Button - Top Left (Restored) */}
+                    <div className="absolute top-10 left-10 w-24 h-24 opacity-90 animate-in slide-in-from-left duration-[2s]">
+                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
+                            <circle cx="50" cy="50" r="40" fill="#F48FB1" stroke="#F06292" strokeWidth="2" />
+                            <circle cx="50" cy="50" r="32" stroke="#F06292" strokeWidth="1" strokeDasharray="3 2" opacity="0.6" />
+                            <circle cx="40" cy="40" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
+                            <circle cx="60" cy="40" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
+                            <circle cx="40" cy="60" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
+                            <circle cx="60" cy="60" r="6" fill="#FCE4EC" stroke="#AD1457" strokeWidth="1" />
+                            <line x1="40" y1="40" x2="60" y2="60" stroke="#EC407A" strokeWidth="4" strokeLinecap="round" />
+                            <line x1="60" y1="40" x2="40" y2="60" stroke="#EC407A" strokeWidth="4" strokeLinecap="round" />
+                        </svg>
+                    </div>
+                    {/* Green Wool Ball - Bottom Right (Matching Image) */}
+                    <div className="absolute bottom-10 right-10 w-32 h-32 opacity-90 animate-bounce" style={{ animationDuration: '4s' }}>
+                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
+                            {/* Main Ball Body */}
+                            <circle cx="50" cy="50" r="40" fill="#86EFAC" /> {/* Light Green */}
+                            {/* Yarn Strands */}
+                            <path d="M20 40 Q 50 10 80 40" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            <path d="M15 50 Q 50 20 85 50" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            <path d="M20 60 Q 50 90 80 60" stroke="#4ADE80" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            <path d="M30 30 Q 70 70 40 80" stroke="#22C55E" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            <path d="M60 20 Q 30 50 70 80" stroke="#86EFAC" strokeWidth="3" fill="none" strokeLinecap="round" />
+                            {/* Loose Strand */}
+                            <path d="M85 60 Q 95 70 90 90" stroke="#22C55E" strokeWidth="4" strokeLinecap="round" fill="none" />
+                        </svg>
+                    </div>
+                 </div>
+             );
+        case 'music':
+            return (
+                <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
+                    {/* Vinyl Record - Top Left */}
+                    <div className="absolute top-10 left-10 w-32 h-32 opacity-90 animate-spin-slow">
+                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl">
+                            {/* Disc */}
+                            <circle cx="50" cy="50" r="48" fill="#1E1B2E" />
+                            {/* Grooves */}
+                            <circle cx="50" cy="50" r="40" stroke="#2D2A3E" strokeWidth="2" />
+                            <circle cx="50" cy="50" r="32" stroke="#2D2A3E" strokeWidth="2" />
+                            <circle cx="50" cy="50" r="24" stroke="#2D2A3E" strokeWidth="2" />
+                            {/* Label */}
+                            <circle cx="50" cy="50" r="16" fill="#F472B6" />
+                            <circle cx="50" cy="50" r="3" fill="#1E1B2E" />
+                            {/* Reflection */}
+                            <path d="M20 50 A 30 30 0 0 1 80 50" stroke="white" strokeWidth="4" strokeOpacity="0.1" strokeLinecap="round" />
+                        </svg>
+                    </div>
+                    {/* Floating Notes - Bottom Right */}
+                    <div className="absolute bottom-12 right-10 w-32 h-32 opacity-90 animate-bounce" style={{ animationDuration: '3s' }}>
+                        <svg viewBox="0 0 100 100" fill="none" className="drop-shadow-xl rotate-12">
+                            <path d="M30 70 L30 30 L70 20 L70 60" stroke="#8B5CF6" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="25" cy="75" r="10" fill="#A78BFA" transform="rotate(-15 25 75)" />
+                            <circle cx="65" cy="65" r="10" fill="#A78BFA" transform="rotate(-15 65 65)" />
+                            <path d="M30 40 L70 30" stroke="#8B5CF6" strokeWidth="4" />
+                        </svg>
+                    </div>
+                </div>
+            );
         case 'halloween':
             return (
                 <div className="fixed inset-0 pointer-events-none overflow-hidden z-50">
@@ -375,6 +439,7 @@ const App: React.FC = () => {
   const [currentTheme, setCurrentTheme] = useState<Theme>('default');
   const [isRainActive, setIsRainActive] = useState(true); // For transition delay
   
+  
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const t = TRANSLATIONS[language];
@@ -456,6 +521,7 @@ const App: React.FC = () => {
       const timer = setTimeout(() => {
           setIsRainActive(true);
       }, 1000); // Reduced to 1s
+      
       return () => clearTimeout(timer);
   }, [currentTheme]);
 
@@ -653,6 +719,10 @@ const App: React.FC = () => {
   // Dynamic Button Class Generator based on Theme (Start Screen & App)
   const getThemeButtonClass = () => {
       switch (currentTheme) {
+          case 'plush':
+              return 'bg-rose-300 border-b-4 border-rose-400 text-white rounded-full hover:bg-rose-400 active:border-b-0 active:translate-y-1 transition-all';
+          case 'music':
+              return 'bg-violet-400 border-b-4 border-violet-500 text-white rounded-full hover:bg-violet-500 active:border-b-0 active:translate-y-1 transition-all';
           case 'christmas':
               return 'bg-red-600 border-red-500 text-white hover:bg-red-500 shadow-xl shadow-red-900/50 font-serif';
           case 'school':
@@ -736,6 +806,8 @@ const App: React.FC = () => {
         <div>
             <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">Creative</span>
             <div className="grid grid-cols-3 gap-2">
+                <ThemeButton themeId="plush" label="Plush" color="bg-rose-100 text-rose-600 border-rose-300" />
+                <ThemeButton themeId="music" label="Music" color="bg-violet-100 text-violet-600 border-violet-300" />
                 <ThemeButton themeId="pixel" label="Retro" color="bg-gray-200 text-green-700 border-gray-400 font-mono" />
                 <ThemeButton themeId="space" label="Space" color="bg-indigo-950 text-indigo-200 border-indigo-700" />
                 <ThemeButton themeId="neon" label="Neon" color="bg-black text-fuchsia-400 border-fuchsia-500" />
@@ -747,7 +819,7 @@ const App: React.FC = () => {
 
         <div className={`h-px my-2 ${isDarkMode ? 'bg-white/10' : 'bg-slate-200'}`}></div>
 
-        {/* Lofi Radio - Placed ABOVE Language */}
+        {/* Lofi Radio */}
         <button onClick={handleMusicSelect} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isMusicPlaying ? <Volume2 className="w-5 h-5 text-emerald-400 shrink-0 animate-pulse" /> : <VolumeX className="w-5 h-5 text-slate-400 shrink-0" />}
             <div className="flex flex-col">
@@ -799,6 +871,29 @@ const App: React.FC = () => {
       let animLayer = null;
 
       switch (currentTheme) {
+          case 'plush':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-[#fff0f5]">
+                       <div className="absolute inset-0 opacity-10" style={{
+                          backgroundImage: 'radial-gradient(#f9a8d4 3px, transparent 3px)',
+                          backgroundSize: '24px 24px'
+                      }}></div>
+                  </div>
+              );
+              // Updated to match the provided image (Bows, Stars, etc.)
+              if (isRainActive) animLayer = <ThemeRain items={['🎀', '✨', '🧶', '🧁', '☁️']} colors="text-rose-300 opacity-80" count={40} />;
+              break;
+          case 'music':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-violet-50 to-fuchsia-50">
+                       <div className="absolute inset-0 opacity-10" style={{
+                          backgroundImage: 'linear-gradient(to right, #8B5CF6 1px, transparent 1px)',
+                          backgroundSize: '40px 100%' // Sheet music lines effect
+                      }}></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['🎵', '🎶', '🎹', '🎸', '🎧', '🎼']} colors="text-violet-400 opacity-80" count={40} />;
+              break;
           case 'christmas':
               bgLayer = <div className="fixed inset-0 z-[-1] bg-gradient-to-br from-red-950 via-slate-900 to-emerald-950"></div>;
               if (isRainActive) animLayer = <ThemeRain items={['❄️', '⛄', '🎄', '🎁', '✨']} colors="text-white opacity-80" />;
@@ -980,7 +1075,7 @@ const App: React.FC = () => {
       {/* Backgrounds */}
       {renderThemeBackgrounds()}
       <ThemeDecorations theme={currentTheme} isDarkMode={isDarkMode} />
-
+      
       {/* Login Modal */}
       {showLogin && (
         <div className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-200">
@@ -1069,14 +1164,14 @@ const App: React.FC = () => {
 
           <div className="max-w-md w-full animate-in slide-in-from-bottom-8 duration-700">
              <div className="mb-8 relative inline-block">
-                <div className={`absolute inset-0 blur-3xl rounded-full opacity-50 ${isDarkMode ? 'bg-violet-900' : 'bg-violet-200'}`}></div>
-                <div className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-6 duration-500 ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'}`}>
+                <div className={`absolute inset-0 blur-3xl rounded-full opacity-50 ${currentTheme === 'plush' ? 'bg-rose-300' : (currentTheme === 'music' ? 'bg-violet-300' : (isDarkMode ? 'bg-violet-900' : 'bg-violet-200'))}`}></div>
+                <div className={`relative w-24 h-24 sm:w-32 sm:h-32 rounded-[2rem] flex items-center justify-center shadow-2xl rotate-3 transition-transform hover:rotate-6 duration-500 ${currentTheme === 'plush' ? 'bg-white text-rose-300 border-4 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white text-violet-500 border-4 border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'))}`}>
                    <GraduationCap className="w-12 h-12 sm:w-16 sm:h-16" />
                 </div>
              </div>
              
              <h1 className="text-4xl sm:text-5xl font-black mb-2 tracking-tight leading-tight">
-               <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400">
+               <span className={`text-transparent bg-clip-text bg-gradient-to-r ${currentTheme === 'plush' ? 'from-rose-400 to-rose-300' : (currentTheme === 'music' ? 'from-violet-500 to-fuchsia-500' : 'from-violet-600 to-fuchsia-600 dark:from-violet-400 dark:to-fuchsia-400')}`}>
                   Grade
                </span>
                <span className={isDarkMode ? 'text-white' : 'text-slate-800'}>Path</span>
@@ -1088,10 +1183,10 @@ const App: React.FC = () => {
              </p>
 
              {/* Daily Focus Card */}
-             <div className="mb-8 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-left relative overflow-hidden group hover:-translate-y-1 transition-transform">
-                 <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-violet-500 to-fuchsia-500"></div>
+             <div className={`mb-8 bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm p-5 rounded-2xl border border-slate-100 dark:border-slate-700 shadow-sm text-left relative overflow-hidden group hover:-translate-y-1 transition-transform ${currentTheme === 'plush' ? 'border-dashed border-rose-200' : (currentTheme === 'music' ? 'border-violet-200' : '')}`}>
+                 <div className={`absolute top-0 left-0 w-1 h-full bg-gradient-to-b ${currentTheme === 'plush' ? 'from-rose-400 to-rose-200' : (currentTheme === 'music' ? 'from-violet-500 to-fuchsia-500' : 'from-violet-500 to-fuchsia-500')}`}></div>
                  <div className="flex items-center gap-2 mb-2">
-                     <Quote className="w-4 h-4 text-violet-500" />
+                     <Quote className={`w-4 h-4 ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : 'text-violet-500')}`} />
                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{t.dailyFocus}</span>
                  </div>
                  <p className="text-slate-700 dark:text-slate-200 font-serif italic text-lg leading-relaxed mb-2">
@@ -1102,7 +1197,7 @@ const App: React.FC = () => {
 
              <button
                onClick={() => setHasStarted(true)}
-               className={`w-full py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group ${getThemeButtonClass()}`}
+               className={`w-full py-4 sm:py-5 rounded-2xl font-bold text-lg sm:text-xl transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3 relative overflow-hidden group ${getThemeButtonClass()} ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''}`}
              >
                 <span className="relative z-10 flex items-center gap-2">
                    {t.getStarted} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
@@ -1131,7 +1226,7 @@ const App: React.FC = () => {
            <header className="py-6 flex flex-col relative z-20 gap-4">
                <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg ${currentTheme === 'plush' ? 'bg-white text-rose-300 rounded-full border-2 border-dashed border-rose-200' : (currentTheme === 'music' ? 'bg-white text-violet-500 rounded-full border-2 border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white' : 'bg-white text-violet-600'))}`}>
                             <GraduationCap className="w-6 h-6" />
                         </div>
                         <div className="flex flex-col">
@@ -1150,23 +1245,23 @@ const App: React.FC = () => {
                     
                     <button 
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
-                        className={`p-3 rounded-xl transition-all shadow-sm ${isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-100'}`}
+                        className={`p-3 rounded-xl transition-all shadow-sm ${currentTheme === 'plush' ? 'bg-white text-rose-400 border border-rose-100' : (currentTheme === 'music' ? 'bg-white text-violet-500 border border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-100'))}`}
                     >
                         <MoreVertical className="w-5 h-5" />
                     </button>
                </div>
 
                {/* Top Navigation Tabs */}
-               <div className="p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl flex relative backdrop-blur-md w-full">
+               <div className={`p-1.5 bg-slate-100/50 dark:bg-slate-800/50 rounded-2xl flex relative backdrop-blur-md w-full ${currentTheme === 'plush' ? 'bg-white/50 border-2 border-dashed border-rose-200 rounded-full' : (currentTheme === 'music' ? 'bg-white/50 border border-violet-200 rounded-full' : '')}`}>
                     <button 
                         onClick={() => setActiveView('dashboard')}
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${activeView === 'dashboard' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''} ${activeView === 'dashboard' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         {t.navCheck}
                     </button>
                     <button 
                         onClick={() => setActiveView('exercises')}
-                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${activeView === 'exercises' ? 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                        className={`flex-1 py-3 rounded-xl text-sm font-bold transition-all relative z-10 ${currentTheme === 'plush' || currentTheme === 'music' ? 'rounded-full' : ''} ${activeView === 'exercises' ? (currentTheme === 'plush' ? 'bg-rose-300 text-white shadow-sm' : (currentTheme === 'music' ? 'bg-violet-400 text-white shadow-sm' : 'bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-white')) : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
                     >
                         {t.navPractice}
                     </button>
@@ -1212,6 +1307,8 @@ const App: React.FC = () => {
 
                        {/* 2. Results Section (Scroll Down Target) */}
                        <div id="results-container" className={`w-full min-h-[500px] rounded-[2.5rem] shadow-2xl p-4 sm:p-8 relative transition-all duration-500 border ${
+                            currentTheme === 'plush' ? 'bg-[#fffbf7] border-rose-100 shadow-rose-100 border-4 border-dashed' :
+                            currentTheme === 'music' ? 'bg-[#fdfaff] border-violet-200 shadow-violet-100 border-2' :
                             currentTheme === 'christmas' ? 'bg-white/80 border-red-100 shadow-red-100' :
                             currentTheme === 'school' ? 'bg-white/80 border-blue-100 shadow-blue-100' :
                             currentTheme === 'chalkboard' ? 'bg-[#333]/90 border-[#444] shadow-black' :
@@ -1233,6 +1330,8 @@ const App: React.FC = () => {
                ) : (
                    /* 3. Exercises Section (Separate View) */
                    <div className={`w-full min-h-[600px] rounded-[2.5rem] shadow-2xl p-4 sm:p-8 relative transition-all duration-500 border ${
+                        currentTheme === 'plush' ? 'bg-[#fffbf7] border-rose-100 shadow-rose-100 border-4 border-dashed' :
+                        currentTheme === 'music' ? 'bg-[#fdfaff] border-violet-200 shadow-violet-100 border-2' :
                         currentTheme === 'christmas' ? 'bg-white/80 border-red-100 shadow-red-100' :
                         currentTheme === 'school' ? 'bg-white/80 border-blue-100 shadow-blue-100' :
                         currentTheme === 'chalkboard' ? 'bg-[#333]/90 border-[#444] shadow-black' :
@@ -1255,7 +1354,7 @@ const App: React.FC = () => {
            <div className="fixed bottom-6 right-6 z-50">
                <button 
                   onClick={() => setIsChatOpen(true)}
-                  className="w-14 h-14 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-full shadow-lg shadow-violet-200 dark:shadow-none flex items-center justify-center border-4 border-white dark:border-slate-900"
+                  className={`w-14 h-14 bg-gradient-to-r rounded-full shadow-lg flex items-center justify-center border-4 ${currentTheme === 'plush' ? 'from-rose-300 to-rose-200 border-white shadow-rose-200' : (currentTheme === 'music' ? 'from-violet-400 to-fuchsia-400 border-white shadow-violet-200' : 'from-violet-600 to-fuchsia-600 shadow-violet-200 dark:shadow-none border-white dark:border-slate-900')}`}
                >
                    <MessageCircle className="w-7 h-7 text-white" />
                </button>
