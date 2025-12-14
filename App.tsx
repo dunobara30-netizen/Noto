@@ -935,6 +935,26 @@ const App: React.FC = () => {
               );
               if (isRainActive) animLayer = <ThemeRain items={['⚡', '👾', '🕹️', '💾', '💿']} colors="text-fuchsia-400 opacity-80" glow />;
               break;
+          case 'coffee':
+              bgLayer = (
+                  <div className="fixed inset-0 z-[-1] bg-[#e3dcd2]">
+                      {/* Cafe Wall Texture */}
+                      <div className="absolute inset-0 opacity-10" style={{
+                          backgroundImage: 'linear-gradient(to right, #8b5e3c 1px, transparent 1px), linear-gradient(to bottom, #8b5e3c 1px, transparent 1px)',
+                          backgroundSize: '40px 40px'
+                      }}></div>
+                      {/* Warm Gradient Overlay (Cozy Lighting) */}
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#c9b49c]/40 via-transparent to-[#5d4037]/20"></div>
+                      
+                      {/* Decorative Circle (Abstract Art on Wall) */}
+                      <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-[#d7ccc8] rounded-full blur-3xl opacity-60 mix-blend-multiply"></div>
+                      <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-[#a1887f] rounded-full blur-3xl opacity-40 mix-blend-multiply"></div>
+
+                      <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+                  </div>
+              );
+              if (isRainActive) animLayer = <ThemeRain items={['☕', '🥐', '🥯', '🍪', '🤎', '🍂']} colors="text-[#5d4037] opacity-60" />;
+              break;
           // DEFAULT CASE MUST PROVIDE A BACKGROUND IF ONE DOESN'T EXIST
           default:
               bgLayer = (
