@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
-import { X, Mic, PhoneOff, Activity, Shield, Play, Settings, ArrowRight } from 'lucide-react';
+import { X, Mic, PhoneOff, Activity, Play, AlertCircle, Loader2 } from 'lucide-react';
 import { Language, TRANSLATIONS } from '../types';
 
 interface OralTutorProps {
@@ -10,9 +10,10 @@ interface OralTutorProps {
   targetLanguage?: string;
   subject?: string;
   topic?: string;
+  initialStream?: MediaStream | null;
 }
 
-// Audio Utils (from Gemini Docs)
+// Audio Utils
 function encode(bytes: Uint8Array) {
   let binary = '';
   const len = bytes.byteLength;
@@ -51,31 +52,30 @@ async function decodeAudioData(
     return buffer;
 }
 
-const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, targetLanguage, subject = "General", topic = "Basics" }) => {
-    const [view, setView] = useState<'setup' | 'consent' | 'session'>('setup');
-    const [customTopic, setCustomTopic] = useState(topic);
-    const [status, setStatus] = useState<'connecting' | 'listening' | 'speaking'>('connecting');
+const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, targetLanguage, subject = "General", topic = "Basics", initialStream }) => {
+    // Determine initial view based on props
+    const [view, setView] = useState<'idle' | 'connecting' | 'session' | 'error'>('idle');
+    const [status, setStatus] = useState<'listening' | 'speaking'>('listening');
     const [caption, setCaption] = useState("");
+    const [errorMsg, setErrorMsg] = useState<string>("");
     const t = TRANSLATIONS[language];
     
     const inputAudioContextRef = useRef<AudioContext | null>(null);
     const outputAudioContextRef = useRef<AudioContext | null>(null);
+    const streamRef = useRef<MediaStream | null>(null); 
     const nextStartTimeRef = useRef<number>(0);
     const sessionPromiseRef = useRef<Promise<any> | null>(null);
     const sourcesRef = useRef<Set<AudioBufferSourceNode>>(new Set());
 
-    // Strict System Prompt Construction
     const promptLang = targetLanguage === 'German' ? 'German' : 'English';
     const posWord = promptLang === 'English' ? "Amazing!" : "Super!";
     const negWord = promptLang === 'English' ? "Not there yet" : "Noch nicht ganz";
-    
-    // Add randomness to prompt to ensure variety
     const randomSeed = Math.floor(Math.random() * 10000);
 
     const systemPrompt = `
     ROLE: Oral Exam Teacher. 
     SUBJECT: ${subject}. 
-    TOPIC: ${customTopic}.
+    TOPIC: ${topic}.
     LANGUAGE: STRICTLY ${promptLang}.
     SESSION_ID: ${randomSeed}.
 
@@ -91,57 +91,154 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
     CONSTRAINT: Keep responses SHORT (max 2 sentences).
     `;
 
+    // Handle initial stream or error from parent
     useEffect(() => {
         if (isOpen) {
-            setView('setup');
-            setCustomTopic(topic);
             setCaption("");
+            setErrorMsg("");
+            
+            if (initialStream && initialStream.active) {
+                // If a stream is provided (from the toggle) and active, start immediately
+                connectSession(initialStream);
+            } else {
+                setView('idle');
+            }
         } else {
             stopSession();
         }
-    }, [isOpen, topic]);
+    }, [isOpen, initialStream]);
 
-    const handleStartSetup = () => {
-        setView('consent');
+    useEffect(() => {
+        return () => {
+            stopSession();
+        };
+    }, []);
+
+    const stopSession = () => {
+        // Only stop tracks if we created the stream (i.e., not initialStream)
+        // Note: We don't stop tracks of initialStream here to avoid breaking parent state unexpectedly.
+        
+        if (streamRef.current && streamRef.current !== initialStream) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+        }
+        streamRef.current = null;
+
+        if (inputAudioContextRef.current) {
+            inputAudioContextRef.current.close();
+            inputAudioContextRef.current = null;
+        }
+        if (outputAudioContextRef.current) {
+            outputAudioContextRef.current.close();
+            outputAudioContextRef.current = null;
+        }
+        sourcesRef.current.forEach(s => s.stop());
+        sourcesRef.current.clear();
+        sessionPromiseRef.current = null;
     };
 
-    const handleConsent = () => {
-        setView('session');
-        startSession();
+    const handlePermissionError = (e: any) => {
+        if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            setErrorMsg(language === 'en' 
+                ? "Microphone access blocked. Please click the lock icon in your address bar and 'Allow' microphone access." 
+                : "Mikrofonzugriff blockiert. Bitte klicke auf das Schloss-Symbol in der Adressleiste und erlaube das Mikrofon.");
+        } else if (e.name === 'NotFoundError') {
+            setErrorMsg(language === 'en' ? "No microphone found on this device." : "Kein Mikrofon auf diesem Gerät gefunden.");
+        } else if (e.name === 'NotReadableError') {
+            setErrorMsg(language === 'en' ? "Microphone is busy or being used by another app." : "Das Mikrofon wird bereits von einer anderen App verwendet.");
+        } else {
+            setErrorMsg(language === 'en' 
+                ? `Error accessing microphone: ${e.message}` 
+                : `Fehler beim Mikrofonzugriff: ${e.message}`);
+        }
+        setView('error');
     };
 
-    const startSession = async () => {
-        setStatus('connecting');
+    // Internal retry handler if no initial stream
+    const handleStart = async () => {
+        // If initial stream is available, use it first
+        if (initialStream && initialStream.active) {
+            connectSession(initialStream);
+            return;
+        }
+
+        stopSession();
+        setErrorMsg("");
+        
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Browser API not supported");
+            }
+
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: true,
+                        noiseSuppression: true,
+                        autoGainControl: true
+                    }
+                });
+            } catch (err) {
+                // Fallback
+                console.warn("Falling back to basic audio constraints");
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            }
+
+            // If successful, we use this new stream
+            connectSession(stream);
+        } catch (e) {
+            handlePermissionError(e);
+        }
+    };
+
+    const connectSession = async (stream: MediaStream) => {
+        if (!process.env.API_KEY) {
+            console.error("API Key missing");
+            setErrorMsg("System Error: API Key missing.");
+            setView('error');
+            return;
+        }
+
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
-        const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
-        const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-        
-        inputAudioContextRef.current = inputCtx;
-        outputAudioContextRef.current = outputCtx;
-        nextStartTimeRef.current = 0;
+        streamRef.current = stream;
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            // Initialize Audio Contexts
+            const inputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+            const outputCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
             
+            if (inputCtx.state === 'suspended') await inputCtx.resume();
+            if (outputCtx.state === 'suspended') await outputCtx.resume();
+
+            inputAudioContextRef.current = inputCtx;
+            outputAudioContextRef.current = outputCtx;
+            nextStartTimeRef.current = 0;
+
+            setView('connecting');
+
+            // Connect to Gemini Live API
             sessionPromiseRef.current = ai.live.connect({
                 model: 'gemini-2.5-flash-native-audio-preview-09-2025',
                 callbacks: {
                     onopen: () => {
                         console.log("Gemini Live Connected");
                         setStatus('listening');
+                        setView('session');
                         
                         const source = inputCtx.createMediaStreamSource(stream);
                         const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
                         
                         scriptProcessor.onaudioprocess = (e) => {
+                            if (!sessionPromiseRef.current) return;
+                            
                             const inputData = e.inputBuffer.getChannelData(0);
                             const pcmData = new Int16Array(inputData.length);
                             for(let i=0; i<inputData.length; i++) {
                                 pcmData[i] = inputData[i] * 32768;
                             }
                             const uint8 = new Uint8Array(pcmData.buffer);
-                            sessionPromiseRef.current?.then(session => {
+                            
+                            sessionPromiseRef.current.then(session => {
                                 session.sendRealtimeInput({
                                     media: { mimeType: 'audio/pcm;rate=16000', data: encode(uint8) }
                                 });
@@ -151,17 +248,12 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                         scriptProcessor.connect(inputCtx.destination);
                     },
                     onmessage: async (msg: LiveServerMessage) => {
-                        // Handle Text Transcription (Caption)
                         if (msg.serverContent?.outputTranscription?.text) {
                             setCaption(prev => prev + msg.serverContent?.outputTranscription?.text);
                         }
-
-                        // Handle Interruption (Clear Caption)
                         if (msg.serverContent?.interrupted) {
                             setCaption("");
                         }
-
-                        // Handle Audio Output
                         const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                         if (audioData) {
                             setStatus('speaking');
@@ -184,87 +276,80 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                             sourcesRef.current.add(source);
                         }
                     },
-                    onclose: () => stopSession(),
-                    onerror: () => stopSession()
+                    onclose: () => {
+                        console.log("Session closed");
+                        // Don't auto-reset view if it was intentional
+                    },
+                    onerror: (e) => {
+                        console.error("Session error", e);
+                        setErrorMsg("Connection to AI service interrupted.");
+                        setView('error');
+                    }
                 },
                 config: {
                     responseModalities: [Modality.AUDIO],
-                    outputAudioTranscription: {}, // Enable transcription for captions
+                    outputAudioTranscription: {}, 
                     speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } } },
                     systemInstruction: systemPrompt,
-                    generationConfig: {
-                        temperature: 1.0, // Increase temperature for variety
-                    }
                 }
             });
 
-        } catch (e) {
-            console.error("Failed to start oral tutor");
-            onClose();
+        } catch (e: any) {
+            console.error("Failed to start oral tutor", e);
+            stopSession();
+            handlePermissionError(e);
         }
-    };
-
-    const stopSession = () => {
-        inputAudioContextRef.current?.close();
-        outputAudioContextRef.current?.close();
-        sourcesRef.current.forEach(s => s.stop());
-        sourcesRef.current.clear();
-        sessionPromiseRef.current = null;
     };
 
     if (!isOpen) return null;
 
-    // SETUP VIEW
-    if (view === 'setup') {
+    // --- VIEW: ERROR ---
+    if (view === 'error') {
         return (
             <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300 p-6">
                 <button onClick={onClose} className="absolute top-6 right-6 p-4 text-slate-400 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-                <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full border border-slate-700 shadow-2xl">
-                    <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-400"><Settings className="w-8 h-8" /></div>
-                    <h2 className="text-xl font-bold text-white mb-2 text-center">{language === 'en' ? 'Oral Tutor Setup' : 'Tutor Setup'}</h2>
-                    <p className="text-slate-400 text-sm mb-6 text-center">{language === 'en' ? 'What exactly do you want to practice?' : 'Was genau möchtest du üben?'}</p>
-                    
-                    <div className="mb-6">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Topic / Thema</label>
-                        <textarea 
-                            value={customTopic}
-                            onChange={(e) => setCustomTopic(e.target.value)}
-                            className="w-full bg-slate-900 border border-slate-600 rounded-xl p-3 text-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-900/50 outline-none transition-all h-24 resize-none"
-                            placeholder="e.g. Simple Past, Photosynthesis, World War 2..."
-                        />
+                <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full border border-red-900/50 shadow-2xl text-center">
+                    <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6 text-red-500">
+                        <AlertCircle className="w-8 h-8" />
                     </div>
-
-                    <button 
-                        onClick={handleStartSetup} 
-                        disabled={!customTopic.trim()}
-                        className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/50 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {language === 'en' ? 'Next' : 'Weiter'} <ArrowRight className="w-4 h-4" />
-                    </button>
+                    <h2 className="text-xl font-bold text-white mb-3">
+                        {language === 'en' ? 'Access Issue' : 'Zugriffsproblem'}
+                    </h2>
+                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">
+                        {errorMsg}
+                    </p>
+                    <div className="space-y-3">
+                        <button 
+                            onClick={handleStart} 
+                            className="w-full py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/40"
+                        >
+                            {language === 'en' ? 'Try Again' : 'Erneut versuchen'}
+                        </button>
+                        <button 
+                            onClick={onClose}
+                            className="w-full py-3 bg-transparent text-slate-400 font-bold rounded-xl hover:bg-slate-800 transition-colors"
+                        >
+                            {t.cancel}
+                        </button>
+                    </div>
                 </div>
             </div>
         );
     }
 
-    // CONSENT VIEW
-    if (view === 'consent') {
+    // --- VIEW: CONNECTING ---
+    if (view === 'connecting') {
         return (
-            <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300 p-6">
-                 <button onClick={onClose} className="absolute top-6 right-6 p-4 text-slate-400 hover:text-white transition-colors"><X className="w-6 h-6" /></button>
-                <div className="bg-slate-800 p-8 rounded-3xl max-w-sm w-full text-center border border-slate-700 shadow-2xl">
-                    <div className="w-16 h-16 bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-6 text-emerald-400"><Mic className="w-8 h-8" /></div>
-                    <h2 className="text-xl font-bold text-white mb-2">{t.micConsentTitle}</h2>
-                    <p className="text-slate-400 text-sm mb-6 leading-relaxed">{t.micConsentDesc}</p>
-                    <div className="flex gap-3">
-                        <button onClick={() => setView('setup')} className="flex-1 py-3 bg-slate-700 text-slate-300 font-bold rounded-xl hover:bg-slate-600 transition-colors">{t.cancel}</button>
-                        <button onClick={handleConsent} className="flex-1 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/50">{t.iAgree}</button>
-                    </div>
-                </div>
+            <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300">
+                 <div className="flex flex-col items-center gap-4">
+                     <Loader2 className="w-12 h-12 text-emerald-500 animate-spin" />
+                     <p className="text-emerald-500 font-bold animate-pulse">Connecting to Tutor...</p>
+                 </div>
             </div>
-        )
+        );
     }
 
-    // SESSION VIEW
+    // --- VIEW: SESSION & IDLE ---
     return (
         <div className="fixed inset-0 z-[60] bg-black/90 backdrop-blur-xl flex flex-col items-center justify-center animate-in fade-in duration-300">
             <button onClick={onClose} className="absolute top-6 right-6 p-4 bg-slate-800 rounded-full text-white hover:bg-slate-700 transition-colors"><X className="w-6 h-6" /></button>
@@ -280,31 +365,52 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                 <div className="relative mx-auto w-fit">
                     <div className={`w-32 h-32 sm:w-48 sm:h-48 rounded-full blur-3xl absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500 ${
                         status === 'speaking' ? 'bg-emerald-500 opacity-60 scale-150 animate-pulse' : 
-                        status === 'listening' ? 'bg-violet-600 opacity-40 scale-100' : 'bg-slate-500 opacity-20'
+                        (status === 'listening' && view === 'session') ? 'bg-violet-600 opacity-40 scale-100' : 'bg-slate-500 opacity-20'
                     }`}></div>
                     <div className={`relative z-10 w-24 h-24 sm:w-32 sm:h-32 rounded-full flex items-center justify-center transition-all duration-300 ${
                         status === 'speaking' ? 'bg-white scale-110 shadow-[0_0_50px_rgba(255,255,255,0.5)]' : 
-                        status === 'listening' ? 'bg-violet-600 scale-100 shadow-xl' : 'bg-slate-800'
+                        (status === 'listening' && view === 'session') ? 'bg-violet-600 scale-100 shadow-xl' : 'bg-slate-800'
                     }`}>
                         {status === 'speaking' ? <Activity className="w-10 h-10 sm:w-14 sm:h-14 text-emerald-600 animate-pulse" /> : <Mic className="w-10 h-10 sm:w-14 sm:h-14 text-white" />}
                     </div>
                 </div>
                 <div>
                     <h2 className="text-3xl font-bold text-white mb-2">{t.oralTutor}</h2>
-                    {status === 'listening' && !caption && (
-                        <p className="text-emerald-400 font-bold animate-pulse text-lg flex items-center justify-center gap-2">
-                            <Play className="w-4 h-4" /> Say "Start" to begin!
-                        </p>
+                    
+                    {view === 'idle' ? (
+                        <div className="space-y-4">
+                            <p className="text-slate-400 font-medium text-sm">
+                                {language === 'en' ? 'Tap below to start the session.' : 'Tippe unten, um zu beginnen.'}
+                            </p>
+                            <button 
+                                onClick={handleStart}
+                                className="group relative inline-flex items-center justify-center px-8 py-4 font-bold text-white transition-all duration-200 bg-emerald-600 font-lg rounded-full hover:bg-emerald-500 hover:scale-105 shadow-lg shadow-emerald-900/40"
+                            >
+                                <Mic className="w-5 h-5 mr-2 group-hover:animate-bounce" />
+                                {language === 'en' ? 'Enable & Start' : 'Aktivieren & Starten'}
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            {status === 'listening' && !caption && (
+                                <p className="text-emerald-400 font-bold animate-pulse text-lg flex items-center justify-center gap-2">
+                                    <Play className="w-4 h-4" /> Say "Start" to begin!
+                                </p>
+                            )}
+                            <p className="text-slate-400 font-medium text-sm mt-2">
+                                {status === 'listening' ? t.listening : t.speaking}
+                            </p>
+                        </>
                     )}
-                    <p className="text-slate-400 font-medium text-sm mt-2">
-                        {status === 'connecting' ? 'Connecting...' : status === 'listening' ? t.listening : t.speaking}
-                    </p>
-                    <p className="text-slate-600 text-xs mt-4">Topic: {customTopic}</p>
+                    
+                    <p className="text-slate-600 text-xs mt-4">Topic: {topic}</p>
                 </div>
-                <button onClick={onClose} className="bg-rose-500/20 text-rose-400 border border-rose-500/50 px-8 py-3 rounded-full font-bold hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2 mx-auto">
-                    <PhoneOff className="w-5 h-5" />
-                    {t.endCall}
-                </button>
+                {view !== 'idle' && (
+                    <button onClick={onClose} className="bg-rose-500/20 text-rose-400 border border-rose-500/50 px-8 py-3 rounded-full font-bold hover:bg-rose-500 hover:text-white transition-all flex items-center gap-2 mx-auto">
+                        <PhoneOff className="w-5 h-5" />
+                        {t.endCall}
+                    </button>
+                )}
             </div>
         </div>
     );

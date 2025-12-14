@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { AnalysisResult, getClosestGradeLabel, Course, Language, TRANSLATIONS, UniversityCheckResult, GradeLevel, CareerCheckResult, PlaceResult } from '../types';
+import { AnalysisResult, getClosestGradeLabel, Course, Language, TRANSLATIONS, UniversityCheckResult, GradeLevel, CareerCheckResult, PlaceResult, Theme } from '../types';
 import { MapPin, CheckCircle, Target, ArrowUpRight, Briefcase, Award, Star, User, Search, Loader2, Building2, AlertCircle, Rocket, Map } from 'lucide-react';
 import { BarChart, Bar, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { checkUniversityAdmission, checkCareerFit, findNearbyPlaces } from '../services/geminiService';
@@ -11,7 +11,7 @@ interface ResultsDashboardProps {
   courses: Course[];
   gradeLevel: GradeLevel;
   language: Language;
-  isChristmasMode?: boolean;
+  currentTheme: Theme;
 }
 
 interface UniLookupProps {
@@ -22,20 +22,82 @@ interface UniLookupProps {
     checkingUni: boolean;
     uniResult: UniversityCheckResult | null;
     isUK: boolean;
-    isChristmasMode: boolean;
+    currentTheme: Theme;
 }
 
-const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, handleUniCheck, checkingUni, uniResult, isUK, isChristmasMode }) => (
-    <div className={`rounded-3xl border p-5 sm:p-6 shadow-sm mb-6 transition-all hover:shadow-md ${
-        isChristmasMode 
-        ? 'bg-gradient-to-r from-red-50 to-amber-50 border-red-100' 
-        : 'bg-gradient-to-r from-violet-50 to-indigo-50 dark:from-violet-900/20 dark:to-indigo-900/20 border-violet-100 dark:border-violet-800'
-    }`}>
-      <div className={`flex items-center gap-2 mb-4 ${isChristmasMode ? 'text-red-700' : 'text-violet-700 dark:text-violet-300'}`}>
-          <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+const getThemeStyle = (theme: Theme, element: 'input' | 'button' | 'card' | 'iconBg') => {
+    switch (theme) {
+        case 'christmas':
+            if (element === 'input') return 'focus:ring-red-400 bg-white/70';
+            if (element === 'button') return 'bg-red-600 hover:bg-red-700 shadow-red-200 text-white rounded-2xl';
+            if (element === 'card') return 'bg-white/30 border-red-100 rounded-3xl backdrop-blur-md';
+            if (element === 'iconBg') return 'bg-white text-red-600';
+            break;
+        case 'pixel':
+            if (element === 'input') return 'focus:ring-0 border-2 border-[#0f380f] bg-[#9bbc0f]/20 font-mono rounded-none text-[#0f380f]';
+            if (element === 'button') return 'bg-[#0f380f] text-[#9bbc0f] hover:bg-[#306230] font-mono rounded-none shadow-none border-2 border-[#0f380f]';
+            if (element === 'card') return 'bg-[#f0f0f0]/70 border-4 border-[#0f380f] rounded-none';
+            if (element === 'iconBg') return 'bg-[#0f380f] text-[#9bbc0f] rounded-none';
+            break;
+        case 'neon':
+            if (element === 'input') return 'bg-black/30 border border-fuchsia-500/50 text-fuchsia-300 focus:border-fuchsia-500 focus:shadow-[0_0_10px_rgba(232,121,249,0.3)] rounded-none';
+            if (element === 'button') return 'bg-black/50 border border-fuchsia-500 text-fuchsia-400 hover:bg-fuchsia-900/30 shadow-[0_0_15px_rgba(232,121,249,0.5)] rounded-none';
+            if (element === 'card') return 'bg-black/10 border border-fuchsia-500/30 shadow-[0_0_20px_rgba(232,121,249,0.2)] rounded-none backdrop-blur-sm';
+            if (element === 'iconBg') return 'bg-fuchsia-900/20 text-fuchsia-400 border border-fuchsia-500 rounded-none';
+            break;
+        case 'space':
+            if (element === 'input') return 'bg-indigo-950/30 border-indigo-500/50 text-indigo-200 focus:border-indigo-400 focus:ring-indigo-900 rounded-xl';
+            if (element === 'button') return 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/50 rounded-xl border border-indigo-400/30';
+            if (element === 'card') return 'bg-slate-900/30 border border-indigo-500/30 shadow-[0_0_30px_rgba(79,70,229,0.2)] rounded-3xl backdrop-blur-sm';
+            if (element === 'iconBg') return 'bg-indigo-500/20 text-indigo-300 rounded-xl';
+            break;
+        case 'chalkboard':
+            if (element === 'input') return 'bg-[#444] border-gray-500 text-white font-serif rounded-sm';
+            if (element === 'button') return 'bg-white text-black border-2 border-gray-400 hover:bg-gray-200 rounded-sm font-serif font-bold';
+            if (element === 'card') return 'bg-black/20 border border-gray-600 shadow-lg rounded-sm backdrop-blur-sm';
+            if (element === 'iconBg') return 'bg-[#555] text-white rounded-sm';
+            break;
+        case 'coffee':
+            if (element === 'input') return 'bg-[#f5f5dc]/50 border-[#d2b48c] text-[#4a3525] focus:border-[#8b4513] rounded-lg font-serif';
+            if (element === 'button') return 'bg-[#6f4e37] text-[#f5f5dc] border border-[#4a3525] hover:bg-[#5d4037] shadow-md font-serif rounded-lg';
+            if (element === 'card') return 'bg-[#fff8e7]/40 border-[#d2b48c] shadow-md rounded-xl backdrop-blur-md';
+            if (element === 'iconBg') return 'bg-[#8b4513] text-[#f5f5dc] rounded-lg';
+            break;
+        case 'school':
+            if (element === 'input') return 'bg-white/60 border-blue-100 text-slate-700 focus:border-blue-500 focus:ring-blue-100 rounded-xl';
+            if (element === 'button') return 'bg-blue-600 text-white border-blue-500 hover:bg-blue-500 shadow-xl font-sans rounded-xl';
+            if (element === 'card') return 'bg-white/30 border-blue-100 shadow-sm rounded-3xl backdrop-blur-sm';
+            if (element === 'iconBg') return 'bg-blue-100 text-blue-600 rounded-xl';
+            break;
+        case 'library':
+            if (element === 'input') return 'bg-[#f5f5dc]/60 border-[#8b4513]/50 text-[#3e2b22] focus:border-[#5c4033] rounded-lg font-serif';
+            if (element === 'button') return 'bg-[#5c4033] text-[#f5f5dc] border border-[#3e2b22] hover:bg-[#3e2b22] shadow-sm font-serif rounded-lg';
+            if (element === 'card') return 'bg-[#f5f5dc]/40 border-[#8b4513] shadow-lg rounded-xl backdrop-blur-md';
+            if (element === 'iconBg') return 'bg-[#3e2b22] text-[#f5f5dc] rounded-lg';
+            break;
+        case 'autumn':
+            if (element === 'input') return 'bg-white/50 border-orange-200 text-orange-900 focus:border-orange-500 rounded-xl';
+            if (element === 'button') return 'bg-orange-600 text-white border border-orange-700 hover:bg-orange-700 shadow-md font-serif rounded-xl';
+            if (element === 'card') return 'bg-white/30 border-orange-200 shadow-orange-100 rounded-3xl backdrop-blur-md';
+            if (element === 'iconBg') return 'bg-orange-100 text-orange-600 rounded-xl';
+            break;
+        default:
+            if (element === 'input') return 'focus:ring-violet-400 bg-white/50 dark:bg-slate-800/50 text-slate-700 dark:text-slate-200 rounded-2xl';
+            if (element === 'button') return 'bg-violet-600 hover:bg-violet-700 shadow-violet-200 dark:shadow-none text-white rounded-2xl';
+            if (element === 'card') return 'bg-white/30 dark:bg-slate-800/30 border-violet-100 dark:border-violet-800 rounded-3xl backdrop-blur-xl';
+            if (element === 'iconBg') return 'bg-white dark:bg-slate-800 text-violet-600 dark:text-violet-400 rounded-xl';
+            break;
+    }
+    return '';
+};
+
+const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, handleUniCheck, checkingUni, uniResult, isUK, currentTheme }) => (
+    <div className={`border p-5 sm:p-6 shadow-sm mb-6 transition-all hover:shadow-md ${getThemeStyle(currentTheme, 'card')}`}>
+      <div className={`flex items-center gap-2 mb-4`}>
+          <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
               <Building2 className="w-5 h-5" />
           </div>
-          <h3 className="font-bold text-base sm:text-lg">{t.uniLookupHeader}</h3>
+          <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.uniLookupHeader}</h3>
       </div>
       
       <div className="flex gap-2 mb-4">
@@ -46,20 +108,14 @@ const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, 
                   onChange={(e) => setUniQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleUniCheck()}
                   placeholder={t.uniLookupPlaceholder}
-                  className={`w-full pl-10 pr-4 py-3 sm:py-4 rounded-2xl border-none shadow-sm focus:ring-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium ${
-                      isChristmasMode ? 'focus:ring-red-400' : 'focus:ring-violet-400'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 sm:py-4 border-none shadow-sm focus:ring-2 font-medium ${getThemeStyle(currentTheme, 'input')}`}
               />
-              <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 text-slate-400 dark:text-slate-500" />
+              <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 opacity-50" />
           </div>
           <button 
               onClick={handleUniCheck}
               disabled={checkingUni || !uniQuery}
-              className={`px-4 sm:px-6 rounded-2xl font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 text-white ${
-                  isChristmasMode 
-                  ? 'bg-red-600 hover:bg-red-700 shadow-red-200' 
-                  : 'bg-violet-600 hover:bg-violet-700 shadow-violet-200 dark:shadow-none'
-              }`}
+              className={`px-4 sm:px-6 font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 ${getThemeStyle(currentTheme, 'button')}`}
           >
               {checkingUni ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowUpRight className="w-5 h-5" />}
               <span className="hidden sm:inline">{t.checkAdmission}</span>
@@ -67,7 +123,7 @@ const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, 
       </div>
 
       {uniResult && (
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
+          <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
                   <h4 className="font-bold text-slate-800 dark:text-slate-100 text-lg">{uniResult.uniName}</h4>
                   <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
@@ -100,7 +156,7 @@ const UniLookupSection: React.FC<UniLookupProps> = ({ t, uniQuery, setUniQuery, 
     </div>
 );
 
-const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, courses, gradeLevel, language, isChristmasMode = false }) => {
+const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, courses, gradeLevel, language, currentTheme }) => {
     const t = TRANSLATIONS[language];
     const isUK = language === 'en';
 
@@ -162,7 +218,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
         return (
             <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center p-6">
                 <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 animate-pulse ${
-                    isChristmasMode ? 'bg-red-50 text-red-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
+                    currentTheme === 'christmas' ? 'bg-red-50 text-red-300' : 'bg-slate-50 dark:bg-slate-800 text-slate-300 dark:text-slate-700'
                 }`}>
                    <Target className="w-10 h-10" />
                 </div>
@@ -179,19 +235,19 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                 <div>
                     <div className="flex items-center gap-2 mb-1">
                         <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                            isChristmasMode 
+                            currentTheme === 'christmas' 
                             ? 'bg-red-100 text-red-600' 
                             : 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-300'
                         }`}>
                             {t.aiAnalysis}
                         </span>
                     </div>
-                    <h2 className="text-3xl font-black text-slate-800 dark:text-slate-100">{results.archetype}</h2>
+                    <h2 className={`text-3xl font-black ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-100')}`}>{results.archetype}</h2>
                 </div>
                 <div className="flex items-center gap-2">
                     {/* Career Tags */}
                     {results.careers.slice(0, 2).map((job, i) => (
-                        <span key={i} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white dark:bg-slate-800/50">
+                        <span key={i} className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-600 dark:text-slate-400 bg-white/50 dark:bg-slate-800/50">
                             {job}
                         </span>
                     ))}
@@ -200,12 +256,12 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
 
             {/* Advice Section */}
             <div className={`p-5 rounded-2xl border ${
-                isChristmasMode 
-                ? 'bg-emerald-50 border-emerald-100' 
-                : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-700'
+                currentTheme === 'christmas' 
+                ? 'bg-emerald-50/50 border-emerald-100' 
+                : 'bg-slate-50/50 dark:bg-slate-800/30 border-slate-100 dark:border-slate-700'
             }`}>
-                <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-2 flex items-center gap-2">
-                    <Rocket className={`w-5 h-5 ${isChristmasMode ? 'text-emerald-500' : 'text-violet-500'}`} />
+                <h3 className={`font-bold mb-2 flex items-center gap-2 ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')}`}>
+                    <Rocket className={`w-5 h-5 ${currentTheme === 'christmas' ? 'text-emerald-500' : (currentTheme === 'autumn' ? 'text-orange-600' : 'text-violet-500')}`} />
                     Strategy
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-4">
@@ -251,20 +307,16 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                     checkingUni={checkingUni}
                     uniResult={uniResult}
                     isUK={isUK}
-                    isChristmasMode={isChristmasMode}
+                    currentTheme={currentTheme}
                 />
 
                 {/* 2. Career Check */}
-                <div className={`rounded-3xl border p-5 sm:p-6 shadow-sm mb-6 transition-all hover:shadow-md ${
-                    isChristmasMode 
-                    ? 'bg-gradient-to-r from-red-50 to-amber-50 border-red-100' 
-                    : 'bg-gradient-to-r from-fuchsia-50 to-pink-50 dark:from-fuchsia-900/20 dark:to-pink-900/20 border-fuchsia-100 dark:border-fuchsia-800'
-                }`}>
-                    <div className={`flex items-center gap-2 mb-4 ${isChristmasMode ? 'text-red-700' : 'text-fuchsia-700 dark:text-fuchsia-300'}`}>
-                        <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+                <div className={`border p-5 sm:p-6 shadow-sm mb-6 transition-all hover:shadow-md ${getThemeStyle(currentTheme, 'card')}`}>
+                    <div className={`flex items-center gap-2 mb-4`}>
+                        <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                             <Briefcase className="w-5 h-5" />
                         </div>
-                        <h3 className="font-bold text-base sm:text-lg">{t.careerCheckHeader}</h3>
+                        <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.careerCheckHeader}</h3>
                     </div>
                     
                     <div className="flex gap-2 mb-4">
@@ -275,20 +327,14 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                                 onChange={(e) => setCareerQuery(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && handleCareerCheck()}
                                 placeholder={t.careerCheckPlaceholder}
-                                className={`w-full pl-10 pr-4 py-3 sm:py-4 rounded-2xl border-none shadow-sm focus:ring-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium ${
-                                    isChristmasMode ? 'focus:ring-red-400' : 'focus:ring-fuchsia-400'
-                                }`}
+                                className={`w-full pl-10 pr-4 py-3 sm:py-4 border-none shadow-sm focus:ring-2 font-medium ${getThemeStyle(currentTheme, 'input')}`}
                             />
-                            <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                            <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 opacity-50" />
                         </div>
                         <button 
                             onClick={handleCareerCheck}
                             disabled={checkingCareer || !careerQuery}
-                            className={`px-4 sm:px-6 rounded-2xl font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 text-white ${
-                                isChristmasMode 
-                                ? 'bg-red-600 hover:bg-red-700 shadow-red-200' 
-                                : 'bg-fuchsia-600 hover:bg-fuchsia-700 shadow-fuchsia-200 dark:shadow-none'
-                            }`}
+                            className={`px-4 sm:px-6 font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 ${getThemeStyle(currentTheme, 'button')}`}
                         >
                             {checkingCareer ? <Loader2 className="w-5 h-5 animate-spin" /> : <Star className="w-5 h-5" />}
                             <span className="hidden sm:inline">{t.checkCareer}</span>
@@ -296,7 +342,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                     </div>
 
                     {careerResult && (
-                        <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
+                        <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
                              <div className="flex items-center justify-between mb-2">
                                 <h4 className="font-bold text-slate-800 dark:text-slate-100 text-lg">{careerResult.jobTitle}</h4>
                                 <div className="text-right">
@@ -319,16 +365,12 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
             </div>
 
              {/* Location / Maps Search */}
-             <div className={`rounded-3xl border p-5 sm:p-6 shadow-sm transition-all hover:shadow-md ${
-                isChristmasMode 
-                ? 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100' 
-                : 'bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-100 dark:border-blue-800'
-            }`}>
-                 <div className={`flex items-center gap-2 mb-4 ${isChristmasMode ? 'text-emerald-700' : 'text-blue-700 dark:text-blue-300'}`}>
-                    <div className="p-2 bg-white dark:bg-slate-800 rounded-xl shadow-sm">
+             <div className={`border p-5 sm:p-6 shadow-sm transition-all hover:shadow-md ${getThemeStyle(currentTheme, 'card')}`}>
+                 <div className={`flex items-center gap-2 mb-4`}>
+                    <div className={`p-2 shadow-sm ${getThemeStyle(currentTheme, 'iconBg')}`}>
                         <MapPin className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-base sm:text-lg">{t.locationSearchHeader}</h3>
+                    <h3 className={`font-bold text-base sm:text-lg ${currentTheme === 'chalkboard' ? 'text-white' : (currentTheme === 'neon' ? 'text-fuchsia-400' : (currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-700 dark:text-slate-200')))}`}>{t.locationSearchHeader}</h3>
                 </div>
 
                 <div className="flex gap-2 mb-4">
@@ -339,20 +381,14 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             onChange={(e) => setLocationQuery(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleLocationSearch()}
                             placeholder={t.locationPlaceholder}
-                            className={`w-full pl-10 pr-4 py-3 sm:py-4 rounded-2xl border-none shadow-sm focus:ring-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium ${
-                                isChristmasMode ? 'focus:ring-emerald-400' : 'focus:ring-blue-400'
-                            }`}
+                            className={`w-full pl-10 pr-4 py-3 sm:py-4 border-none shadow-sm focus:ring-2 font-medium ${getThemeStyle(currentTheme, 'input')}`}
                         />
-                        <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 text-slate-400 dark:text-slate-500" />
+                        <Search className="absolute left-3 top-3.5 sm:top-4 w-5 h-5 opacity-50" />
                     </div>
                     <button 
                         onClick={handleLocationSearch}
                         disabled={findingPlaces || !locationQuery}
-                        className={`px-4 sm:px-6 rounded-2xl font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 text-white ${
-                            isChristmasMode 
-                            ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-200' 
-                            : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200 dark:shadow-none'
-                        }`}
+                        className={`px-4 sm:px-6 font-bold shadow-lg disabled:opacity-50 disabled:shadow-none transition-all flex items-center gap-2 active:scale-95 ${getThemeStyle(currentTheme, 'button')}`}
                     >
                         {findingPlaces ? <Loader2 className="w-5 h-5 animate-spin" /> : <Map className="w-5 h-5" />}
                         <span className="hidden sm:inline">{t.findNearby}</span>
@@ -360,7 +396,7 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                 </div>
 
                 {placeResult && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
+                    <div className="bg-white/80 dark:bg-slate-800/80 rounded-2xl p-5 sm:p-6 border border-slate-100 dark:border-slate-700 shadow-md animate-in slide-in-from-bottom-2">
                         <div className="prose dark:prose-invert text-sm max-w-none mb-4">
                              {/* Render simple markdown text */}
                              {placeResult.text.split('\n').map((line, i) => (
@@ -371,9 +407,6 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-700">
                                 <span className="w-full text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{t.mapLinks}</span>
                                 {placeResult.chunks.map((chunk, idx) => {
-                                    // Handle Google Maps Grounding Chunks
-                                    // Structure might be { maps: { ... } } or { web: { ... } } depending on tool used.
-                                    // The prompt used `googleMaps` tool, so we look for maps data or web data.
                                     
                                     const uri = chunk.web?.uri || chunk.maps?.googleMapsUri;
                                     const title = chunk.web?.title || chunk.maps?.place?.name || `Location ${idx + 1}`;
@@ -403,8 +436,8 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
 
             {/* University Recommendations List */}
             <div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-200 mb-4 flex items-center gap-2">
-                    <Building2 className={`w-6 h-6 ${isChristmasMode ? 'text-red-500' : 'text-violet-500'}`} />
+                <h3 className={`text-xl font-bold mb-4 flex items-center gap-2 ${currentTheme === 'library' ? 'text-[#3e2b22]' : (currentTheme === 'autumn' ? 'text-orange-900' : 'text-slate-800 dark:text-slate-200')}`}>
+                    <Building2 className={`w-6 h-6 ${currentTheme === 'christmas' ? 'text-red-500' : 'text-violet-500'}`} />
                     {t.collegesHeader}
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -412,9 +445,9 @@ const ResultsDashboard: React.FC<ResultsDashboardProps> = ({ results, gpa, cours
                         <div 
                             key={idx} 
                             className={`p-5 rounded-2xl border transition-all hover:shadow-lg group ${
-                                isChristmasMode 
-                                ? 'bg-white hover:border-red-200 shadow-sm' 
-                                : 'bg-white dark:bg-slate-800 hover:border-violet-200 dark:hover:border-violet-700 shadow-sm border-slate-100 dark:border-slate-700'
+                                currentTheme === 'christmas' 
+                                ? 'bg-white/70 hover:border-red-200 shadow-sm backdrop-blur-sm' 
+                                : 'bg-white/30 dark:bg-slate-800/30 hover:border-violet-200 dark:hover:border-violet-700 shadow-sm border-slate-100 dark:border-slate-700 backdrop-blur-sm'
                             }`}
                         >
                             <div className="flex justify-between items-start mb-2">

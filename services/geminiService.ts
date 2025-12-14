@@ -238,6 +238,40 @@ export const findNearbyPlaces = async (
   }
 };
 
+export const solveHomeworkProblem = async (
+    imageBase64: string,
+    language: Language
+): Promise<string> => {
+    const isUK = language === 'en';
+    const targetLang = isUK ? 'English' : 'German';
+    const prompt = `
+      Task: Solve this homework problem visible in the image.
+      Language: STRICTLY ${targetLang}.
+      
+      1. Identify the subject and question.
+      2. Provide the step-by-step solution.
+      3. Explain the answer briefly.
+      
+      Constraint: Use clear formatting (Markdown).
+    `;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: {
+                parts: [
+                    { inlineData: { mimeType: 'image/jpeg', data: imageBase64 } },
+                    { text: prompt }
+                ]
+            }
+        });
+        return response.text || "Could not analyze image.";
+    } catch (error) {
+        console.error("Homework Solver Error:", error);
+        throw new Error("Failed to solve homework.");
+    }
+};
+
 const getRandomConcept = (subject: string): string => {
   // Simplified list for brevity
   const concepts: Record<string, string[]> = {
@@ -264,6 +298,7 @@ export const generatePracticeQuestion = async (
     specificTopic: string | undefined, 
     language: Language,
     difficulty: Difficulty,
+    previousQuestions: string[] = [], // NEW: Avoid Repeats
     retryCount = 0
   ): Promise<Exercise> => {
     
@@ -285,12 +320,32 @@ export const generatePracticeQuestion = async (
     const topicPrompt = isNotesMode 
         ? `Source: "${specificTopic.substring(0, 500)}...". Task: Question based on source.` 
         : `Topic: "${specificTopic || randomSubConcept}".`;
+        
+    // SIMPLER MATH INSTRUCTION
+    const isMath = subLower.includes('math') || subLower.includes('mathematik');
+    let difficultyInstruction = `Difficulty: ${difficulty}.`;
+    
+    if (isMath) {
+        if (difficulty === 'easy') {
+            difficultyInstruction = "DIFFICULTY: SUPER EASY. Integers only. Numbers under 100. Basic arithmetic (+, -, *, /) or simple geometry.";
+        } else if (difficulty === 'medium') {
+            difficultyInstruction = "DIFFICULTY: MEDIUM. Simple linear equations (e.g. x + 5 = 12). Basic fractions or percentages.";
+        } else {
+            difficultyInstruction = "DIFFICULTY: HARD. Calculus, Functions, or complex Algebra.";
+        }
+    }
+
+    // AVOID REPEATS instruction
+    const repeatInstruction = previousQuestions.length > 0 
+        ? `DO NOT generate any of these previous questions: ${JSON.stringify(previousQuestions.slice(-3))}.`
+        : "";
 
     const prompt = `
-      Create a practice question for ${subject} (${gradeLevel}).
-      Difficulty: ${difficulty}.
+      Create a unique practice question for ${subject} (${gradeLevel}).
       Language: STRICTLY ${targetLang}.
       ${topicPrompt}
+      ${difficultyInstruction}
+      ${repeatInstruction}
       
       Constraint: Keep Question and Explanation SHORT and DIRECT.
       Seed: ${randomSeed}.
@@ -325,7 +380,7 @@ export const generatePracticeQuestion = async (
       return JSON.parse(cleanJson(text)) as Exercise;
 
     } catch (error) {
-      if (retryCount < 2) return generatePracticeQuestion(subject, gradeLevel, specificTopic, language, difficulty, retryCount + 1);
+      if (retryCount < 2) return generatePracticeQuestion(subject, gradeLevel, specificTopic, language, difficulty, previousQuestions, retryCount + 1);
       throw new Error("Gen Error");
     }
   };

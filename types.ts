@@ -31,6 +31,24 @@ export enum GradeLevel {
   Y13 = 'Year 13 (Sixth Form / A-Level)',
 }
 
+export type Theme = 
+  | 'default' 
+  | 'christmas' 
+  | 'school' 
+  | 'chalkboard' 
+  | 'library' 
+  | 'exam'
+  | 'spring'
+  | 'summer'
+  | 'autumn'
+  | 'halloween'
+  | 'night'
+  | 'pixel'
+  | 'space'
+  | 'neon'
+  | 'coffee'
+  | 'nature';
+
 export interface CollegeRecommendation {
   name: string;
   location: string;
