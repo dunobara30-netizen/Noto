@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import GradeCalculator from './components/GradeCalculator';
 import ResultsDashboard from './components/ResultsDashboard';
@@ -9,13 +8,13 @@ import { analyzeAcademicProfile } from './services/geminiService';
 import { 
   GraduationCap, Sparkles, X, Smartphone, Share, MoreVertical, Copy, ShieldCheck, 
   Eye, EyeOff, Lock, Unlock, Edit2, BrainCircuit, LayoutDashboard, Languages, Moon, Sun, ArrowRight, 
-  Play, Home, Scale, Radio, Volume2, VolumeX, Quote, MessageCircle, PenTool, Eraser, MicOff,
+  Play, Home, Scale, Radio, Volume2, VolumeX, Quote, MessageCircle, MicOff,
   // Theme Icons
   Ghost, Gift, Rocket, Zap, Coffee, Trees, BookOpen, ClipboardList, Library, Gamepad2, 
   Leaf, CloudRain, Umbrella, Bug, Circle, Cloud, Flower2, Lamp, Search, Hourglass, CloudMoon, Star, CloudFog,
   Heart, Music, Triangle, AlertTriangle, CloudLightning, Wind, Ruler, Disc, Utensils, Glasses,
   IceCream, Sprout, Droplets, Timer, Files, Puzzle, MonitorPlay, Settings, Settings2, Rabbit, PartyPopper, Tent, Anchor, Save, Cpu, Terminal, Snowflake, SunDim,
-  Backpack, Monitor, Coins
+  Backpack, Monitor, Coins, Eraser
 } from 'lucide-react';
 
 // --- GENERIC ANIMATED BACKGROUND COMPONENT ---
@@ -61,9 +60,9 @@ const ThemeRain: React.FC<ThemeRainProps> = ({ items, colors = "text-white", cou
   );
 };
 
-// --- MISSING COMPONENTS DEFINITIONS ---
+// --- COMPONENT DEFINITIONS ---
 
-const Firework = ({ x, y, onComplete }: { x: number, y: number, onComplete: () => void }) => {
+const Firework: React.FC<{ x: number, y: number, onComplete: () => void }> = ({ x, y, onComplete }) => {
   useEffect(() => {
     const t = setTimeout(onComplete, 1000);
     return () => clearTimeout(t);
@@ -84,95 +83,6 @@ const Firework = ({ x, y, onComplete }: { x: number, y: number, onComplete: () =
       <div className="absolute w-3 h-3 bg-white rounded-full animate-ping"></div>
     </div>
   );
-};
-
-const WhiteboardOverlay = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-    const [isDrawing, setIsDrawing] = useState(false);
-
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (canvas && isOpen) {
-            const resize = () => {
-                canvas.width = window.innerWidth;
-                canvas.height = window.innerHeight;
-                const ctx = canvas.getContext('2d');
-                if (ctx) {
-                    ctx.lineCap = 'round';
-                    ctx.strokeStyle = '#000';
-                    ctx.lineWidth = 4;
-                }
-            };
-            resize();
-            window.addEventListener('resize', resize);
-            return () => window.removeEventListener('resize', resize);
-        }
-    }, [isOpen]);
-
-    const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-        setIsDrawing(true);
-        draw(e);
-    };
-
-    const stopDrawing = () => {
-        setIsDrawing(false);
-        const ctx = canvasRef.current?.getContext('2d');
-        ctx?.beginPath();
-    };
-
-    const draw = (e: React.MouseEvent | React.TouchEvent) => {
-        if (!isDrawing) return;
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-
-        let clientX, clientY;
-        if ('touches' in e) {
-            clientX = e.touches[0].clientX;
-            clientY = e.touches[0].clientY;
-        } else {
-            clientX = (e as React.MouseEvent).clientX;
-            clientY = (e as React.MouseEvent).clientY;
-        }
-
-        ctx.lineTo(clientX, clientY);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.moveTo(clientX, clientY);
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-[100] bg-white cursor-crosshair touch-none animate-in fade-in duration-200">
-            <div className="absolute top-4 right-4 flex gap-2">
-                 <button onClick={() => {
-                     const canvas = canvasRef.current;
-                     const ctx = canvas?.getContext('2d');
-                     if(canvas && ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-                 }} className="p-3 bg-slate-100 text-slate-600 rounded-full shadow-lg hover:bg-slate-200 transition-colors">
-                    <Eraser className="w-6 h-6" />
-                 </button>
-                 <button onClick={onClose} className="p-3 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-colors">
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
-             <div className="absolute top-4 left-4 pointer-events-none opacity-50 text-sm font-bold text-slate-400">
-                Whiteboard
-            </div>
-            <canvas
-                ref={canvasRef}
-                onMouseDown={startDrawing}
-                onMouseUp={stopDrawing}
-                onMouseMove={draw}
-                onTouchStart={startDrawing}
-                onTouchEnd={stopDrawing}
-                onTouchMove={draw}
-                className="w-full h-full block"
-            />
-        </div>
-    );
 };
 
 const GemAvatar = ({ mood }: { mood: 'neutral' | 'happy' | 'sad' }) => {
@@ -212,6 +122,9 @@ const BackgroundWidgetLayout = ({
     </div>
 );
 
+// Helper for icons to fill container
+const FullIcon = ({ Icon }: { Icon: React.ElementType }) => <Icon className="w-full h-full" />;
+
 const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ theme, isDarkMode }) => {
     const [chestOpen, setChestOpen] = useState(false);
     const [glitching, setGlitching] = useState(false);
@@ -245,9 +158,6 @@ const ThemeDecorations: React.FC<{ theme: Theme, isDarkMode: boolean }> = ({ the
         setGumballs(prev => [...prev, { id, color, left }]);
         setTimeout(() => setGumballs(prev => prev.filter(g => g.id !== id)), 2000);
     };
-
-    // Helper for icons to fill container
-    const FullIcon = ({ Icon }: { Icon: React.ElementType }) => <Icon className="w-full h-full" />;
 
     switch (theme) {
         // --- PRESERVED THEMES (NO CHANGE) ---
@@ -492,9 +402,6 @@ const App: React.FC = () => {
   
   // Fireworks State (New Year Theme)
   const [fireworks, setFireworks] = useState<{id: number, x: number, y: number}[]>([]);
-  
-  // Feature States
-  const [showWhiteboard, setShowWhiteboard] = useState(false);
   
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -888,54 +795,54 @@ const App: React.FC = () => {
     return (
     <div className="space-y-3 w-full max-h-[60vh] overflow-y-auto custom-scrollbar p-1">
         <div className="flex items-center justify-between px-1">
-             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Select Theme</span>
+             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t.selectTheme}</span>
         </div>
         
         {/* Academic */}
         <div>
-            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">Academic</span>
+            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">{t.academic}</span>
             <div className="grid grid-cols-3 gap-2">
-                <ThemeButton themeId="default" label="Default" color="bg-violet-100 text-violet-700 border-violet-300" />
-                <ThemeButton themeId="school" label="School" color="bg-blue-100 text-blue-700 border-blue-300" />
-                <ThemeButton themeId="chalkboard" label="Chalk" color="bg-emerald-900 text-emerald-100 border-emerald-700" />
-                <ThemeButton themeId="library" label="Library" color="bg-[#eaddcf] text-[#5c4033] border-[#c0a080]" />
-                <ThemeButton themeId="exam" label="Exam" color="bg-white text-black border-slate-400" />
+                <ThemeButton themeId="default" label={t.themeDefault} color="bg-violet-100 text-violet-700 border-violet-300" />
+                <ThemeButton themeId="school" label={t.themeSchool} color="bg-blue-100 text-blue-700 border-blue-300" />
+                <ThemeButton themeId="chalkboard" label={t.themeChalk} color="bg-emerald-900 text-emerald-100 border-emerald-700" />
+                <ThemeButton themeId="library" label={t.themeLibrary} color="bg-[#eaddcf] text-[#5c4033] border-[#c0a080]" />
+                <ThemeButton themeId="exam" label={t.themeExam} color="bg-white text-black border-slate-400" />
             </div>
         </div>
 
         {/* Seasonal */}
         <div>
-            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">Seasonal</span>
+            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">{t.seasonal}</span>
             <div className="grid grid-cols-3 gap-2">
-                <ThemeButton themeId="spring" label="Spring" color="bg-pink-100 text-pink-700 border-pink-300" />
-                <ThemeButton themeId="summer" label="Summer" color="bg-yellow-100 text-amber-700 border-amber-300" />
-                <ThemeButton themeId="autumn" label="Autumn" color="bg-orange-100 text-orange-800 border-orange-300" />
-                <ThemeButton themeId="halloween" label="Spooky" color="bg-purple-900 text-orange-400 border-orange-500" />
-                <ThemeButton themeId="christmas" label="Xmas" color="bg-red-100 text-red-700 border-red-300" />
-                <ThemeButton themeId="easter" label="Easter" color="bg-yellow-100 text-green-700 border-yellow-300" />
-                <ThemeButton themeId="newyear" label="New Year" color="bg-black text-yellow-400 border-yellow-500" />
+                <ThemeButton themeId="spring" label={t.themeSpring} color="bg-pink-100 text-pink-700 border-pink-300" />
+                <ThemeButton themeId="summer" label={t.themeSummer} color="bg-yellow-100 text-amber-700 border-amber-300" />
+                <ThemeButton themeId="autumn" label={t.themeAutumn} color="bg-orange-100 text-orange-800 border-orange-300" />
+                <ThemeButton themeId="halloween" label={t.themeSpooky} color="bg-purple-900 text-orange-400 border-orange-500" />
+                <ThemeButton themeId="christmas" label={t.themeXmas} color="bg-red-100 text-red-700 border-red-300" />
+                <ThemeButton themeId="easter" label={t.themeEaster} color="bg-yellow-100 text-green-700 border-yellow-300" />
+                <ThemeButton themeId="newyear" label={t.themeNewYear} color="bg-black text-yellow-400 border-yellow-500" />
             </div>
         </div>
 
         {/* Creative & Aesthetic */}
         <div>
-            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">Creative</span>
+            <span className="text-[10px] font-bold text-slate-400 pl-1 mb-1 block">{t.creative}</span>
             <div className="grid grid-cols-3 gap-2">
-                <ThemeButton themeId="plush" label="Plush" color="bg-rose-100 text-rose-600 border-rose-300" />
-                <ThemeButton themeId="music" label="Music" color="bg-violet-100 text-violet-600 border-violet-300" />
-                <ThemeButton themeId="pixel" label="Retro" color="bg-gray-200 text-green-700 border-gray-400 font-mono" />
-                <ThemeButton themeId="space" label="Space" color="bg-indigo-950 text-indigo-200 border-indigo-700" />
-                <ThemeButton themeId="neon" label="Neon" color="bg-black text-fuchsia-400 border-fuchsia-500" />
-                <ThemeButton themeId="coffee" label="Coffee" color="bg-[#dcc8b8] text-[#4a3525] border-[#9c7c64]" />
-                <ThemeButton themeId="nature" label="Nature" color="bg-green-100 text-green-800 border-green-300" />
-                <ThemeButton themeId="night" label="Night" color="bg-slate-800 text-slate-300 border-slate-600" />
-                <ThemeButton themeId="steampunk" label="Steam" color="bg-[#2b2b2b] text-[#cd7f32] border-[#cd7f32]" />
-                <ThemeButton themeId="circus" label="Circus" color="bg-red-100 text-red-700 border-yellow-400" />
-                <ThemeButton themeId="deepsea" label="Deep Sea" color="bg-blue-900 text-blue-200 border-blue-700" />
-                <ThemeButton themeId="cyberpunk" label="Cyber" color="bg-black text-green-500 border-green-500 font-mono" />
-                <ThemeButton themeId="candy" label="Candy" color="bg-pink-200 text-pink-600 border-pink-400" />
-                <ThemeButton themeId="vaporwave" label="Vapor" color="bg-fuchsia-200 text-cyan-700 border-cyan-400" />
-                <ThemeButton themeId="zen" label="Zen" color="bg-[#d6cfc7] text-[#5c5552] border-[#a8a29e]" />
+                <ThemeButton themeId="plush" label={t.themePlush} color="bg-rose-100 text-rose-600 border-rose-300" />
+                <ThemeButton themeId="music" label={t.themeMusic} color="bg-violet-100 text-violet-600 border-violet-300" />
+                <ThemeButton themeId="pixel" label={t.themeRetro} color="bg-gray-200 text-green-700 border-gray-400 font-mono" />
+                <ThemeButton themeId="space" label={t.themeSpace} color="bg-indigo-950 text-indigo-200 border-indigo-700" />
+                <ThemeButton themeId="neon" label={t.themeNeon} color="bg-black text-fuchsia-400 border-fuchsia-500" />
+                <ThemeButton themeId="coffee" label={t.themeCoffee} color="bg-[#dcc8b8] text-[#4a3525] border-[#9c7c64]" />
+                <ThemeButton themeId="nature" label={t.themeNature} color="bg-green-100 text-green-800 border-green-300" />
+                <ThemeButton themeId="night" label={t.themeNight} color="bg-slate-800 text-slate-300 border-slate-600" />
+                <ThemeButton themeId="steampunk" label={t.themeSteam} color="bg-[#2b2b2b] text-[#cd7f32] border-[#cd7f32]" />
+                <ThemeButton themeId="circus" label={t.themeCircus} color="bg-red-100 text-red-700 border-yellow-400" />
+                <ThemeButton themeId="deepsea" label={t.themeDeepSea} color="bg-blue-900 text-blue-200 border-blue-700" />
+                <ThemeButton themeId="cyberpunk" label={t.themeCyber} color="bg-black text-green-500 border-green-500 font-mono" />
+                <ThemeButton themeId="candy" label={t.themeCandy} color="bg-pink-200 text-pink-600 border-pink-400" />
+                <ThemeButton themeId="vaporwave" label={t.themeVapor} color="bg-fuchsia-200 text-cyan-700 border-cyan-400" />
+                <ThemeButton themeId="zen" label={t.themeZen} color="bg-[#d6cfc7] text-[#5c5552] border-[#a8a29e]" />
             </div>
         </div>
 
@@ -952,12 +859,12 @@ const App: React.FC = () => {
 
         <button onClick={toggleLanguage} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             <Languages className="w-5 h-5 text-fuchsia-400 shrink-0" />
-            <span>{language === 'de' ? 'Sprache: Deutsch' : 'Language: English'}</span>
+            <span>{language === 'de' ? t.langDe : t.langEn}</span>
         </button>
 
         <button onClick={toggleDarkMode} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isDarkMode ? <Moon className="w-5 h-5 text-violet-400 shrink-0" /> : <Sun className="w-5 h-5 text-amber-500 shrink-0" />}
-            <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
+            <span>{isDarkMode ? t.darkMode : t.lightMode}</span>
         </button>
         
         <button onClick={() => setShowGradeInfo(true)} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
@@ -969,7 +876,7 @@ const App: React.FC = () => {
 
         <button onClick={isAdmin ? handleLogout : () => setShowLogin(true)} className={`w-full flex items-center gap-3 p-3 rounded-2xl transition-colors text-left text-sm font-bold min-h-[44px] ${isDarkMode ? 'hover:bg-white/10 text-white' : 'hover:bg-slate-100 text-slate-700'}`}>
             {isAdmin ? <Unlock className="w-5 h-5 text-emerald-400 shrink-0" /> : <Lock className="w-5 h-5 text-slate-400 shrink-0" />}
-            <span>{isAdmin ? 'Admin Active' : 'Admin Login'}</span>
+            <span>{isAdmin ? t.adminActive : t.adminLogin}</span>
         </button>
     </div>
     );
@@ -982,7 +889,6 @@ const App: React.FC = () => {
     return 'bg-transparent'; 
   };
 
-  // Helper for Theme-specific fixed backgrounds
   const renderThemeBackgrounds = () => {
       // Admin Overlay
       if (isAdmin) {
@@ -1300,16 +1206,13 @@ const App: React.FC = () => {
   };
 
   return (
-    // REMOVED SOLID BG COLOR FROM ROOT TO ALLOW FIXED BACKGROUNDS TO SHOW
-    <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-violet-200 selection:text-violet-900 ${isDarkMode ? 'dark text-white' : 'text-slate-900'} ${isBlurred ? 'blur-sm' : ''}`}>
+    // ADDED text-shadow-sm AND drop-shadow-md TO ENSURE TEXT VISIBILITY IN DARK THEMES
+    <div className={`min-h-screen transition-colors duration-500 font-sans selection:bg-violet-200 selection:text-violet-900 ${isDarkMode ? 'dark text-white' : 'text-slate-900'} ${isBlurred ? 'blur-sm' : ''} drop-shadow-md`}>
       <audio ref={audioRef} src={currentSong.url} loop />
       
       {/* Backgrounds */}
       {renderThemeBackgrounds()}
       <ThemeDecorations theme={currentTheme} isDarkMode={isDarkMode} />
-      
-      {/* Overlays */}
-      <WhiteboardOverlay isOpen={showWhiteboard} onClose={() => setShowWhiteboard(false)} />
       
       {/* Login Modal */}
       {showLogin && (
@@ -1405,11 +1308,11 @@ const App: React.FC = () => {
                 </div>
              </div>
              
-             <h1 className={`text-4xl sm:text-5xl font-black mb-1 tracking-tight ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32] font-mono' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'christmas' ? 'text-white drop-shadow-md' : 'text-slate-800 dark:text-white'))))}`}>
+             <h1 className={`text-4xl sm:text-5xl font-black mb-1 tracking-tight drop-shadow-md ${currentTheme === 'plush' ? 'text-rose-400' : (currentTheme === 'music' ? 'text-violet-500' : (currentTheme === 'steampunk' ? 'text-[#cd7f32] font-mono' : (currentTheme === 'newyear' ? 'text-yellow-400' : (currentTheme === 'christmas' ? 'text-white drop-shadow-md' : 'text-slate-800 dark:text-white'))))}`}>
                 GradePath
              </h1>
-             <p className={`text-xs font-bold uppercase tracking-widest mb-4 opacity-70 ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-400'}`}>by Ihssan</p>
-             <p className={`text-lg sm:text-xl font-medium mb-10 leading-relaxed ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-300'}`}>
+             <p className={`text-xs font-bold uppercase tracking-widest mb-4 opacity-70 drop-shadow-sm ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-400'}`}>by Ihssan</p>
+             <p className={`text-lg sm:text-xl font-medium mb-10 leading-relaxed drop-shadow-sm ${currentTheme === 'steampunk' ? 'text-[#8b4513]' : 'text-slate-500 dark:text-slate-300'}`}>
                 {t.welcomeSubtitle}
              </p>
 
@@ -1421,17 +1324,17 @@ const App: React.FC = () => {
              </button>
 
              <div className="mt-12 opacity-80 hover:opacity-100 transition-opacity">
-                 <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">{t.dailyFocus}</p>
+                 <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3 drop-shadow-sm">{t.dailyFocus}</p>
                  <div className={`p-4 rounded-2xl border backdrop-blur-sm ${currentTheme === 'plush' ? 'bg-white/60 border-rose-200' : (currentTheme === 'music' ? 'bg-white/60 border-violet-200' : (currentTheme === 'steampunk' ? 'bg-[#1a1a1a]/80 border-[#cd7f32]' : 'bg-white/40 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700'))}`}>
                      <Quote className={`w-5 h-5 mb-2 ${currentTheme === 'plush' ? 'text-rose-300' : 'text-slate-300'}`} />
-                     <p className={`text-sm italic font-medium mb-2 ${currentTheme === 'steampunk' ? 'text-[#cd7f32]' : 'text-slate-600 dark:text-slate-300'}`}>"{dailyQuote.text}"</p>
-                     <p className="text-xs font-bold text-slate-400">— {dailyQuote.author}</p>
+                     <p className={`text-sm italic font-medium mb-2 drop-shadow-sm ${currentTheme === 'steampunk' ? 'text-[#cd7f32]' : 'text-slate-600 dark:text-slate-300'}`}>"{dailyQuote.text}"</p>
+                     <p className="text-xs font-bold text-slate-400 drop-shadow-sm">— {dailyQuote.author}</p>
                  </div>
              </div>
           </div>
           
           {/* Footer */}
-          <div className="absolute bottom-6 text-xs font-bold text-slate-400 dark:text-slate-600 flex gap-4">
+          <div className="absolute bottom-6 text-xs font-bold text-slate-400 dark:text-slate-600 flex gap-4 drop-shadow-sm">
               <button onClick={() => setShowGradeInfo(true)} className="hover:text-slate-600 dark:hover:text-slate-400 transition-colors">
                   {t.gradeInfoBtn}
               </button>
@@ -1454,8 +1357,8 @@ const App: React.FC = () => {
                             <ThemeIcon />
                         </div>
                         <div className="flex flex-col">
-                            <h1 className={`font-black text-2xl leading-none ${currentTheme === 'newyear' || currentTheme === 'steampunk' ? 'text-white' : 'dark:text-white'}`}>GradePath</h1>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">by Ihssan</span>
+                            <h1 className={`font-black text-2xl leading-none drop-shadow-md ${currentTheme === 'newyear' || currentTheme === 'steampunk' ? 'text-white' : 'dark:text-white'}`}>GradePath</h1>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest drop-shadow-sm">by Ihssan</span>
                         </div>
                         {/* Home Button moved here from header cluster */}
                         <button 
@@ -1468,15 +1371,6 @@ const App: React.FC = () => {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        {/* MOVED FLOATING BUTTONS HERE */}
-                        <button
-                            onClick={() => setShowWhiteboard(true)}
-                            className={`p-3 rounded-2xl transition-all shadow-sm ${currentTheme === 'steampunk' ? 'bg-[#1a1a1a] text-[#cd7f32] border border-[#cd7f32]' : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700'}`}
-                            title="Whiteboard"
-                        >
-                            <PenTool className="w-6 h-6" />
-                        </button>
-
                         <button 
                             onClick={() => setShowMobileMenu(!showMobileMenu)}
                             className={`p-3 rounded-2xl transition-all shadow-sm ${currentTheme === 'plush' ? 'bg-white text-rose-400 border border-rose-100' : (currentTheme === 'music' ? 'bg-white text-violet-500 border border-violet-200' : (isDarkMode ? 'bg-slate-800 text-white hover:bg-slate-700' : 'bg-white text-slate-700 hover:bg-slate-100'))}`}
@@ -1544,8 +1438,8 @@ const App: React.FC = () => {
                         <div className="flex justify-center -my-2 z-10 relative">
                             <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-4 rounded-3xl border border-slate-100 dark:border-slate-700 shadow-sm flex items-center gap-4">
                                 <GemAvatar mood={currentAverage === 0 ? 'neutral' : (currentAverage < 2.5 ? 'happy' : 'sad')} />
-                                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 max-w-[150px]">
-                                    {currentAverage === 0 ? "Enter your grades, let's see where you stand!" : (currentAverage < 2.5 ? "Wow! You're crushing it! Keep going!" : "Don't worry, we can improve this together.")}
+                                <div className="text-sm font-medium text-slate-600 dark:text-slate-300 max-w-[150px] drop-shadow-sm">
+                                    {currentAverage === 0 ? t.gemGreeting : (currentAverage < 2.5 ? t.gemGood : t.gemBad)}
                                 </div>
                             </div>
                         </div>
