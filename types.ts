@@ -2,12 +2,11 @@
 export interface Course {
   id: string;
   name: string;
-  grade: string; // German (1-6) or UK (9-1)
+  grade: string;
   credits: number;
 }
 
 export enum GradeLevel {
-  // German System
   Five = 'Klasse 5',
   Six = 'Klasse 6',
   Seven = 'Klasse 7',
@@ -20,8 +19,6 @@ export enum GradeLevel {
   Q3 = 'Qualifikationsphase 3 (Q3/13.1)',
   Q4 = 'Qualifikationsphase 4 (Q4/13.2)',
   ABITUR = 'Abitur (Gesamt)',
-  
-  // UK System
   Y7 = 'Year 7',
   Y8 = 'Year 8',
   Y9 = 'Year 9',
@@ -31,34 +28,16 @@ export enum GradeLevel {
   Y13 = 'Year 13 (Sixth Form / A-Level)',
 }
 
-export type Theme = 
-  | 'default' 
-  | 'christmas' 
-  | 'school' 
-  | 'chalkboard' 
-  | 'library' 
-  | 'exam'
-  | 'spring'
-  | 'summer'
-  | 'autumn'
-  | 'halloween'
-  | 'night'
-  | 'pixel'
-  | 'space'
-  | 'neon'
-  | 'coffee'
-  | 'nature'
-  | 'plush'
-  | 'music'
-  | 'steampunk'
-  | 'easter'
-  | 'circus'
-  | 'newyear'
-  | 'deepsea'
-  | 'cyberpunk'
-  | 'candy'
-  | 'vaporwave'
-  | 'zen';
+export interface AnalysisResult {
+  colleges: CollegeRecommendation[];
+  advice: {
+    summary: string;
+    strengths: string[];
+    improvements: string[];
+  };
+  archetype: string;
+  careers: string[];
+}
 
 export interface CollegeRecommendation {
   name: string;
@@ -68,73 +47,30 @@ export interface CollegeRecommendation {
   reason: string;
 }
 
-export interface UniversityCheckResult {
-  uniName: string;
-  likelihood: 'High' | 'Medium' | 'Low';
-  requirements: string;
-  gapAnalysis: string; // What is missing?
-  verdictText: string;
-}
-
-export interface CareerCheckResult {
-  jobTitle: string;
-  matchScore: number; // 0-100
-  likelihood: 'Very High' | 'High' | 'Medium' | 'Low' | 'Very Low';
-  analysis: string;
-  keySubjects: string[]; // Subjects relevant to this job
-}
-
-export interface AcademicAdvice {
-  summary: string;
-  strengths: string[];
-  improvements: string[];
-}
-
-export interface AnalysisResult {
-  colleges: CollegeRecommendation[];
-  advice: AcademicAdvice;
-  archetype: string;
-  careers: string[];
-}
-
-export type ExerciseType = 'multiple-choice' | 'true-false' | 'fill-blank' | 'flashcard';
-
 export interface Exercise {
-  type: ExerciseType;
+  type: 'multiple-choice' | 'text-input' | 'multi-select';
   subject: string;
   topic: string;
-  question: string; // Front of card for flashcard
-  imageUrl?: string;
+  question: string;
   hint: string;
-  options?: string[]; // Only for MC
-  correctAnswer: string; // Back of card for flashcard
+  options?: string[]; // For multiple-choice or multi-select
+  correctAnswer: string | string[]; // Single string or array of strings for multi-select
   explanation: string;
-  difficulty: 'Leicht' | 'Mittel' | 'Schwer' | 'Easy' | 'Medium' | 'Hard';
+  difficulty: 'easy' | 'medium' | 'hard';
 }
 
-export interface Source {
-  title: string;
-  url: string;
+export interface UserStats {
+  xp: number;
+  level: number;
+  streak: number;
+  lastVisit: string;
 }
 
-export interface GroundingChunk {
-  web?: {
-    uri?: string;
-    title?: string;
-  };
-  maps?: {
-    googleMapsUri?: string;
-    place?: {
-      name?: string;
-    };
-  };
-}
+export type Language = 'de' | 'en';
+export type Difficulty = 'easy' | 'medium' | 'hard';
+export type Theme = 'default' | 'dark' | 'light';
 
-export interface PlaceResult {
-  text: string;
-  chunks: GroundingChunk[];
-}
-
+// Added ChatMessage and Source interfaces
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';
@@ -143,9 +79,14 @@ export interface ChatMessage {
   sources?: Source[];
 }
 
-// German Grading Scale (Lower is better)
+export interface Source {
+  title: string;
+  url: string;
+}
+
+// Added Grade constants and helper functions
 export const GERMAN_GRADES: Record<string, number> = {
-  '1+': 0.7, '1': 1.0, '1-': 1.3,
+  '1+': 1.0, '1': 1.0, '1-': 1.3,
   '2+': 1.7, '2': 2.0, '2-': 2.3,
   '3+': 2.7, '3': 3.0, '3-': 3.3,
   '4+': 3.7, '4': 4.0, '4-': 4.3,
@@ -153,372 +94,175 @@ export const GERMAN_GRADES: Record<string, number> = {
   '6': 6.0
 };
 
-// UK Grading Scale (GCSE 9-1) - Higher is better
 export const UK_GRADES: Record<string, number> = {
-  '9+': 9.3, '9': 9.0, '9-': 8.7, // A**
-  '8+': 8.3, '8': 8.0, '8-': 7.7, // A*
-  '7+': 7.3, '7': 7.0, '7-': 6.7, // A
-  '6+': 6.3, '6': 6.0, '6-': 5.7, // B
-  '5+': 5.3, '5': 5.0, '5-': 4.7, // Strong C
-  '4+': 4.3, '4': 4.0, '4-': 3.7, // Standard C
-  '3': 3.0, '2': 2.0, '1': 1.0, 'U': 0
+  '9': 9.0, '8': 8.0, '7': 7.0, '6': 6.0, '5': 5.0, '4': 4.0, '3': 3.0, '2': 2.0, '1': 1.0, 'U': 0.0
 };
 
-export type Language = 'de' | 'en';
-export type Difficulty = 'easy' | 'medium' | 'hard';
-
-// Helper to find the closest grade label
-export const getClosestGradeLabel = (average: number, language: Language): string => {
-  const grades = language === 'en' ? UK_GRADES : GERMAN_GRADES;
-  let closestLabel = '-';
-  let minDiff = Number.MAX_VALUE;
-
-  for (const [label, value] of Object.entries(grades)) {
-    const diff = Math.abs(average - value);
-    if (diff < minDiff) {
-      minDiff = diff;
-      closestLabel = label;
-    }
-  }
-  return closestLabel;
-};
-
-// Available Grade Levels per System
 export const GERMAN_LEVELS = [
-  GradeLevel.Five, GradeLevel.Six, GradeLevel.Seven, GradeLevel.Eight, 
-  GradeLevel.Nine, GradeLevel.Ten, GradeLevel.EF, GradeLevel.Q1, 
+  GradeLevel.Five, GradeLevel.Six, GradeLevel.Seven, GradeLevel.Eight,
+  GradeLevel.Nine, GradeLevel.Ten, GradeLevel.EF, GradeLevel.Q1,
   GradeLevel.Q2, GradeLevel.Q3, GradeLevel.Q4, GradeLevel.ABITUR
 ];
 
 export const UK_LEVELS = [
-  GradeLevel.Y7, GradeLevel.Y8, GradeLevel.Y9, GradeLevel.Y10, 
+  GradeLevel.Y7, GradeLevel.Y8, GradeLevel.Y9, GradeLevel.Y10,
   GradeLevel.Y11, GradeLevel.Y12, GradeLevel.Y13
 ];
 
+export const getClosestGradeLabel = (score: number, language: Language): string => {
+  const grades = language === 'en' ? UK_GRADES : GERMAN_GRADES;
+  let closest = Object.keys(grades)[0];
+  let minDiff = Math.abs(score - grades[closest]);
+  
+  for (const label in grades) {
+    const diff = Math.abs(score - grades[label]);
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = label;
+    }
+  }
+  return closest;
+};
 
 export const TRANSLATIONS = {
   de: {
-    // Start Screen
-    welcomeTitle: "Dein KI Studienbegleiter",
-    welcomeSubtitle: "Berechne deinen Schnitt, finde deinen Weg und trainiere für die Zukunft.",
+    welcomeTitle: "GradePath AI",
+    welcomeSubtitle: "Berechne deinen Schnitt und finde deinen Weg.",
     getStarted: "Jetzt Starten",
-    gradeInfoBtn: "Was bedeuten meine Noten?",
-    gradeInfoTitle: "Offizielle Notenskala & Chancen",
     backToStart: "Startmenü",
-    dailyFocus: "Tages-Impuls",
-    dailyFocusSubtitle: "Motivation für heute",
-    // App
-    navCheck: "Check",
-    navPractice: "Üben",
-    installApp: "App installieren",
-    mobileAccess: "App",
+    dailyFocus: "Heutiger Fokus",
+    navCheck: "Profil",
+    navPractice: "Training",
     yourGrades: "Deine Noten",
     enterSubjects: "Trage deine Fächer ein",
-    lkHint: "(LK = ★)",
     yourAverage: "Dein Schnitt",
     gradeLevel: "Klassenstufe / Phase",
     addCourse: "Fach hinzufügen",
-    analyzeBtn: "Zukunft checken",
-    analyzing: "Analyse läuft...",
+    analyzeBtn: "Zukunft analysieren",
+    analyzing: "KI berechnet...",
     coursePlaceholder: "Fach",
-    resultsHeader: "Deine Zukunftsanalyse",
-    readyToCheck: "Bereit für den Check?",
-    readyDesc: "Gib deine Noten ein und klicke auf 'Zukunft checken'.",
-    yourResult: "Dein Ergebnis",
-    profileType: "Dein Profil-Typ",
-    trend: "Dein Trend",
-    current: "Aktuell",
-    target: "Ziel",
     aiAnalysis: "KI Analyse",
-    collegesHeader: "Passende Hochschulen & Wege",
-    hurdle: "Hürde",
-    chatGreeting: "Hallo! Ich bin Gem. Ich kann live im Internet nach Unis und NC-Werten für dich suchen. Was möchtest du wissen?",
-    chatGreetingAdmin: "SYSTEM: ONLINE. Awaiting commands.",
-    chatPlaceholder: "Frag nach Unis, NC-Werten...",
-    chatPlaceholderAdmin: "> Execute...",
+    collegesHeader: "Passende Hochschulen",
+    chatGreeting: "Hallo! Ich bin Gem. Wie kann ich dir heute helfen?",
+    chatGreetingAdmin: "Terminal bereit. Systemstatus: Optimal.",
+    chatPlaceholder: "Frag mich was...",
+    chatPlaceholderAdmin: "Befehl eingeben...",
     studyHub: "Study Hub",
     chooseSubject: "Wähle dein Fach für heute",
-    start: "Loslegen",
+    start: "Start",
     trainingFor: "Training",
-    whatTopic: "Was möchtest du heute genau üben?",
-    topicPlaceholder: "z.B. Brüche, Past Tense, Lyrik...",
-    specificTopic: "Spezifisches Thema",
-    randomTopic: "Zufälliges Thema",
+    topicPlaceholder: "z.B. Brüche, Geometrie...",
     startQuiz: "Quiz Starten",
     creatingQuiz: "Erstelle Quiz...",
-    topic: "Thema",
-    hintBtn: "Brauchst du einen Tipp?",
-    hintHide: "Tipp verbergen",
-    checkAnswer: "Antwort prüfen",
-    nextQuestion: "Nächste Aufgabe",
-    correct: "Super!",
-    incorrect: "Nicht ganz!",
-    back: "Zurück",
-    quit: "Beenden",
-    // Difficulty
-    difficulty: "Schwierigkeit",
-    easy: "Leicht",
-    medium: "Mittel",
-    hard: "Schwer",
-    // Uni Lookup
-    uniLookupHeader: "Wunsch-Uni Check",
-    uniLookupPlaceholder: "Welche Uni/Schule interessiert dich?",
-    checkAdmission: "Zulassung prüfen",
-    checking: "Prüfe...",
-    admissionChance: "Deine Chance",
-    requirements: "Anforderungen",
-    gapAnalysis: "Was du tun musst",
-    // Career Check
-    careerCheckHeader: "Traumberuf-Check",
-    careerCheckPlaceholder: "Was willst du werden? (z.B. Pilot, Arzt)",
-    checkCareer: "Checken",
-    matchScore: "Match Score",
-    careerAnalysis: "Analyse",
-    // Notes
-    fromNotes: "Aus eigenen Notizen",
-    pasteNotes: "Füge hier deinen Text oder deine Notizen ein...",
-    // Music & Theme
-    lofiRadio: "Lofi Radio",
-    christmasMode: "Christmas Mode",
-    treeVideo: "Baum-Video (Hintergrund)",
-    // Oral Tutor
-    oralTutor: "Mündlicher KI-Tutor",
-    micConsentTitle: "Mikrofon-Zugriff",
-    micConsentDesc: "Um den mündlichen Tutor zu nutzen, benötigen wir Zugriff auf dein Mikrofon. Die Daten werden an Google Gemini gesendet.",
-    iAgree: "Ich stimme zu",
-    cancel: "Abbrechen",
-    listening: "Ich höre zu...",
-    speaking: "Ich spreche...",
-    endCall: "Gespräch beenden",
-    // Subject Names
+    lightMode: "Heller Modus",
+    darkMode: "Dunkler Modus",
     Math: "Mathematik",
     German: "Deutsch",
     English: "Englisch",
     Biology: "Biologie",
     History: "Geschichte",
-    // Exercise Types
-    true: "Wahr",
-    false: "Falsch",
-    fillPlaceholder: "Deine Antwort eingeben...",
-    revealCard: "Karte umdrehen",
-    gotIt: "Gewusst",
-    forgotIt: "Vergessen",
-    // New Features
-    simulationMode: "Noten-Simulator",
-    simulationModeDesc: "Was wäre wenn?",
-    locationSearchHeader: "Unis in deiner Nähe",
-    locationPlaceholder: "Deine Stadt / Region (z.B. Köln)",
-    findNearby: "Suchen",
-    findingPlaces: "Suche Orte...",
-    noPlacesFound: "Keine Orte gefunden.",
-    mapLinks: "Karten & Details",
-    // Panic Mode
-    panicBreathe: "ATMEN",
-    panicInstruction: "Fokussiere dich auf den Kreis. Atme ein, wenn er wächst. Atme aus, wenn er schrumpft. Du machst das super.",
-    imCalmNow: "Ich bin wieder ruhig",
-    // Gem Avatar
-    gemGreeting: "Gib deine Noten ein, mal sehen wo du stehst!",
-    gemGood: "Wow! Das läuft ja super! Weiter so!",
-    gemBad: "Keine Sorge, das können wir gemeinsam verbessern.",
-    // Settings Menu
-    selectTheme: "Design wählen",
-    academic: "Akademisch",
-    seasonal: "Saisonal",
-    creative: "Kreativ",
-    themeDefault: "Standard",
-    themeSchool: "Schule",
-    themeChalk: "Tafel",
-    themeLibrary: "Bib",
-    themeExam: "Klausur",
-    themeSpring: "Frühling",
-    themeSummer: "Sommer",
-    themeAutumn: "Herbst",
-    themeSpooky: "Grusel",
-    themeXmas: "Weihnachten",
-    themeEaster: "Ostern",
-    themeNewYear: "Neujahr",
-    themePlush: "Plüsch",
-    themeMusic: "Musik",
-    themeRetro: "Retro",
-    themeSpace: "Weltraum",
-    themeNeon: "Neon",
-    themeCoffee: "Kaffee",
-    themeNature: "Natur",
-    themeNight: "Nacht",
-    themeSteam: "Steam",
-    themeCircus: "Zirkus",
-    themeDeepSea: "Tiefsee",
-    themeCyber: "Cyber",
-    themeCandy: "Süß",
-    themeVapor: "Vapor",
-    themeZen: "Zen",
-    langDe: "Sprache: Deutsch",
-    langEn: "Language: English",
-    lightMode: "Heller Modus",
-    darkMode: "Dunkler Modus",
-    adminActive: "Admin Aktiv",
-    adminLogin: "Admin Login",
+    cancel: "Abbrechen",
+    xpLabel: "XP",
+    levelLabel: "Level",
+    difficulty: "Schwierigkeit",
+    easy: "Leicht",
+    medium: "Mittel",
+    hard: "Schwer",
+    sessionComplete: "Richtig!",
+    wrongAnswer: "Falsch!",
+    xpEarned: "XP erhalten",
+    xpLost: "XP verloren",
+    returnHub: "Zum Hub",
+    nextExercise: "Nächste Übung",
+    byIhssan: "By Ihssan",
+    nextLevelInfo: (xp: number, level: number) => `Noch ${xp} XP bis Level ${level}`,
+    levelPass: "Level Pass",
+    submitAnswer: "Antwort prüfen",
+    typeAnswer: "Antwort hier schreiben...",
+    selectAll: "Wähle alle richtigen aus",
+    unlocked: "Freigeschaltet",
+    locked: "Gesperrt",
+    readyToCheck: "Bereit für den Check?",
+    readyDesc: "Gib deine Noten ein und klicke auf 'Zukunft analysieren'.",
+    oralTutor: "Mündlicher Tutor",
+    listening: "Ich höre zu...",
+    speaking: "Gem spricht...",
+    endCall: "Gespräch beenden",
+    deepSolver: "Deep Solver",
+    aiInterviewer: "KI Interviewer",
   },
   en: {
-    // Start Screen
-    welcomeTitle: "Your AI Study Companion",
-    welcomeSubtitle: "Calculate your grades, find your path, and train for the future.",
+    welcomeTitle: "GradePath AI",
+    welcomeSubtitle: "Calculate your grades and find your path.",
     getStarted: "Get Started",
-    gradeInfoBtn: "What do my grades mean?",
-    gradeInfoTitle: "Official Grade Scale & Outlook",
     backToStart: "Start Menu",
-    dailyFocus: "Daily Focus",
-    dailyFocusSubtitle: "Motivation for today",
-    // App
-    navCheck: "Check",
-    navPractice: "Practice",
-    installApp: "Install App",
-    mobileAccess: "App",
+    dailyFocus: "Today's Focus",
+    navCheck: "Profile",
+    navPractice: "Training",
     yourGrades: "Your Grades",
     enterSubjects: "Enter your subjects",
-    lkHint: "(Higher = ★)",
     yourAverage: "Your Average",
     gradeLevel: "Grade Level / Year",
     addCourse: "Add Subject",
     analyzeBtn: "Analyze Future",
-    analyzing: "Analyzing...",
+    analyzing: "AI Analyzing...",
     coursePlaceholder: "Subject",
-    resultsHeader: "Your Future Analysis",
-    readyToCheck: "Ready to check?",
-    readyDesc: "Enter your grades and click 'Analyze Future'.",
-    yourResult: "Your Result",
-    profileType: "Your Profile Type",
-    trend: "Your Trend",
-    current: "Current",
-    target: "Target",
     aiAnalysis: "AI Analysis",
-    collegesHeader: "Matching Colleges & Paths",
-    hurdle: "Hurdle",
-    chatGreeting: "Hi! I'm Gem. I can search the web for universities and entry requirements for you. What do you want to know?",
-    chatGreetingAdmin: "SYSTEM: ONLINE. Awaiting commands.",
-    chatPlaceholder: "Ask about Unis, requirements...",
-    chatPlaceholderAdmin: "> Execute...",
+    collegesHeader: "Matching Colleges",
+    chatGreeting: "Hi! I'm Gem. How can I help you today?",
+    chatGreetingAdmin: "Terminal Ready. System status: Optimal.",
+    chatPlaceholder: "Ask me anything...",
+    chatPlaceholderAdmin: "Enter command...",
     studyHub: "Study Hub",
     chooseSubject: "Choose your subject for today",
     start: "Start",
     trainingFor: "Training",
-    whatTopic: "What do you want to practice?",
-    topicPlaceholder: "e.g. Fractions, Past Tense, Poetry...",
-    specificTopic: "Specific Topic",
-    randomTopic: "Random Topic",
+    topicPlaceholder: "e.g. Fractions, Past Tense...",
     startQuiz: "Start Quiz",
     creatingQuiz: "Creating Quiz...",
-    topic: "Topic",
-    hintBtn: "Need a hint?",
-    hintHide: "Hide hint",
-    checkAnswer: "Check Answer",
-    nextQuestion: "Next Question",
-    correct: "Great job!",
-    incorrect: "Not quite!",
-    back: "Back",
-    quit: "Quit",
-    // Difficulty
-    difficulty: "Difficulty",
-    easy: "Easy",
-    medium: "Medium",
-    hard: "Hard",
-    // Uni Lookup
-    uniLookupHeader: "Dream Uni Check",
-    uniLookupPlaceholder: "Which Uni/School interests you?",
-    checkAdmission: "Check Admission",
-    checking: "Checking...",
-    admissionChance: "Your Chance",
-    requirements: "Requirements",
-    gapAnalysis: "Gap Analysis",
-    // Career Check
-    careerCheckHeader: "Dream Job Check",
-    careerCheckPlaceholder: "What do you want to be? (e.g. Pilot, Doctor)",
-    checkCareer: "Check Fit",
-    matchScore: "Match Score",
-    careerAnalysis: "Analysis",
-    // Notes
-    fromNotes: "From My Notes",
-    pasteNotes: "Paste your study notes or text here...",
-    // Music & Theme
-    lofiRadio: "Lofi Radio",
-    christmasMode: "Christmas Mode",
-    treeVideo: "Tree Video (Background)",
-    // Oral Tutor
-    oralTutor: "Oral AI Tutor",
-    micConsentTitle: "Microphone Access",
-    micConsentDesc: "To use the Oral Tutor, we need access to your microphone. Audio is sent to Google Gemini for processing.",
-    iAgree: "I Agree",
-    cancel: "Cancel",
-    listening: "Listening...",
-    speaking: "Speaking...",
-    endCall: "End Call",
-    // Subject Names
+    lightMode: "Light Mode",
+    darkMode: "Dark Mode",
     Math: "Math",
     German: "German",
     English: "English",
     Biology: "Biology",
     History: "History",
-    // Exercise Types
-    true: "True",
-    false: "False",
-    fillPlaceholder: "Type your answer...",
-    revealCard: "Reveal Card",
-    gotIt: "Got it",
-    forgotIt: "Forgot it",
-    // New Features
-    simulationMode: "Grade Simulator",
-    simulationModeDesc: "What If Mode?",
-    locationSearchHeader: "Unis Near You",
-    locationPlaceholder: "Your City / Region",
-    findNearby: "Search",
-    findingPlaces: "Finding places...",
-    noPlacesFound: "No places found.",
-    mapLinks: "Maps & Details",
-    // Panic Mode
-    panicBreathe: "BREATHE",
-    panicInstruction: "Focus on the circle. Inhale as it expands. Exhale as it shrinks. You are doing great.",
-    imCalmNow: "I'm calm now",
-    // Gem Avatar
-    gemGreeting: "Enter your grades, let's see where you stand!",
-    gemGood: "Wow! You're crushing it! Keep going!",
-    gemBad: "Don't worry, we can improve this together.",
-    // Settings Menu
-    selectTheme: "Select Theme",
-    academic: "Academic",
-    seasonal: "Seasonal",
-    creative: "Creative",
-    themeDefault: "Default",
-    themeSchool: "School",
-    themeChalk: "Chalk",
-    themeLibrary: "Library",
-    themeExam: "Exam",
-    themeSpring: "Spring",
-    themeSummer: "Summer",
-    themeAutumn: "Autumn",
-    themeSpooky: "Spooky",
-    themeXmas: "Xmas",
-    themeEaster: "Easter",
-    themeNewYear: "New Year",
-    themePlush: "Plush",
-    themeMusic: "Music",
-    themeRetro: "Retro",
-    themeSpace: "Space",
-    themeNeon: "Neon",
-    themeCoffee: "Coffee",
-    themeNature: "Nature",
-    themeNight: "Night",
-    themeSteam: "Steam",
-    themeCircus: "Circus",
-    themeDeepSea: "Deep Sea",
-    themeCyber: "Cyber",
-    themeCandy: "Candy",
-    themeVapor: "Vapor",
-    themeZen: "Zen",
-    langDe: "Sprache: Deutsch",
-    langEn: "Language: English",
-    lightMode: "Light Mode",
-    darkMode: "Dark Mode",
-    adminActive: "Admin Active",
-    adminLogin: "Admin Login",
+    cancel: "Cancel",
+    xpLabel: "XP",
+    levelLabel: "Level",
+    difficulty: "Difficulty",
+    easy: "Easy",
+    medium: "Medium",
+    hard: "Hard",
+    sessionComplete: "Correct!",
+    wrongAnswer: "Wrong!",
+    xpEarned: "XP earned",
+    xpLost: "XP lost",
+    returnHub: "Return to Hub",
+    nextExercise: "Next Exercise",
+    byIhssan: "By Ihssan",
+    nextLevelInfo: (xp: number, level: number) => `Earn ${xp} XP for Level ${level}`,
+    levelPass: "Level Pass",
+    submitAnswer: "Submit Answer",
+    typeAnswer: "Type your answer...",
+    selectAll: "Select all that apply",
+    unlocked: "Unlocked",
+    locked: "Locked",
+    readyToCheck: "Ready to check?",
+    readyDesc: "Enter your grades and click 'Analyze Future'.",
+    oralTutor: "Oral Tutor",
+    listening: "Listening...",
+    speaking: "Gem speaking...",
+    endCall: "End Call",
+    deepSolver: "Deep Solver",
+    aiInterviewer: "AI Interviewer",
   }
 };
+
+export const REWARDS = [
+  { level: 1, name: "Default Theme", color: "Indigo", hex: "#6366F1" },
+  { level: 3, name: "Scholar Rank", color: "Emerald", hex: "#10B981" },
+  { level: 5, name: "Expert Rank", color: "Amber", hex: "#F59E0B" },
+  { level: 7, name: "Master Rank", color: "Rose", hex: "#F43F5E" },
+  { level: 10, name: "Visionary Rank", color: "Metallic", hex: "#B87333" },
+];

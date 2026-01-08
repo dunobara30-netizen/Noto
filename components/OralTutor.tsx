@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import { X, Mic, PhoneOff, Activity, Play, AlertCircle, Loader2 } from 'lucide-react';
@@ -131,7 +132,9 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
             outputAudioContextRef.current.close();
             outputAudioContextRef.current = null;
         }
-        sourcesRef.current.forEach(s => s.stop());
+        for (const s of sourcesRef.current) {
+          s.stop();
+        }
         sourcesRef.current.clear();
         sessionPromiseRef.current = null;
     };
@@ -217,8 +220,9 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
             setView('connecting');
 
             // Connect to Gemini Live API
+            // Fixed: Updated model to the recommended version 'gemini-2.5-flash-native-audio-preview-12-2025'
             sessionPromiseRef.current = ai.live.connect({
-                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+                model: 'gemini-2.5-flash-native-audio-preview-12-2025',
                 callbacks: {
                     onopen: () => {
                         console.log("Gemini Live Connected");
@@ -229,6 +233,7 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                         const scriptProcessor = inputCtx.createScriptProcessor(4096, 1, 1);
                         
                         scriptProcessor.onaudioprocess = (e) => {
+                            // Fixed: Using sessionPromise.then to ensure data is sent only after the session is resolved
                             if (!sessionPromiseRef.current) return;
                             
                             const inputData = e.inputBuffer.getChannelData(0);
@@ -247,14 +252,20 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                         source.connect(scriptProcessor);
                         scriptProcessor.connect(inputCtx.destination);
                     },
-                    onmessage: async (msg: LiveServerMessage) => {
-                        if (msg.serverContent?.outputTranscription?.text) {
-                            setCaption(prev => prev + msg.serverContent?.outputTranscription?.text);
+                    onmessage: async (message: LiveServerMessage) => {
+                        if (message.serverContent?.outputTranscription?.text) {
+                            setCaption(prev => prev + message.serverContent?.outputTranscription?.text);
                         }
-                        if (msg.serverContent?.interrupted) {
+                        if (message.serverContent?.interrupted) {
                             setCaption("");
+                            // Handle interruption by stopping current audio sources
+                            for (const source of sourcesRef.current) {
+                                source.stop();
+                            }
+                            sourcesRef.current.clear();
+                            nextStartTimeRef.current = 0;
                         }
-                        const audioData = msg.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+                        const audioData = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
                         if (audioData) {
                             setStatus('speaking');
                             if (outputCtx.state === 'suspended') await outputCtx.resume();
@@ -278,7 +289,6 @@ const OralTutor: React.FC<OralTutorProps> = ({ isOpen, onClose, language, target
                     },
                     onclose: () => {
                         console.log("Session closed");
-                        // Don't auto-reset view if it was intentional
                     },
                     onerror: (e) => {
                         console.error("Session error", e);
